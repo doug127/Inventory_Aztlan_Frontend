@@ -1,4 +1,4 @@
-export default function Input({ id, type = 'text', placeholder, value, onChange }) {
+export const Input = ({ id, type = 'text', placeholder, value, onChange }) => {
   return (
     <input
       id={id}
