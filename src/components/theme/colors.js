@@ -10,5 +10,5 @@ export const colors = {
   textSecondary: '#6B7280',
   error: '#DC2626',
   warning: '#F59E0B',
-  succes: '#16A34A'
+  succes: '#16A34A',
 }
