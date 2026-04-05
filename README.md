@@ -10,15 +10,15 @@
       - UI library (shadcn, Ant Design, PrimeVue, etc.)
       - Tokens: colores, tipografía, espaciado
       - Componentes globales: Button, Input, Table, Modal, Badge, Spinner
-- [ ] 1.3 HTTP Client
+- [x] 1.3 HTTP Client
       - Instancia base (axios) con baseURL desde .env
       - Interceptor de REQUEST → inyecta token
       - Interceptor de RESPONSE → manejo global de errores (401, 403, 500)
       - Wrapper tipado para respuestas paginadas
-- [ ] 1.4 Estado Global (Store)
+- [x] 1.4 Estado Global (Store)
       - Setup ( Zustand )
       - Slice de auth (user, token, permisos)
-- [ ] 1.5 Routing
+- [x] 1.5 Routing
       - Definición de rutas (lazy loading desde el inicio)
       - Layout principal (sidebar, topbar, outlet)
       - Layout de auth (solo login)
