@@ -9,7 +9,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 
-export const  ConfirmDialog = ({
+export const ConfirmDialog = ({
   open,
   onOpenChange,
   title = '¿Estás seguro?',

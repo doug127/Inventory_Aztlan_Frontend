@@ -16,7 +16,7 @@
       - Interceptor de RESPONSE → manejo global de errores (401, 403, 500)
       - Wrapper tipado para respuestas paginadas
 - [ ] 1.4 Estado Global (Store)
-      - Setup (Pinia / Zustand / Redux Toolkit)
+      - Setup ( Zustand )
       - Slice de auth (user, token, permisos)
 - [ ] 1.5 Routing
       - Definición de rutas (lazy loading desde el inicio)

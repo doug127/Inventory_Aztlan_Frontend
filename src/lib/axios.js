@@ -4,7 +4,7 @@ import { useAuthStore } from '@/stores/authStore'
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
   headers: { 'Content-Type': 'application/json' },
-  withCredentials: true,
+  // withCredentials: true,
 })
 
 api.interceptors.request.use((config) => {
@@ -26,6 +26,11 @@ api.interceptors.response.use(
 
     if (status === 403) {
       window.location.href = '/403'
+    }
+
+    if (status === 500) {
+      console.error('[Server Error]', error.response?.data)
+      // toast.error('Error interno del servidor') ← lo activamos cuando instalemos sonner en Fase 2
     }
 
     return Promise.reject(error.response?.data ?? error)
