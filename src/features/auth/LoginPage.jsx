@@ -28,32 +28,23 @@ export function LoginPage() {
 
   const onSubmit = async (data) => {
     try {
-      setServerError(null)
+      const res = await authService.login(data)
+      console.log('1. Login res:', res)
 
-      // 1. Login → el backend setea la cookie y retorna { message, user }
-      const loginRes = await authService.login(data)
-      console.log('1. Login response:', loginRes)
-
-      // 2. /auth/me → retorna { id, username, role, privilege }
       const me = await authService.me()
-      console.log('2. /auth/me response:', me)
 
-      // 3. Guardamos user y permisos en el store
-      //    privilege viene como array del backend
-      const userData = { id: me.id, username: me.username, role: me.role }
-      const permissions = me.privilege ?? []
-      console.log('3. Guardando user:', userData)
-      console.log('4. Guardando permissions:', permissions)
-      setAuth({ user: userData, permissions })
+      const { user } = res
+      console.log('2. User:', user)
 
-      // 4. Redirigir al dashboard
-      console.log('5. Store después de setAuth:', useAuthStore.getState())
-      toast.success(`Bienvenido, ${me.username}`)
-      navigate('/', { replace: true })
+      // CORRECCIÓN:
+      useAuthStore.getState().setAuth(me)  
+      console.log('3. Store:', useAuthStore.getState())
 
+      toast.success(`Bienvenido, ${user.username}`)
+      setTimeout(() => navigate('/', { replace: true }), 100)
     } catch (error) {
-      const msg = error?.message ?? error?.raw?.error ?? 'Credenciales incorrectas'
-      toast.error(msg)
+      console.log('ERROR:', error)
+      toast.error(error?.message ?? 'Credenciales incorrectas')
     }
   }
 
@@ -82,14 +73,6 @@ export function LoginPage() {
               <p className='text-xs text-destructive'>{errors.username.message}</p>
             )}
           </div>
-
-          <Button
-            type='button'
-            variant='outline'
-            onClick={() => toast.success('Sonner funciona')}
-          >
-            Test toast
-          </Button>
 
           {/* Password */}
           <div className='space-y-1.5'>

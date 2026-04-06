@@ -23,12 +23,13 @@ export function AuthProvider({ children }) {
         }
 
         const me = await authService.me()
+        console.log('AuthProvider me:', me)
 
         if (!cancelled) {
-          useAuthStore.getState().setAuth({
-            user: { id: me.id, username: me.username, role: me.role },
-            permissions: me.privilege ?? []
-        })
+          useAuthStore.getState().setAuth(
+            // { user: { id: me.id, username: me.username, role: me.role}, }
+              me
+          )
           setReady(true)
         }
       } catch {

@@ -4,6 +4,9 @@ import { AppLayout } from '@/components/layouts/AppLayout'
 import { AuthLayout } from '@/components/layouts/AuthLayout'
 import { ProtectedRoute } from '@/features/auth/ProtectedRoute'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
+import { HIERARCHY } from '@/lib/constants'
+import { ForbiddenPage } from '@/components/common/ForbiddenPage'
+import { PermissionRoute } from '@/features/auth/PermissionRoute'
 
 // Lazy imports — cada módulo se carga solo cuando se navega a él
 const LoginPage = lazy(() =>
@@ -49,6 +52,10 @@ export const router = createBrowserRouter([
       },
     ],
   },
+
+  // ─── Ruta 403 Forbidden ───────────────────────────────────────────────────────
+
+  { path: '/403', element: <Page><ForbiddenPage /></Page> },
 
   // ─── Rutas protegidas ─────────────────────────────────────────────────────
   {
@@ -105,13 +112,12 @@ export const router = createBrowserRouter([
               </Page>
             ),
           },
+          // Solo admins pueden ver la lista de usuarios
           {
-            path: '/users',
-            element: (
-              <Page>
-                <UsersPage />
-              </Page>
-            ),
+            element: <PermissionRoute minHierarchy={HIERARCHY.ADMIN} />,
+            children: [
+              { path: '/users', element: <Page><UsersPage /></Page> },
+            ],
           },
         ],
       },

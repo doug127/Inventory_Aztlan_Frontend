@@ -1,8 +1,7 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 
-export const ProtectedRoute = ({privilege, minHierarchy}) => {
-  // const user = useAuthStore((s) => s.user)
+export const PermissionRoute = ({ privilege, minHierarchy }) => {
   const hasHierarchy = useAuthStore((s) => s.hasHierarchy)
   const _hasHydrated = useAuthStore((s) => s._hasHydrated)
 
@@ -11,9 +10,9 @@ export const ProtectedRoute = ({privilege, minHierarchy}) => {
     return <div className="min-h-screen flex items-center justify-center">Cargando...</div>
   }
   
-  // if (!user) return <Navigate to='/login' replace />
-  
-  if (minHierarchy && !hasHierarchy(minHierarchy)) return <Navigate to='/login' replace />
-  
+  if (minHierarchy && !hasHierarchy(minHierarchy)) {
+    return <Navigate to='/403' replace />
+  }
+
   return <Outlet />
 }

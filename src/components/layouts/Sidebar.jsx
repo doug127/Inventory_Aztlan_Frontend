@@ -1,6 +1,8 @@
 import { NavLink } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { useUiStore } from '@/stores/uiStore'
+import { useAuthStore } from '@/stores/authStore'
+import { HIERARCHY } from '@/lib/constants'
 import {
   LayoutDashboard,
   Package,
@@ -13,17 +15,26 @@ import {
 } from 'lucide-react'
 
 const NAV_ITEMS = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/movements', label: 'Movimientos', icon: ArrowLeftRight },
-  { to: '/stock', label: 'Stock', icon: BarChart2 },
-  { to: '/products', label: 'Productos', icon: Package },
-  { to: '/warehouses', label: 'Almacenes', icon: Warehouse },
-  { to: '/assets', label: 'Activos', icon: Truck },
-  { to: '/users', label: 'Usuarios', icon: Users },
+  { to: '/', label: 'Dashboard', icon: LayoutDashboard, minHierarchy: null },
+  { to: '/movements', label: 'Movimientos', icon: ArrowLeftRight, minHierarchy: HIERARCHY.USER },
+  { to: '/stock', label: 'Stock', icon: BarChart2, minHierarchy: HIERARCHY.USER },
+  { to: '/products', label: 'Productos', icon: Package, minHierarchy: HIERARCHY.USER },
+  { to: '/warehouses', label: 'Almacenes', icon: Warehouse, minHierarchy: HIERARCHY.USER },
+  { to: '/assets', label: 'Activos', icon: Truck, minHierarchy: HIERARCHY.USER },
+  { to: '/users', label: 'Usuarios', icon: Users, minHierarchy: HIERARCHY.ADMIN },
 ]
 
 export const Sidebar = () => {
   const { sidebarOpen, toggleSidebar } = useUiStore()
+  const _hasHydrated = useAuthStore((s) => s._hasHydrated)
+  const user = useAuthStore((s) => s.user)
+
+  const visibleItems = _hasHydrated
+    ? NAV_ITEMS.filter(
+        (item) => !item.minHierarchy || (user?.hierarchy_level ?? 0) >= item.minHierarchy
+      )
+    : []
+  console.log('visibleItems:', visibleItems)
 
   return (
     <aside
@@ -49,7 +60,7 @@ export const Sidebar = () => {
 
       {/* Nav */}
       <nav className='flex-1 py-3 px-2 space-y-0.5 overflow-y-auto'>
-        {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
+        {visibleItems.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
