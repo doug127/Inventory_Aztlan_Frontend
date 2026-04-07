@@ -14,7 +14,6 @@ import { toast } from 'sonner'
 
 export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
-  const [serverError, setServerError] = useState(null)
   const { setAuth } = useAuthStore()
   const navigate = useNavigate()
 

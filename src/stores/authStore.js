@@ -1,6 +1,7 @@
 import { User } from '@hugeicons/core-free-icons'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { authService } from '@/features/auth/authService'
 
 export const useAuthStore = create(
   persist(
@@ -12,7 +13,15 @@ export const useAuthStore = create(
 
       setAuth: ( user ) => set({ user }),
 
-      logout: () => set({ user: null }),
+      logout: async () => {
+        try {
+          await authService.logout()
+        } catch (e) {
+          console.error(e)
+        } finally {
+          set({ user: null })
+        }
+      },
 
       hasHierarchy: (minLevel) => {
         const user = get().user
