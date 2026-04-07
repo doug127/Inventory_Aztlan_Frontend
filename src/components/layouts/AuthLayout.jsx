@@ -1,4 +1,5 @@
 import { Outlet } from 'react-router-dom'
+import { Toaster } from 'sonner'
 
 export const AuthLayout = () => {
   return (
@@ -6,6 +7,7 @@ export const AuthLayout = () => {
       <div className='w-full max-w-sm'>
         <Outlet />
       </div>
+      <Toaster richColors position='top-right' />
     </div>
   )
 }

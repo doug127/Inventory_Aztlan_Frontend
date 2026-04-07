@@ -25,20 +25,21 @@
 
 ## Fase 2 · Auth + Seguridad
 > El sistema de permisos es infraestructura, no feature opcional.
-- [ ] 2.1 Login
+- [x] 2.1 Login
       - Formulario, validación, manejo de errores de credenciales
       - Persistencia de token (localStorage / cookie httpOnly)
-- [ ] 2.2 Sesión (/auth/me)
+- [x] 2.2 Sesión (/auth/me)
       - Carga de usuario y permisos al iniciar la app
       - Rehidratación del store en refresh de página
-- [ ] 2.3 Guards de rutas
+- [x] 2.3 Guards de rutas
       - isAuthenticated guard
       - hasPermission(privilege) guard
       - Redirecciones: no autenticado → /login, sin permiso → /403
-- [ ] 2.4 UI Condicional por permisos
+- [x] 2.4 UI Condicional por permisos
       - Hook/Composable usePermission(privilege)
       - Componente <CanRender privilege="..." /> 
       - Aplicado desde aquí en adelante en todos los módulos
+- [x] 2.5 Logout
 
 ## Fase 3 · Maestros (Core Data)
 > En orden de dependencia: Units → Categories → Products → Warehouses
