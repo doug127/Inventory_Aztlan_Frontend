@@ -7,6 +7,8 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useNavigate } from 'react-router-dom'
 
+import logoImage from '@/assets/image/logo.jpeg' 
+
 export const Topbar = () => {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
@@ -17,13 +19,24 @@ export const Topbar = () => {
   }
 
   return (
-    <header className='h-14 border-b bg-background flex items-center justify-end px-4 shrink-0'>
+    <header className='h-14 border-b bg-background flex items-center justify-between px-4 shrink-0'>
+
+      <div className='flex items-center h-full py-1.5'>
+        <img 
+          src={logoImage} 
+          alt="Logo" 
+          className='h-full w-auto object-contain'
+        />
+      </div>
+
       <DropdownMenu>
         <DropdownMenuTrigger className='flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-muted cursor-pointer select-none outline-none transition-colors duration-200'>
           <div className='h-7 w-7 rounded-full bg-muted flex items-center justify-center border'>
             <User className='h-4 w-4 text-muted-foreground' />
           </div>
-          <span className='text-sm text-foreground font-medium'>{user?.full_name ?? 'Usuario'}</span>
+          <span className='text-sm text-foreground font-medium'>
+            {user?.full_name ?? 'Usuario'}
+          </span>
         </DropdownMenuTrigger>
 
         <DropdownMenuContent

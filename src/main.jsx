@@ -15,7 +15,6 @@ createRoot(document.getElementById('root')).render(
         <App />
         <Toaster richColors position='top-right' />
       </AuthProvider>
-      <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   </StrictMode>
 )
