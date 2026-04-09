@@ -64,6 +64,15 @@ export default function FormComponents() {
     { value: 'Bodega', label: 'Bodega' }
   ];
 
+  // ✅ Nuevo: Opciones para unidad de medida
+  const unidadOptions = [
+    { value: 'litro', label: 'Litro' },
+    { value: 'galon', label: 'Galón' },
+    { value: 'kilogramo', label: 'Kilogramo' },
+    { value: 'unidad', label: 'Unidad' },
+    { value: 'metro', label: 'Metro' }
+  ];
+
   const showNotification = (type, message) => {
     setNotification({
       isVisible: true,
@@ -103,7 +112,7 @@ export default function FormComponents() {
           transition={{ duration: 0.4 }}
           className="w-full"
         >
-          <div className=" overflow-hidden">
+          <div className="overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100">
               <h3 className="text-lg font-medium text-gray-900">
                 Nuevo movimiento de inventario
@@ -198,19 +207,34 @@ export default function FormComponents() {
                   />
                 </div>
 
-                <FormInput
-                  label="Cantidad"
-                  name="cantidad"
-                  type="number"
-                  value={formData.cantidad}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  error={errors.cantidad}
-                  touched={touched.cantidad}
-                  min={1}
-                  max={1000}
-                  required
-                />
+                {/* ✅ NUEVO: Cantidad + Unidad en la misma fila */}
+                <div className="col-span-2 grid grid-cols-2 gap-4">
+                  <FormInput
+                    label="Cantidad"
+                    name="cantidad"
+                    type="number"
+                    value={formData.cantidad}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    error={errors.cantidad}
+                    touched={touched.cantidad}
+                    min={1}
+                    max={1000}
+                    required
+                  />
+                  
+                  <FormSelect
+                    label="Unidad"
+                    name="unidad"
+                    value={formData.unidad || 'litro'}
+                    options={unidadOptions}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    error={errors.unidad}
+                    touched={touched.unidad}
+                    required
+                  />
+                </div>
 
                 <div className="col-span-2">
                   <FormTextarea
