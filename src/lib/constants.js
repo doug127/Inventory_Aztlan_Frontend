@@ -1,7 +1,7 @@
 export const HIERARCHY = {
-  1: 3, // superadmin
-  2: 2, // admin
-  3: 1, 
+  USER: 1,
+  ADMIN: 2,
+  SUPERADMIN: 3,
 }
 
 export const MOVEMENT_TYPES = {

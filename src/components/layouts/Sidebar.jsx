@@ -30,15 +30,13 @@ export const Sidebar = () => {
   const user = useAuthStore((s) => s.user)
 
   const visibleItems = _hasHydrated
-    ? NAV_ITEMS.filter((item) => {
-        if (!item.minHierarchy) return true
-
-        const level = HIERARCHY[user?.role_id] ?? 0
-        return level >= item.minHierarchy
-      })
+    ? NAV_ITEMS.filter(
+        (item) =>
+          !item.minHierarchy ||
+          (user?.hierarchy_level ?? 0) >= item.minHierarchy
+      )
     : []
-  console.log('visibleItems:', visibleItems)
-
+    
   return (
     <aside
       className={cn(
