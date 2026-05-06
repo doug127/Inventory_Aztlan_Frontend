@@ -1,5 +1,3 @@
-import { Stock } from './components/Stock'
-
 export const StockPage = () => {
-  return <Stock />
+  return <div className='text-sm text-muted-foreground'>Dashboard — Fase 2</div>
 }

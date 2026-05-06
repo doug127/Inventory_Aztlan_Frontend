@@ -1,5 +1,4 @@
-import FormComponents from "./components/FormComponents"
 
 export const MovementsPage = () => {
-  return <FormComponents />
+  return <div className='text-sm text-muted-foreground'>Movements Page — Fase 2</div>
 }

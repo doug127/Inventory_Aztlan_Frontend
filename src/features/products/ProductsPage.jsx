@@ -1,5 +1,3 @@
-import Products from './components/Products'
-
 export const ProductsPage = () => {
-  return <Products />
+  return <div className='text-sm text-muted-foreground'>Products Page — Fase 2</div>
 }
