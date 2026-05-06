@@ -11,7 +11,7 @@ import { formatDate } from '@/lib/utils'
 import { useUsers, useCreateUser, useUpdateUser, useDeleteUser } from './usersQueries'
 import { UserForm } from './UserForm'
 
-export function UsersPage() {
+export const UsersPage = () => {
   const [formOpen, setFormOpen]       = useState(false)
   const [deleteOpen, setDeleteOpen]   = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
@@ -20,7 +20,8 @@ export function UsersPage() {
   const createUser  = useCreateUser()
   const updateUser  = useUpdateUser()
   const deleteUser  = useDeleteUser()
-
+  const [serverError, setServerError] = useState(null)
+  
   const handleCreate = () => {
     setSelectedUser(null)
     setFormOpen(true)
@@ -37,12 +38,25 @@ export function UsersPage() {
   }
 
   const handleFormSubmit = async (data) => {
-    if (selectedUser) {
-      await updateUser.mutateAsync({ id: selectedUser.id, data })
-    } else {
-      await createUser.mutateAsync(data)
+    try {
+      setServerError(null)
+
+      if (selectedUser) {
+        await updateUser.mutateAsync({ id: selectedUser.id, data })
+      } else {
+        await createUser.mutateAsync(data)
+      }
+
+      setFormOpen(false)
+    } catch (error) {
+      console.log('SERVER ERROR:', error)
+
+      setServerError(
+        error?.response?.data?.message ||
+        error?.message ||
+        'Error inesperado'
+      )
     }
-    setFormOpen(false)
   }
 
   const handleDeleteConfirm = async () => {
@@ -69,7 +83,7 @@ export function UsersPage() {
       accessorKey: 'role',
       header: 'Rol',
       cell: ({ row }) => (
-        <StatusBadge value={row.original.role.name} label={row.original.role.name} />
+        <StatusBadge value={row.original.role} label={row.original.role} />
       ),
     },
     {
@@ -77,15 +91,6 @@ export function UsersPage() {
       header: 'Estado',
       cell: ({ row }) => (
         <StatusBadge value={row.original.is_active ? 'active' : 'inactive'} />
-      ),
-    },
-    {
-      accessorKey: 'createdAt',
-      header: 'Creado',
-      cell: ({ row }) => (
-        <span className='text-sm text-muted-foreground'>
-          {formatDate(row.original.createdAt)}
-        </span>
       ),
     },
     {
@@ -147,6 +152,7 @@ export function UsersPage() {
         user={selectedUser}
         onSubmit={handleFormSubmit}
         loading={createUser.isPending || updateUser.isPending}
+        serverError={serverError}
       />
 
       <ConfirmDialog

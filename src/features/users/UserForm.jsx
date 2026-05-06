@@ -28,7 +28,7 @@ const ROLES_BY_HIERARCHY = {
   [HIERARCHY.SUPERADMIN]: [{ id: 2, label: 'Admin' }, { id: 3, label: 'Usuario' }],
 }
 
-export function UserForm({ open, onOpenChange, user = null, onSubmit, loading }) {
+export const UserForm = ({ open, onOpenChange, user = null, onSubmit, loading }) => {
   const isEditing = !!user
   const hierarchyLevel = useAuthStore((s) => s.user?.hierarchy_level ?? 0)
   const isSuperAdmin = hierarchyLevel >= HIERARCHY.SUPERADMIN
@@ -49,7 +49,7 @@ export function UserForm({ open, onOpenChange, user = null, onSubmit, loading })
       fullname:  user.fullname,
       password:  '',
       is_active: user.is_active,
-      role_id:   user.role_id,
+      role_id:   user.role_id ?? 3,
     } : {
       username: '',
       fullname: '',
@@ -58,26 +58,41 @@ export function UserForm({ open, onOpenChange, user = null, onSubmit, loading })
     },
   })
 
+  useEffect(() => {
+    if (!isSuperAdmin) {
+      setValue('role_id', 3)
+    }
+  }, [isSuperAdmin])
+
   // Resetear form cuando cambia el usuario o se abre/cierra
   useEffect(() => {
     if (open) {
-      reset(isEditing ? {
-        username:  user.username,
-        fullname:  user.fullname,
-        password:  '',
-        is_active: user.is_active,
-        role_id:   user.role_id,
-      } : {
-        username: '',
-        fullname: '',
-        password: '',
-        role_id: undefined,
+      const values = isEditing
+        ? {
+            username: user.username,
+            fullname: user.fullname,
+            password: '',
+            is_active: user.is_active,
+            role_id: user.role_id,
+          }
+        : {
+            username: '',
+            fullname: '',
+            password: '',
+            role_id: 3,
+          }
+
+      reset(values, {
+        keepErrors: true,
+        keepDirty: false,
+        keepTouched: false,
       })
     }
-  }, [open, user])
+  }, [open, user, reset, isEditing])
 
   const handleFormSubmit = (data) => {
     // Limpiar password vacío en edición
+    console.log('Form data before submit:', data)
     if (isEditing && !data.password) delete data.password
     onSubmit(data)
   }
@@ -98,6 +113,7 @@ export function UserForm({ open, onOpenChange, user = null, onSubmit, loading })
               placeholder='Juan Pérez'
               {...register('fullname')}
               className={errors.fullname ? 'border-destructive' : ''}
+              aria-invalid={!!errors.fullname}
             />
             {errors.fullname && (
               <p className='text-xs text-destructive'>{errors.fullname.message}</p>
@@ -111,6 +127,7 @@ export function UserForm({ open, onOpenChange, user = null, onSubmit, loading })
               placeholder='juan_perez'
               {...register('username')}
               className={errors.username ? 'border-destructive' : ''}
+              aria-invalid={!!errors.username}
             />
             {errors.username && (
               <p className='text-xs text-destructive'>{errors.username.message}</p>
@@ -125,6 +142,7 @@ export function UserForm({ open, onOpenChange, user = null, onSubmit, loading })
               placeholder={isEditing ? 'Dejar vacío para no cambiar' : 'Mínimo 6 caracteres'}
               {...register('password')}
               className={errors.password ? 'border-destructive' : ''}
+              aria-invalid={!!errors.password}
             />
             {errors.password && (
               <p className='text-xs text-destructive'>{errors.password.message}</p>
@@ -137,11 +155,19 @@ export function UserForm({ open, onOpenChange, user = null, onSubmit, loading })
               <Label>Rol</Label>
               <Select
                 value={watch('role_id')?.toString()}
-                onValueChange={(val) => setValue('role_id', Number(val))}
+                onValueChange={(val) =>
+                  setValue('role_id', Number(val), {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  })
+                }
               >
                 <SelectTrigger className={errors.role_id ? 'border-destructive' : ''}>
-                  <SelectValue placeholder='Seleccionar rol' />
+                  <SelectValue>
+                    {availableRoles.find(r => r.id === watch('role_id'))?.label || 'Seleccionar rol'}
+                  </SelectValue>
                 </SelectTrigger>
+
                 <SelectContent>
                   {availableRoles.map((r) => (
                     <SelectItem key={r.id} value={r.id.toString()}>
@@ -149,7 +175,7 @@ export function UserForm({ open, onOpenChange, user = null, onSubmit, loading })
                     </SelectItem>
                   ))}
                 </SelectContent>
-              </Select>
+</Select>
               {errors.role_id && (
                 <p className='text-xs text-destructive'>{errors.role_id.message}</p>
               )}
