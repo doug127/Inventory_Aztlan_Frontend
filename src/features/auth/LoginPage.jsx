@@ -27,22 +27,15 @@ export function LoginPage() {
 
   const onSubmit = async (data) => {
     try {
-      const res = await authService.login(data)
-      console.log('1. Login res:', res)
+      await authService.login(data)
 
-      const me = await authService.me()
+      const user = await authService.me()
 
-      const { user } = res
-      console.log('2. User:', user)
-
-      // CORRECCIÓN:
-      useAuthStore.getState().setAuth(me)  
-      console.log('3. Store:', useAuthStore.getState())
+      useAuthStore.getState().setAuth(user)
 
       toast.success(`Bienvenido, ${user.username}`)
-      setTimeout(() => navigate('/', { replace: true }), 100)
+      navigate('/', { replace: true })
     } catch (error) {
-      console.log('ERROR:', error)
       toast.error(error?.message ?? 'Credenciales incorrectas')
     }
   }

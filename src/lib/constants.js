@@ -1,7 +1,7 @@
 export const HIERARCHY = {
-  USER:    1,
-  ADMIN:   2,
-  SUPERADMIN: 3, // ajusta según tus niveles reales
+  USER: 1,
+  ADMIN: 2,
+  SUPERADMIN: 3,
 }
 
 export const MOVEMENT_TYPES = {
