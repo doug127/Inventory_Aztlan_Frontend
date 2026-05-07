@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export const createUserSchema = z.object({
+export const userSchema = z.object({
   username: z.string()
     .min(3, 'El nombre de usuario debe tener al menos 3 caracteres')
     .max(30, 'El nombre de usuario no debe exceder los 30 caracteres')
@@ -20,23 +20,6 @@ export const createUserSchema = z.object({
     .refine(val => !val.includes(' '), 'La contraseña no debe contener espacios')
     .refine(val => /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.,-_])[A-Za-z\d@$!%*?&.,-_]{8,}$/.test(val), 
     'La contraseña debe tener al menos 8 caracteres, una letra mayúscula, una letra minúscula, un número y un carácter especial'),    
-  role_id: z.number().optional(),
-})
-
-export const updateUserSchema = z.object({
-  username: z.string()
-    .min(3, 'Mínimo 3 caracteres')
-    .max(20, 'Máximo 20 caracteres')
-    .regex(/^[a-zA-Z0-9_]+$/, 'Solo letras, números y guión bajo')
-    .optional(),
-  fullname: z.string()
-    .min(3, 'Mínimo 3 caracteres')
-    .max(50, 'Máximo 50 caracteres')
-    .optional(),
-  password: z.string()
-    .min(6, 'Mínimo 6 caracteres')
-    .optional()
-    .or(z.literal('')),
-  is_active: z.boolean().optional(),
-  role_id: z.number().optional(),
+  role_id: z.number()
+    .positive('El rol es obligatorio'),
 })

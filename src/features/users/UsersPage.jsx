@@ -7,32 +7,52 @@ import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { PermissionGate } from '@/features/auth/PermissionGate'
 import { Button } from '@/components/ui/button'
 import { HIERARCHY } from '@/lib/constants'
-import { formatDate } from '@/lib/utils'
 import { useUsers, useCreateUser, useUpdateUser, useDeleteUser } from './usersQueries'
 import { UserForm } from './UserForm'
+import { useAuthStore } from '@/stores/authStore'
 
 export const UsersPage = () => {
   const [formOpen, setFormOpen]       = useState(false)
   const [deleteOpen, setDeleteOpen]   = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
+  const [serverError, setServerError] = useState(null)
+
+  const currentUser = useAuthStore((s) => s.user)
 
   const { data: users = [], isLoading } = useUsers()
+
   const createUser  = useCreateUser()
   const updateUser  = useUpdateUser()
   const deleteUser  = useDeleteUser()
-  const [serverError, setServerError] = useState(null)
   
   const handleCreate = () => {
     setSelectedUser(null)
+    setServerError(null)
     setFormOpen(true)
   }
 
   const handleEdit = (user) => {
     setSelectedUser(user)
+    setServerError(null)
     setFormOpen(true)
   }
 
+  const canDeleteUser = (targetUser) => {
+    if(!currentUser || !targetUser) return false
+    
+     if (targetUser.role === 'superadmin') {
+        return false
+      }
+    // No puede eliminarse a sí mismo
+    if(targetUser.id === currentUser.id) return false 
+
+    // Solo puede eliminarse a usuarios de menor jerarquía
+    return targetUser.hierarchy_level < currentUser.hierarchy_level
+  }
+  
   const handleDeleteClick = (user) => {
+    if(!canDeleteUser(user)) return
+
     setSelectedUser(user)
     setDeleteOpen(true)
   }
@@ -60,8 +80,13 @@ export const UsersPage = () => {
   }
 
   const handleDeleteConfirm = async () => {
-    await deleteUser.mutateAsync(selectedUser.id)
-    setDeleteOpen(false)
+    try {
+      await deleteUser.mutateAsync(selectedUser.id)
+      setDeleteOpen(false)
+      setSelectedUser(null)
+    } catch (error) {
+      console.error('Delete user error:', error)
+    }
   }
 
   const columns = [
@@ -109,14 +134,16 @@ export const UsersPage = () => {
             </Button>
           </PermissionGate>
           <PermissionGate minHierarchy={HIERARCHY.SUPERADMIN}>
-            <Button
-              variant='ghost'
-              size='icon'
-              className='h-8 w-8 text-destructive hover:text-destructive'
-              onClick={() => handleDeleteClick(row.original)}
-            >
-              <Trash2 className='h-3.5 w-3.5' />
-            </Button>
+            {canDeleteUser(row.original) && (
+              <Button
+                variant='ghost'
+                size='icon'
+                className='h-8 w-8 text-destructive hover:text-destructive'
+                onClick={() => handleDeleteClick(row.original)}
+              >
+                <Trash2 className='h-3.5 w-3.5' />
+              </Button>
+            )}
           </PermissionGate>
         </div>
       ),

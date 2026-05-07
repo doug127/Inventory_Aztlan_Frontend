@@ -3,7 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect } from 'react'
 import { useAuthStore } from '@/stores/authStore'
 import { HIERARCHY } from '@/lib/constants'
-import { createUserSchema, updateUserSchema } from './usersSchemas'
+import { userSchema } from './usersSchemas'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -43,7 +43,7 @@ export const UserForm = ({ open, onOpenChange, user = null, onSubmit, loading })
     reset,
     formState: { errors },
   } = useForm({
-    resolver: zodResolver(isEditing ? updateUserSchema : createUserSchema),
+    resolver: zodResolver(isEditing ? userSchema : userSchema),
     defaultValues: isEditing ? {
       username:  user.username,
       fullname:  user.fullname,
@@ -54,15 +54,9 @@ export const UserForm = ({ open, onOpenChange, user = null, onSubmit, loading })
       username: '',
       fullname: '',
       password: '',
-      role_id:  undefined,
+      role_id: isSuperAdmin ? undefined : HIERARCHY.USER,
     },
   })
-
-  useEffect(() => {
-    if (!isSuperAdmin) {
-      setValue('role_id', 3)
-    }
-  }, [isSuperAdmin])
 
   // Resetear form cuando cambia el usuario o se abre/cierra
   useEffect(() => {
@@ -91,10 +85,15 @@ export const UserForm = ({ open, onOpenChange, user = null, onSubmit, loading })
   }, [open, user, reset, isEditing])
 
   const handleFormSubmit = (data) => {
-    // Limpiar password vacío en edición
-    console.log('Form data before submit:', data)
     if (isEditing && !data.password) delete data.password
-    onSubmit(data)
+
+    const payload = {
+      ...data,
+      role_id: isSuperAdmin ? data.role_id : ROLE_USER_ID,
+    }
+
+    console.log('FINAL PAYLOAD:', payload)
+    onSubmit(payload)
   }
 
   return (
@@ -175,7 +174,7 @@ export const UserForm = ({ open, onOpenChange, user = null, onSubmit, loading })
                     </SelectItem>
                   ))}
                 </SelectContent>
-</Select>
+              </Select>
               {errors.role_id && (
                 <p className='text-xs text-destructive'>{errors.role_id.message}</p>
               )}
@@ -183,7 +182,7 @@ export const UserForm = ({ open, onOpenChange, user = null, onSubmit, loading })
           )}
 
           {/* is_active — solo en edición */}
-          {isEditing && (
+          {/* {isEditing && (
             <div className='flex items-center gap-3'>
               <input
                 type='checkbox'
@@ -193,7 +192,7 @@ export const UserForm = ({ open, onOpenChange, user = null, onSubmit, loading })
               />
               <Label htmlFor='is_active'>Usuario activo</Label>
             </div>
-          )}
+          )} */}
 
           <SheetFooter className='pt-4'>
             <Button
