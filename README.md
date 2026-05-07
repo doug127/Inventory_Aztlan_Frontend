@@ -40,6 +40,7 @@
       - Componente <CanRender privilege="..." /> 
       - Aplicado desde aquí en adelante en todos los módulos
 - [x] 2.5 Logout
+- [x] 2.6 Pestañas de users
 
 ## Fase 3 · Maestros (Core Data)
 > En orden de dependencia: Units → Categories → Products → Warehouses
