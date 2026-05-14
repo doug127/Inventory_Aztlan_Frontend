@@ -48,7 +48,11 @@ export const UnitForm = ({
 
     defaultValues: isEditing
       ? {
-          ...unit,
+          name: unit.name,
+          code: unit.code,
+          is_active: unit.is_active,
+          base_unit_id: unit.base_unit?.id ?? null,
+          conversion_factor: unit.conversion_factor,
         }
       : {
           name: '',
@@ -59,16 +63,21 @@ export const UnitForm = ({
         },
   })
 
-  const baseUnits = units.filter(
-    (u) => u.base_unit_id === null
-  )
-
+  // 🔥 ahora units YA son unidades base provenientes del endpoint:
+  // /units/base-units
+  // por eso NO debes filtrarlas
+  const baseUnits = units
+  
   useEffect(() => {
     if (open) {
-
+    
       const values = isEditing
         ? {
-            ...unit,
+            name: unit.name,
+            code: unit.code,
+            is_active: unit.is_active,
+            base_unit_id: unit.base_unit?.id ?? null,
+            conversion_factor: unit.conversion_factor,
           }
         : {
             name: '',
@@ -82,14 +91,21 @@ export const UnitForm = ({
     }
   }, [open, unit, reset, isEditing])
 
-  // si NO tiene unidad base → factor = 1
+  // Si NO tiene unidad base → factor = 1
   useEffect(() => {
     if (watch('base_unit_id') === null) {
       setValue('conversion_factor', 1)
     }
-  }, [watch('base_unit_id')])
+  }, [watch('base_unit_id'), setValue])
 
   const handleFormSubmit = (data) => {
+
+    // 🔥 si es unidad base:
+    // conversion_factor = 1 automáticamente
+    if (data.base_unit_id === null) {
+      data.conversion_factor = 1
+    }
+
     onSubmit(data)
   }
 
@@ -145,12 +161,16 @@ export const UnitForm = ({
           </div>
 
           {/* BASE UNIT */}
-
+            
           <div className='space-y-1.5'>
             <Label>Unidad base</Label>
 
             <Select
-              value={watch('base_unit_id')?.toString() || 'null'}
+              value={
+                watch('base_unit_id') !== null
+                  ? watch('base_unit_id')?.toString()
+                  : 'null'
+              }
               onValueChange={(val) =>
                 setValue(
                   'base_unit_id',
@@ -164,7 +184,13 @@ export const UnitForm = ({
                 )
               }
             >
-              <SelectTrigger>
+              <SelectTrigger
+                className={
+                  errors.base_unit_id
+                    ? 'border-destructive'
+                    : ''
+                }
+              >
                 <SelectValue placeholder='Sin unidad base' />
               </SelectTrigger>
 
@@ -179,7 +205,7 @@ export const UnitForm = ({
                     key={u.id}
                     value={u.id.toString()}
                   >
-                    {u.name}
+                    {u.name} ({u.code})
                   </SelectItem>
                 ))}
 
@@ -241,7 +267,7 @@ export const UnitForm = ({
           {/* SERVER ERROR */}
 
           {serverError && (
-            <div className='text-sm text-destructive'>
+            <div className='rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive'>
               {serverError}
             </div>
           )}

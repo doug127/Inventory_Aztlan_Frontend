@@ -9,6 +9,13 @@ export const useUnits = () => {
   })
 }
 
+export const useBaseUnits = () => {
+  return useQuery({
+    queryKey: ['base-units'],
+    queryFn: unitsService.getBaseUnits,
+  })
+}
+
 export const useCreateUnit = () => {
   const queryClient = useQueryClient()
 

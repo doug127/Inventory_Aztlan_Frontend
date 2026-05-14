@@ -10,19 +10,25 @@ import { HIERARCHY } from '@/lib/constants'
 
 import { UnitForm } from '@/features/products/units/components/UnitForm'
 
+import {
+  useBaseUnits,
+  useCreateUnit,
+} from './units/hooks/useUnits'
+
 export const ProductsPage = () => {
   const [unitOpen, setUnitOpen] = useState(false)
 
-  // luego esto vendrá de react-query
-  const units = []
+  const { data: units = [] } = useBaseUnits()
+
+  const createUnit = useCreateUnit()
 
   const handleCreateUnit = async (data) => {
-    console.log(data)
 
-    /*
-      await createUnit.mutateAsync(data)
-      setUnitOpen(false)
-    */
+    console.log('DATA ENVIADA:', data)
+
+    await createUnit.mutateAsync(data)
+
+    setUnitOpen(false)
   }
 
   return (
@@ -51,9 +57,13 @@ export const ProductsPage = () => {
       <UnitForm
         open={unitOpen}
         onOpenChange={setUnitOpen}
+
+        // 🔥 AQUÍ
         units={units}
+
         onSubmit={handleCreateUnit}
-        loading={false}
+
+        loading={createUnit.isPending}
       />
 
     </div>
