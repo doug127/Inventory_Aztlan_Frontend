@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 
@@ -63,9 +63,21 @@ export const UnitForm = ({
         },
   })
 
-  // 🔥 ahora units YA son unidades base provenientes del endpoint:
-  // /units/base-units
-  // por eso NO debes filtrarlas
+  const [exampleValue, setExampleValue] = useState(5)
+  const conversionResult =
+  exampleValue && watch('conversion_factor')
+    ? exampleValue * watch('conversion_factor')
+    : 0
+
+  const getDecimals = (num) => {
+    if (!num || !num.toString().includes('.')) return 0
+    return num.toString().split('.')[1].length
+  }
+
+  const decimals = getDecimals(watch('conversion_factor')) + 1
+
+  const formattedResult = conversionResult.toFixed(decimals)
+  
   const baseUnits = units
   
   useEffect(() => {
@@ -166,10 +178,11 @@ export const UnitForm = ({
             <Label>Unidad base</Label>
 
             <Select
-              value={
-                watch('base_unit_id') !== null
-                  ? watch('base_unit_id')?.toString()
-                  : 'null'
+              value={ watch('base_unit_id') === null
+                ? 'Sin unidad base'
+                : baseUnits.find(
+                    (u) => u.id === watch('base_unit_id')
+                  )?.name
               }
               onValueChange={(val) =>
                 setValue(
@@ -243,6 +256,43 @@ export const UnitForm = ({
                 {errors.conversion_factor.message}
               </p>
             )}
+          </div>
+
+          <div className='mt-2 rounded-lg border p-3 bg-muted/30 space-y-2'>
+
+            <Label className='text-xs text-muted-foreground'>
+              Ejemplo de conversión
+            </Label>
+
+            <div className='flex items-center gap-3'>
+
+              {/* INPUT */}
+              <div className='flex items-center gap-2'>
+                <span className='text-xs text-muted-foreground'>Input:</span>
+
+                <Input
+                  type='number'
+                  value={exampleValue}
+                  onChange={(e) => setExampleValue(Number(e.target.value))}
+                  className='h-8 w-24'
+                />
+              </div>
+
+              {/* ICON / SEPARADOR */}
+              <span className='text-muted-foreground text-sm'>
+                →
+              </span>
+
+              {/* RESULTADO */}
+              <div className='flex items-center gap-2'>
+                <span className='text-xs text-muted-foreground'>Resultado:</span>
+
+                <div className='h-8 min-w-[60px] flex items-center px-2 rounded-md bg-background border text-sm font-medium'>
+                  {formattedResult}
+                </div>
+              </div>
+
+            </div>
           </div>
 
           {/* STATUS */}

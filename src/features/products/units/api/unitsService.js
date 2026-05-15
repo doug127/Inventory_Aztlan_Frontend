@@ -7,6 +7,7 @@ export const unitsService = {
 
   getBaseUnits: async () => {
     return await api.get('/units/base-units')
+    console.log('baseUnits', response.data)
   },
 
   create: async (data) => {

@@ -58,7 +58,6 @@ export const ProductsPage = () => {
         open={unitOpen}
         onOpenChange={setUnitOpen}
 
-        // 🔥 AQUÍ
         units={units}
 
         onSubmit={handleCreateUnit}
