@@ -1,17 +1,28 @@
 import { useState } from 'react'
+
 import { PageHeader } from '@/components/common/PageHeader'
+
 import { UnitForm } from '@/features/products/features/units/components/UnitForm'
 import { CategoryForm } from '@/features/products/features/categories/components/CategoryForm'
+
 import { GridCategoryUnit } from '@/features/products/components/GridCategoryUnit'
+
+import { ProductsTable } from '@/features/products/components/ProductsTable'
+
 import {
   useBaseUnits,
   useCreateUnit,
-} from './features/units/hooks/useUnits'
+} from '@/features/products/features/units/hooks/useUnits'
+
 import {
   useCategories,
   useParentCategories,
   useCreateCategory,
 } from '@/features/products/features/categories/hooks/useCategories'
+
+import {
+  useProducts,
+} from './hooks/useProducts'
 
 export const ProductsPage = () => {
 
@@ -19,27 +30,61 @@ export const ProductsPage = () => {
 
   const [categoryOpen, setCategoryOpen] = useState(false)
 
+  // =========================
   // UNITS
-  const { data: units = [] } = useBaseUnits()
+  // =========================
 
+  const { data: units = [] } =
+    useBaseUnits()
+
+  // =========================
   // CATEGORY TREE
-  const { data: categoriesTree = [] } = useParentCategories()
+  // =========================
 
+  const { data: categoriesTree = [] } =
+    useParentCategories()
+
+  // =========================
   // FLAT CATEGORIES
-  const { data: categories = [] } = useCategories()
+  // =========================
 
+  const { data: categories = [] } =
+    useCategories()
+
+  // =========================
+  // PRODUCTS
+  // =========================
+
+  const {
+    data: products = [],
+    isLoading: productsLoading,
+  } = useProducts()
+
+  // =========================
   // MUTATIONS
-  const createUnit = useCreateUnit()
-  const createCategory = useCreateCategory()
+  // =========================
 
+  const createUnit =
+    useCreateUnit()
+
+  const createCategory =
+    useCreateCategory()
+
+  // =========================
   // HANDLERS
+  // =========================
+
   const handleCreateUnit = async (data) => {
+
     await createUnit.mutateAsync(data)
+
     setUnitOpen(false)
   }
 
   const handleCreateCategory = async (data) => {
+
     await createCategory.mutateAsync(data)
+
     setCategoryOpen(false)
   }
 
@@ -50,8 +95,17 @@ export const ProductsPage = () => {
         title='Productos'
         description='Gestión de productos, categorías y unidades'
       />
+      {/* PRODUCTS TABLE */}
+      {/* ========================= */}
 
-      {/* GRID */}
+      <ProductsTable
+        products={products}
+        loading={productsLoading}
+      />
+
+      {/* ========================= */}
+      {/* GRID SUPERIOR */}
+      {/* ========================= */}
 
       <GridCategoryUnit
         setUnitOpen={setUnitOpen}
@@ -60,7 +114,10 @@ export const ProductsPage = () => {
         units={units}
       />
 
+
+      {/* ========================= */}
       {/* UNIT FORM */}
+      {/* ========================= */}
 
       <UnitForm
         open={unitOpen}
@@ -70,7 +127,9 @@ export const ProductsPage = () => {
         loading={createUnit.isPending}
       />
 
+      {/* ========================= */}
       {/* CATEGORY FORM */}
+      {/* ========================= */}
 
       <CategoryForm
         open={categoryOpen}
