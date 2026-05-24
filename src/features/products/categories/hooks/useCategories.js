@@ -9,6 +9,13 @@ export const useCategories = () => {
   })
 }
 
+export const useParentCategories = () => {
+  return useQuery({
+    queryKey: ['categories', 'tree'],
+    queryFn: categoriesService.getTree,
+  })
+}
+
 export const useCreateCategory = () => {
   const queryClient = useQueryClient()
 
@@ -17,6 +24,7 @@ export const useCreateCategory = () => {
     onSuccess: () => {
       toast.success('Categoría creada exitosamente')
       queryClient.invalidateQueries(['categories'])
+      queryClient.invalidateQueries(['categories', 'tree'])
     },
     onError: (error) => {
       toast.error('Error al crear la categoría')

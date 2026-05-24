@@ -5,6 +5,10 @@ export const categoriesService = {
     return await api.get('/categories')
   },
 
+  getTree: async () => {
+    return await api.get('/categories/root')
+  },
+
   create: async (data) => {
     return await api.post('/categories/create', data)
     },
