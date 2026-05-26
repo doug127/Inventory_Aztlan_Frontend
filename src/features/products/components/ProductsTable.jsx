@@ -1,88 +1,54 @@
-import {
-  Package,
-} from 'lucide-react'
-
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-
-import {
-  Badge,
-} from '@/components/ui/badge'
+import { Package } from 'lucide-react'
+import {  Card,  CardContent,  CardHeader,  CardTitle,} from '@/components/ui/card'
+import {  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,} from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
 
 export const ProductsTable = ({
   products = [],
   loading,
+
+  page,
+  setPage,
+  limit,
 }) => {
 
   return (
     <Card className='rounded-3xl'>
 
       <CardHeader>
-
         <CardTitle className='flex items-center gap-2'>
           <Package className='h-5 w-5' />
           Productos
         </CardTitle>
-
       </CardHeader>
 
       <CardContent>
-
         <div className='rounded-2xl border overflow-hidden'>
-
           <Table>
-
-            <TableHeader>
-
+            <TableHeader className='bg-chart-2/50'>
               <TableRow>
-
                 <TableHead>
                   Código
                 </TableHead>
-
                 <TableHead>
                   Producto
                 </TableHead>
-
                 <TableHead>
                   Categoría
                 </TableHead>
-
                 <TableHead>
                   Unidad
                 </TableHead>
-
                 <TableHead>
                   Contenido
                 </TableHead>
-
                 <TableHead>
                   Stock Min
                 </TableHead>
-
                 <TableHead>
                   Stock Max
                 </TableHead>
-
-                <TableHead>
-                  Estado
-                </TableHead>
-
               </TableRow>
-
             </TableHeader>
 
             <TableBody>
@@ -91,29 +57,22 @@ export const ProductsTable = ({
                 loading
                   ? (
                     <TableRow>
-                      <TableCell
-                        colSpan={8}
-                        className='text-center h-24'
-                      >
+                      <TableCell colSpan={8} className='text-center h-24'>
                         Cargando productos...
                       </TableCell>
                     </TableRow>
-                  )
-                  : products.length === 0
+                  ) : products.length === 0
                     ? (
                       <TableRow>
-                        <TableCell
-                          colSpan={8}
-                          className='text-center h-24 text-muted-foreground'
-                        >
+                        <TableCell colSpan={8} >
                           No hay productos registrados
                         </TableCell>
                       </TableRow>
                     )
                     : (
-                      products.map((product) => (
+                      products.data.map((product) => (
 
-                        <TableRow key={product.code}>
+                        <TableRow key={product.code} className='even:!bg-chart-1/60'>
 
                           <TableCell className='font-medium'>
                             {product.code}
@@ -144,38 +103,62 @@ export const ProductsTable = ({
                           <TableCell>
                             {product.max_stock}
                           </TableCell>
-
-                          <TableCell>
-
-                            <Badge
-                              variant={
-                                product.is_active
-                                  ? 'default'
-                                  : 'secondary'
-                              }
-                            >
-                              {
-                                product.is_active
-                                  ? 'Activo'
-                                  : 'Inactivo'
-                              }
-                            </Badge>
-
-                          </TableCell>
-
                         </TableRow>
                       ))
                     )
               }
-
             </TableBody>
-
           </Table>
+          <div className='flex items-center justify-between mt-4'>
 
+            {/* INFO */}
+
+            <div className='text-sm text-muted-foreground'>
+
+              Página{' '}
+
+              <span className='font-medium'>
+                {products?.meta?.page}
+              </span>
+
+              {' '}de{' '}
+
+              <span className='font-medium'>
+                {products?.meta?.totalPages}
+              </span>
+
+            </div>
+
+            {/* BUTTONS */}
+
+            <div className='flex items-center gap-2'>
+
+              <Button
+                variant='outline'
+                size='sm'
+                disabled={!products?.meta?.hasPreviousPage}
+                onClick={() =>
+                  setPage((prev) => prev - 1)
+                }
+              >
+                Anterior
+              </Button>
+
+              <Button
+                size='sm'
+                disabled={!products?.meta?.hasNextPage}
+                onClick={() =>
+                  setPage((prev) => prev + 1)
+                }
+              >
+                Siguiente
+              </Button>
+
+            </div>
+
+          </div>
         </div>
-
       </CardContent>
-
     </Card>
   )
 }

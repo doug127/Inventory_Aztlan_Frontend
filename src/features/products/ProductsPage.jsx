@@ -1,25 +1,18 @@
 import { useState } from 'react'
-
 import { PageHeader } from '@/components/common/PageHeader'
-
 import { UnitForm } from '@/features/products/features/units/components/UnitForm'
 import { CategoryForm } from '@/features/products/features/categories/components/CategoryForm'
-
 import { GridCategoryUnit } from '@/features/products/components/GridCategoryUnit'
-
 import { ProductsTable } from '@/features/products/components/ProductsTable'
-
 import {
   useBaseUnits,
   useCreateUnit,
 } from '@/features/products/features/units/hooks/useUnits'
-
 import {
   useCategories,
   useParentCategories,
   useCreateCategory,
 } from '@/features/products/features/categories/hooks/useCategories'
-
 import {
   useProducts,
 } from './hooks/useProducts'
@@ -30,50 +23,36 @@ export const ProductsPage = () => {
 
   const [categoryOpen, setCategoryOpen] = useState(false)
 
-  // =========================
-  // UNITS
-  // =========================
+  const [page, setPage] = useState(1)
 
+  const limit = 5
+
+  // UNITS
   const { data: units = [] } =
     useBaseUnits()
 
-  // =========================
   // CATEGORY TREE
-  // =========================
-
   const { data: categoriesTree = [] } =
     useParentCategories()
 
-  // =========================
   // FLAT CATEGORIES
-  // =========================
-
   const { data: categories = [] } =
     useCategories()
 
-  // =========================
   // PRODUCTS
-  // =========================
-
   const {
     data: products = [],
     isLoading: productsLoading,
-  } = useProducts()
+  } = useProducts({ page, limit })
 
-  // =========================
-  // MUTATIONS
-  // =========================
-
+    // MUTATIONS
   const createUnit =
     useCreateUnit()
 
   const createCategory =
     useCreateCategory()
 
-  // =========================
   // HANDLERS
-  // =========================
-
   const handleCreateUnit = async (data) => {
 
     await createUnit.mutateAsync(data)
@@ -96,17 +75,16 @@ export const ProductsPage = () => {
         description='Gestión de productos, categorías y unidades'
       />
       {/* PRODUCTS TABLE */}
-      {/* ========================= */}
-
       <ProductsTable
         products={products}
         loading={productsLoading}
+
+        page={page}
+        setPage={setPage}
+        limit={limit}
       />
 
-      {/* ========================= */}
       {/* GRID SUPERIOR */}
-      {/* ========================= */}
-
       <GridCategoryUnit
         setUnitOpen={setUnitOpen}
         setCategoryOpen={setCategoryOpen}
@@ -114,11 +92,7 @@ export const ProductsPage = () => {
         units={units}
       />
 
-
-      {/* ========================= */}
       {/* UNIT FORM */}
-      {/* ========================= */}
-
       <UnitForm
         open={unitOpen}
         onOpenChange={setUnitOpen}
@@ -127,10 +101,7 @@ export const ProductsPage = () => {
         loading={createUnit.isPending}
       />
 
-      {/* ========================= */}
       {/* CATEGORY FORM */}
-      {/* ========================= */}
-
       <CategoryForm
         open={categoryOpen}
         onOpenChange={setCategoryOpen}
