@@ -25,6 +25,12 @@ export const ProductsPage = () => {
 
   const [page, setPage] = useState(1)
 
+  const [filters, setFilters] = useState({
+    search: '',
+    unit: '',
+    category: '',
+  })
+
   const limit = 5
 
   // UNITS
@@ -43,7 +49,14 @@ export const ProductsPage = () => {
   const {
     data: products = [],
     isLoading: productsLoading,
-  } = useProducts({ page, limit })
+  } = useProducts({ 
+    page, 
+    limit,
+    name: filters.search,
+    code: filters.search,
+    unit: filters.unit,
+    category_product: filters.category, 
+  })
 
     // MUTATIONS
   const createUnit =
@@ -81,7 +94,13 @@ export const ProductsPage = () => {
 
         page={page}
         setPage={setPage}
+        
         limit={limit}
+        filters={filters}
+        setFilters={setFilters}
+
+        units={units}
+        categories={categories}
       />
 
       {/* GRID SUPERIOR */}

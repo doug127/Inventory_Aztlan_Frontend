@@ -1,6 +1,8 @@
 import { Package } from 'lucide-react'
-import {  Card,  CardContent,  CardHeader,  CardTitle,} from '@/components/ui/card'
-import {  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,} from '@/components/ui/table'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 
 export const ProductsTable = ({
@@ -10,6 +12,11 @@ export const ProductsTable = ({
   page,
   setPage,
   limit,
+  filters,
+  setFilters,
+
+   units = [],
+    categories = [],
 }) => {
 
   return (
@@ -23,6 +30,113 @@ export const ProductsTable = ({
       </CardHeader>
 
       <CardContent>
+
+        <div className='flex flex-col lg:flex-row gap-3 mb-4'>
+
+          {/* SEARCH */}
+
+          <Input
+            placeholder='Buscar por nombre o código...'
+            value={filters.search}
+            onChange={(e) => {
+
+              setPage(1)
+
+              setFilters((prev) => ({
+                ...prev,
+                search: e.target.value,
+              }))
+            }}
+            className='lg:max-w-sm'
+          />
+
+          {/* UNIT */}
+
+          <Select
+            value={filters.unit}
+            onValueChange={(value) => {
+
+              setPage(1)
+
+              setFilters((prev) => ({
+                ...prev,
+                unit:
+                  value === 'all'
+                    ? ''
+                    : value,
+              }))
+            }}
+          >
+
+            <SelectTrigger className='w-full lg:w-[220px]'>
+              <SelectValue placeholder='Filtrar por unidad' />
+            </SelectTrigger>
+
+            <SelectContent>
+
+              <SelectItem value='all'>
+                Todas las unidades
+              </SelectItem>
+
+              {units.map((unit) => (
+
+                <SelectItem
+                  key={unit.id}
+                  value={unit.name}
+                >
+                  {unit.name}
+                </SelectItem>
+
+              ))}
+
+            </SelectContent>
+
+          </Select>
+
+          {/* CATEGORY */}
+
+          <Select
+            value={filters.category}
+            onValueChange={(value) => {
+
+              setPage(1)
+
+              setFilters((prev) => ({
+                ...prev,
+                category:
+                  value === 'all'
+                    ? ''
+                    : value,
+              }))
+            }}
+          >
+
+            <SelectTrigger className='w-full lg:w-[260px]'>
+              <SelectValue placeholder='Filtrar por categoría' />
+            </SelectTrigger>
+
+            <SelectContent>
+
+              <SelectItem value='all'>
+                Todas las categorías
+              </SelectItem>
+
+              {categories.map((category) => (
+
+                <SelectItem
+                  key={category.id}
+                  value={category.name}
+                >
+                  {category.name}
+                </SelectItem>
+
+              ))}
+
+            </SelectContent>
+
+          </Select>
+
+        </div>
         <div className='rounded-2xl border overflow-hidden'>
           <Table>
             <TableHeader className='bg-chart-2/50'>
