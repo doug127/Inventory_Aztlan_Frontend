@@ -1,7 +1,7 @@
 import { api } from '@/lib/api'
 
 export const unitsService = {
-  ggetAll: async () => {
+  getAll: async () => {
     return await api.get('/units')
   },
 

@@ -1,11 +1,14 @@
 import { useState } from 'react'
 import { PageHeader } from '@/components/common/PageHeader'
+import { ProductForm } from './components/ProductForm'
 import { UnitForm } from '@/features/products/features/units/components/UnitForm'
 import { CategoryForm } from '@/features/products/features/categories/components/CategoryForm'
 import { GridCategoryUnit } from '@/features/products/components/GridCategoryUnit'
 import { ProductsTable } from '@/features/products/components/ProductsTable'
+import { useCreateProduct } from './hooks/useProducts'
 import {
   useBaseUnits,
+  useAllUnits,
   useCreateUnit,
 } from '@/features/products/features/units/hooks/useUnits'
 import {
@@ -16,12 +19,16 @@ import {
 import {
   useProducts,
 } from './hooks/useProducts'
+import { Button } from '@/components/ui/button'
+import { Plus } from 'lucide-react'
 
 export const ProductsPage = () => {
 
   const [unitOpen, setUnitOpen] = useState(false)
 
   const [categoryOpen, setCategoryOpen] = useState(false)
+
+  const [productOpen, setProductOpen] = useState(false)
 
   const [page, setPage] = useState(1)
 
@@ -36,6 +43,9 @@ export const ProductsPage = () => {
   // UNITS
   const { data: units = [] } =
     useBaseUnits()
+
+  // const { data: allUnits = [] } =
+  //   useAllUnits()
 
   // CATEGORY TREE
   const { data: categoriesTree = [] } =
@@ -53,30 +63,31 @@ export const ProductsPage = () => {
     page, 
     limit,
     name: filters.search,
-    code: filters.search,
     unit: filters.unit,
     category_product: filters.category, 
   })
 
     // MUTATIONS
-  const createUnit =
-    useCreateUnit()
+  const createUnit = useCreateUnit()
 
-  const createCategory =
-    useCreateCategory()
+  const createCategory = useCreateCategory()
+
+  const createProduct = useCreateProduct()
+
+  const handleCreateProduct = async (data) => {
+    console.log(data)
+    await createProduct.mutateAsync(data)
+    setProductOpen(false)
+  }
 
   // HANDLERS
   const handleCreateUnit = async (data) => {
-
     await createUnit.mutateAsync(data)
-
     setUnitOpen(false)
   }
 
   const handleCreateCategory = async (data) => {
-
     await createCategory.mutateAsync(data)
-
     setCategoryOpen(false)
   }
 
@@ -87,6 +98,25 @@ export const ProductsPage = () => {
         title='Productos'
         description='Gestión de productos, categorías y unidades'
       />
+      <Button
+        onClick={() => setProductOpen(true)}
+      >
+        <Plus className='h-4 w-4 mr-2' />
+        Nuevo producto
+      </Button>
+      <ProductForm
+        open={productOpen}
+        onOpenChange={setProductOpen}
+
+        units={units}
+
+        categories={categories}
+
+        onSubmit={handleCreateProduct}
+
+        loading={createProduct.isPending}
+      />
+
       {/* PRODUCTS TABLE */}
       <ProductsTable
         products={products}

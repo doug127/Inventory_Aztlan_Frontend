@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { unitsService } from '../api/unitsService'
 
-export const useUnits = () => {
+export const useAllUnits = () => {
   return useQuery({
     queryKey: ['units'],
     queryFn: unitsService.getAll,
