@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { motion } from 'framer-motion'
 import { PageHeader } from '@/components/common/PageHeader'
 import { UnitForm } from '@/features/products/features/units/components/UnitForm'
 import { CategoryForm } from '@/features/products/features/categories/components/CategoryForm'
@@ -18,73 +19,56 @@ import {
 } from './hooks/useProducts'
 
 export const ProductsPage = () => {
-
   const [unitOpen, setUnitOpen] = useState(false)
-
   const [categoryOpen, setCategoryOpen] = useState(false)
-
   const [page, setPage] = useState(1)
 
   const limit = 5
 
-  // UNITS
-  const { data: units = [] } =
-    useBaseUnits()
+  const { data: units = [] } = useBaseUnits()
+  const { data: categoriesTree = [] } = useParentCategories()
+  const { data: categories = [] } = useCategories()
 
-  // CATEGORY TREE
-  const { data: categoriesTree = [] } =
-    useParentCategories()
-
-  // FLAT CATEGORIES
-  const { data: categories = [] } =
-    useCategories()
-
-  // PRODUCTS
   const {
     data: products = [],
     isLoading: productsLoading,
   } = useProducts({ page, limit })
 
-    // MUTATIONS
-  const createUnit =
-    useCreateUnit()
+  const createUnit = useCreateUnit()
+  const createCategory = useCreateCategory()
 
-  const createCategory =
-    useCreateCategory()
-
-  // HANDLERS
   const handleCreateUnit = async (data) => {
-
     await createUnit.mutateAsync(data)
-
     setUnitOpen(false)
   }
 
   const handleCreateCategory = async (data) => {
-
     await createCategory.mutateAsync(data)
-
     setCategoryOpen(false)
   }
 
   return (
     <div className='space-y-6'>
-
       <PageHeader
         title='Productos'
-        description='Gestión de productos, categorías y unidades'
-      />
-      {/* PRODUCTS TABLE */}
-      <ProductsTable
-        products={products}
-        loading={productsLoading}
-
-        page={page}
-        setPage={setPage}
-        limit={limit}
+        description='Gestion de productos, categorias y unidades'
       />
 
-      {/* GRID SUPERIOR */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className='w-full'
+      >
+        <ProductsTable
+          products={products}
+          loading={productsLoading}
+          page={page}
+          setPage={setPage}
+          limit={limit}
+        />
+      </motion.div>
+
       <GridCategoryUnit
         setUnitOpen={setUnitOpen}
         setCategoryOpen={setCategoryOpen}
@@ -92,7 +76,6 @@ export const ProductsPage = () => {
         units={units}
       />
 
-      {/* UNIT FORM */}
       <UnitForm
         open={unitOpen}
         onOpenChange={setUnitOpen}
@@ -101,7 +84,6 @@ export const ProductsPage = () => {
         loading={createUnit.isPending}
       />
 
-      {/* CATEGORY FORM */}
       <CategoryForm
         open={categoryOpen}
         onOpenChange={setCategoryOpen}
@@ -109,7 +91,6 @@ export const ProductsPage = () => {
         onSubmit={handleCreateCategory}
         loading={createCategory.isPending}
       />
-
     </div>
   )
 }
