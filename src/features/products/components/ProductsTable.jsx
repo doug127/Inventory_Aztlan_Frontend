@@ -22,6 +22,11 @@ export const ProductsTable = ({
   page,
   setPage,
   limit,
+  filters,
+  setFilters,
+
+   units = [],
+    categories = [],
 }) => {
   const [searchTerm, setSearchTerm] = useState('')
   const [hoveredRow, setHoveredRow] = useState(null)

@@ -1,12 +1,15 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { PageHeader } from '@/components/common/PageHeader'
+import { ProductForm } from './components/ProductForm'
 import { UnitForm } from '@/features/products/features/units/components/UnitForm'
 import { CategoryForm } from '@/features/products/features/categories/components/CategoryForm'
 import { GridCategoryUnit } from '@/features/products/components/GridCategoryUnit'
 import { ProductsTable } from '@/features/products/components/ProductsTable'
+import { useCreateProduct } from './hooks/useProducts'
 import {
   useBaseUnits,
+  useAllUnits,
   useCreateUnit,
 } from '@/features/products/features/units/hooks/useUnits'
 import {
@@ -17,11 +20,19 @@ import {
 import {
   useProducts,
 } from './hooks/useProducts'
+import { Button } from '@/components/ui/button'
+import { Plus } from 'lucide-react'
 
 export const ProductsPage = () => {
   const [unitOpen, setUnitOpen] = useState(false)
   const [categoryOpen, setCategoryOpen] = useState(false)
   const [page, setPage] = useState(1)
+
+  const [filters, setFilters] = useState({
+    search: '',
+    unit: '',
+    category: '',
+  })
 
   const limit = 5
 
@@ -32,7 +43,13 @@ export const ProductsPage = () => {
   const {
     data: products = [],
     isLoading: productsLoading,
-  } = useProducts({ page, limit })
+  } = useProducts({ 
+    page, 
+    limit,
+    name: filters.search,
+    unit: filters.unit,
+    category_product: filters.category, 
+  })
 
   const createUnit = useCreateUnit()
   const createCategory = useCreateCategory()
