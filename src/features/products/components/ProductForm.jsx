@@ -1,22 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command'
-import { ChevronsUpDown, Check } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { Button } from '@/components/common/Button'
 import { productSchema } from '../schemas/productSchema'
+
+
+const ErrorMessage = ({ message }) => {
+  if (!message) return null
+
+  return (
+    <p className='mt-1 text-xs text-red-600'>
+      {message}
+    </p>
+  )
+}
 
 export const ProductForm = ({
   open,
@@ -26,349 +23,243 @@ export const ProductForm = ({
   units = [],
   categories = [],
 }) => {
-
-  const [unitOpen, setUnitOpen] =
-    useState(false)
-
-  const [categoryOpen, setCategoryOpen] =
-    useState(false)
-
   const {
     register,
     handleSubmit,
-    setValue,
-    watch,
     reset,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(productSchema),
-
     defaultValues: {
       name: '',
       code: '',
       product_category_id: null,
       unit_id: null,
-      content_quantity: 1,
-      min_stock: 0,
-      max_stock: 0,
+      content_quantity: undefined,
+      min_stock: undefined,
+      max_stock: undefined,
     },
   })
 
-  useEffect(() => {
-    if (open) {
-      reset({
-        name: '',
-        code: '',
-        product_category_id: null,
-        unit_id: null,
-        content_quantity: 1,
-        min_stock: 0,
-        max_stock: 0,
-      })
-    }
+  const fieldClass =
+  `w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 
+  shadow-sm transition-all duration-200 placeholder:text-gray-400 
+  focus:border-black focus:ring-2 focus:ring-gray-200 focus:outline-none`
 
+  const labelClass = 'block mb-2 text-sm font-medium text-gray-700'
+
+
+  useEffect(() => {
+    if (!open) return
+
+    reset({
+      name: '',
+      code: '',
+      product_category_id: null,
+      unit_id: null,
+      content_quantity: undefined,
+      min_stock: undefined,
+      max_stock: undefined,
+    })
   }, [open, reset])
 
+  if (!open) return null
+
+  const closeModal = () => onOpenChange(false)
+
+  const submitForm = handleSubmit(async (data) => {
+    await onSubmit(data)
+  })
+
   return (
-    <Dialog
-      open={open}
-      onOpenChange={onOpenChange}
+    <div
+      className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-6 backdrop-blur-[2px]'
+      role='dialog'
+      aria-modal='true'
+      aria-labelledby='product-modal-title'
     >
-      <DialogContent className='sm:max-w-2xl'>
-
-        <DialogHeader>
-          <DialogTitle>
-            Nuevo producto
-          </DialogTitle>
-        </DialogHeader>
-
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className='space-y-4'
-        >
-          {/* NAME */}
-
-          <div className='space-y-1.5'>
-            <Label>
-              Nombre
-            </Label>
-
-            <Input
-              {...register('name')}
-            />
-
-            {errors.name && (
-              <p className='text-xs text-destructive'>
-                {errors.name.message}
+      <div className='relative w-full max-w-2xl max-h-full'>
+        <div className='relative w-full rounded-2xl bg-white border border-gray-200 shadow-2xl overflor-hidden'>
+          <div className='flex rounded-2xl items-center justify-between border-b border-gray-100 bg-gray-50 px-6 py-5'>
+            <div>
+              <h3 id='product-modal-title' className='text-xl font-semiblod text-gray-900'>
+                Nuevo producto
+              </h3>
+              <p className='mt-1 text-sm text-gray-500'>
+                Completa los datos principales del producto.
               </p>
-            )}
+            </div>
 
-          </div>
-          {/* CODE */}
-
-          <div className='space-y-1.5'>
-            <Label>
-              Código
-            </Label>
-
-            <Input {...register('code')}/>
-
-            {errors.code && (
-              <p className='text-xs text-destructive'>
-                {errors.code.message}
-              </p>
-            )}
-
-          </div>
-
-          {/* CATEGORY */}
-
-          <div className='space-y-1.5'>
-            <Label>
-              Categoría
-            </Label>
-
-            <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
-              <PopoverTrigger className={cn(
-                'flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-accent cursor-pointer',
-                errors.product_category_id && 'border-destructive'
-              )}>
-    
-                  {
-                    watch('product_category_id')
-                      ? categories.find(
-                          (c) =>
-                            c.id ===
-                            watch('product_category_id')
-                        )?.name
-                      : 'Seleccionar categoría'
-                  }
-                  <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
-                </PopoverTrigger>
-
-              <PopoverContent className='w-[400px] p-0'>
-                <Command>
-                  <CommandInput placeholder='Buscar categoría...' />
-                  <CommandList>
-                    <CommandEmpty>
-                      No se encontraron categorías
-                    </CommandEmpty>
-                    <CommandGroup>
-                      {categories.map((category) => (
-                        <CommandItem
-                          key={category.id}
-                          value={category.name}
-                          onSelect={() => {
-                            setValue(
-                              'product_category_id',
-                              category.id,
-                              {
-                                shouldValidate: true,
-                                shouldDirty: true,
-                              }
-                            )
-                            setCategoryOpen(false)
-                          }}
-                        >
-
-                          <Check
-                            className={cn(
-                              'mr-2 h-4 w-4',
-                              watch('product_category_id') === category.id
-                                ? 'opacity-100'
-                                : 'opacity-0'
-                            )}
-                          />
-
-                          {category.name}
-
-                        </CommandItem>
-
-                      ))}
-
-                    </CommandGroup>
-
-                  </CommandList>
-
-                </Command>
-
-              </PopoverContent>
-
-            </Popover>
-
-          </div>
-
-          {/* UNIT */}
-
-          <div className='space-y-1.5'>
-
-            <Label>
-              Unidad
-            </Label>
-
-            <Popover
-              open={unitOpen}
-              onOpenChange={setUnitOpen}
+            {/* Botón de cerrar modal */}
+            <button
+              type='button'
+              onClick={closeModal}
+              className='cursor-pointer w-10 h-10 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors'
+              aria-label='Cerrar modal'
             >
-
-              <PopoverTrigger className={cn(
-                'flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-accent cursor-pointer',
-                errors.unit_id && 'border-destructive'
-              )}>
-
-                
-                  {
-                    watch('unit_id')
-                      ? units.find(
-                          (u) =>
-                            u.id ===
-                            watch('unit_id')
-                        )?.name
-                      : 'Seleccionar unidad'
-                  }
-
-                  <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
-
-                </PopoverTrigger>
-
-              <PopoverContent className='w-[400px] p-0'>
-
-                <Command>
-
-                  <CommandInput placeholder='Buscar unidad...' />
-
-                  <CommandList>
-
-                    <CommandEmpty>
-                      No se encontraron unidades
-                    </CommandEmpty>
-
-                    <CommandGroup>
-
-                      {units.map((unit) => (
-
-                        <CommandItem
-                          key={unit.id}
-                          value={unit.name}
-                          onSelect={() => {
-
-                            setValue(
-                              'unit_id',
-                              unit.id,
-                              {
-                                shouldValidate: true,
-                                shouldDirty: true,
-                              }
-                            )
-
-                            setUnitOpen(false)
-                          }}
-                        >
-
-                          <Check
-                            className={cn(
-                              'mr-2 h-4 w-4',
-                              watch('unit_id') === unit.id
-                                ? 'opacity-100'
-                                : 'opacity-0'
-                            )}
-                          />
-
-                          {unit.name}
-
-                        </CommandItem>
-
-                      ))}
-
-                    </CommandGroup>
-
-                  </CommandList>
-
-                </Command>
-
-              </PopoverContent>
-
-            </Popover>
-
+              <svg
+                className='w-5 h-5'
+                aria-hidden='true'
+                xmlns='http://www.w3.org/2000/svg'
+                width='24'
+                height='24'
+                fill='none'
+                viewBox='0 0 24 24'
+              >
+                <path
+                  stroke='currentColor'
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth='2'
+                  d='M6 18 17.94 6M18 18 6.06 6'
+                />
+              </svg>
+            </button>
           </div>
 
-          {/* NUMBERS */}
+          <form onSubmit={submitForm} className='space-y-5 p-6'>
+            <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+              {/* Nombre */}
+              <div>
+                <label className={labelClass} htmlFor='product-name'>
+                  Nombre
+                </label>
+                <input
+                  id='product-name'
+                  type='text'
+                  placeholder='Nombre del producto'
+                  className={fieldClass}
+                  {...register('name')}
+                />
+                <ErrorMessage message={errors.name?.message} />
+              </div>
 
-          <div className='grid grid-cols-3 gap-4'>
-
-            <div className='space-y-1.5'>
-
-              <Label>
-                Contenido
-              </Label>
-
-              <Input
-                type='number'
-                {...register(
-                  'content_quantity',
-                  {
-                    valueAsNumber: true,
-                  }
-                )}
-              />
-
+              {/* Codigo */} 
+              <div>
+                <label className={labelClass} htmlFor='product-code'>
+                  Codigo
+                </label>
+                <input
+                  id='product-code'
+                  type='text'
+                  placeholder='Codigo interno'
+                  className={fieldClass}
+                  {...register('code')}
+                />
+                <ErrorMessage message={errors.code?.message} />
+              </div>
             </div>
 
-            <div className='space-y-1.5'>
+            {/* Categoria y Unidad */}
+            <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+              <div>
+                <label className={labelClass} htmlFor='product-category'>
+                  Categoria
+                </label>
+                <select
+                  id='product-category'
+                  className={fieldClass}
+                  {...register('product_category_id', { valueAsNumber: true })}
+                >
+                  <option value=''>Seleccionar categoria</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+                <ErrorMessage message={errors.product_category_id?.message} />
+              </div>
 
-              <Label>
-                Stock mínimo
-              </Label>
-
-              <Input
-                type='number'
-                {...register(
-                  'min_stock',
-                  {
-                    valueAsNumber: true,
-                  }
-                )}
-              />
-
+              <div>
+                <label className={labelClass} htmlFor='product-unit'>
+                  Unidad
+                </label>
+                <select
+                  id='product-unit'
+                  className={fieldClass}
+                  {...register('unit_id', { valueAsNumber: true })}
+                >
+                  <option value=''>Seleccionar unidad</option>
+                  {units.map((unit) => (
+                    <option key={unit.id} value={unit.id}>
+                      {unit.name} ({unit.code})
+                    </option>
+                  ))}
+                </select>
+                <ErrorMessage message={errors.unit_id?.message} />
+              </div>
             </div>
 
-            <div className='space-y-1.5'>
+            {/* Contenido, Stock Minimo y Stock Maximo */}
+            <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
+              <div>
+                <label className={labelClass} htmlFor='product-content'>
+                  Contenido
+                </label>
+                <input
+                  id='product-content'
+                  type='number'
+                  placeholder='1'
+                  step='1'
+                  className={fieldClass}
+                  {...register('content_quantity', { valueAsNumber: true })}
+                />
+                <ErrorMessage message={errors.content_quantity?.message} />
+              </div>
 
-              <Label>
-                Stock máximo
-              </Label>
+              <div>
+                <label className={labelClass} htmlFor='product-min-stock'>
+                  Stock minimo
+                </label>
+                <input
+                  id='product-min-stock'
+                  type='number'
+                  placeholder='0'
+                  step='1'
+                  className={fieldClass}
+                  {...register('min_stock', { valueAsNumber: true })}
+                />
+                <ErrorMessage message={errors.min_stock?.message} />
+              </div>
 
-              <Input
-                type='number'
-                {...register(
-                  'max_stock',
-                  {
-                    valueAsNumber: true,
-                  }
-                )}
-              />
-
+              <div>
+                <label className={labelClass} htmlFor='product-max-stock'>
+                  Stock maximo
+                </label>
+                <input
+                  id='product-max-stock'
+                  type='number'
+                  placeholder='100'
+                  step='1'
+                  className={fieldClass}
+                  {...register('max_stock', { valueAsNumber: true })}
+                />
+                <ErrorMessage message={errors.max_stock?.message} />
+              </div>
             </div>
 
-          </div>
+            <div className='flex flex-col-reverse gap-3 border-t border-gray-100 px-6 py-4 sm:flex-row sm:justify-end'>
+              <Button
+                type='button'
+                variant='neutral'
+                onClick={closeModal}
+                className='w-full sm:w-auto'
+              >
+                Cancelar
+              </Button>
 
-          {/* ACTIONS */}
-
-          <div className='flex justify-end pt-2'>
-
-            <Button
-              type='submit'
-              disabled={loading}
-            >
-              Crear producto
-            </Button>
-
-          </div>
-
-        </form>
-
-      </DialogContent>
-
-    </Dialog>
+              <Button
+                type='submit'
+                disabled={loading}
+                className='w-full sm:w-auto bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium'
+              >
+                {loading ? 'Creando...' : 'Crear producto'}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   )
 }

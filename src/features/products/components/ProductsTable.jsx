@@ -130,8 +130,7 @@ const tableMinHeight = HEADER_HEIGHT + ROW_HEIGHT * MIN_ROWS;
             </thead>
 
             <tbody>
-              <AnimatePresence mode='wait'>
-                {loading ? (
+              {loading ? (
                   <motion.tr
                     key='loading'
                     initial={{ opacity: 0 }}
@@ -171,10 +170,10 @@ const tableMinHeight = HEADER_HEIGHT + ROW_HEIGHT * MIN_ROWS;
                   filteredProducts.map((product, index) => (
                     <motion.tr
                       key={product.id ?? product.code}
-                      initial={{ opacity: 0, y: 10 }}
+                      initial={{ opacity: 0, y: 15 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.2, delay: index * 0.03 }}
+                      exit={{ opacity: 0, y: -15 }}
+                      transition={{ duration: 0.5, delay: index * 0.05 }}
                       onMouseEnter={() => setHoveredRow(product.id ?? product.code)}
                       onMouseLeave={() => setHoveredRow(null)}
                       className={`border-b border-gray-50 transition-colors duration-150 ${
@@ -191,7 +190,6 @@ const tableMinHeight = HEADER_HEIGHT + ROW_HEIGHT * MIN_ROWS;
                     </motion.tr>
                   ))
                 )}
-              </AnimatePresence>
             </tbody>
           </table>
         </div>

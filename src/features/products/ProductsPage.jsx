@@ -20,10 +20,11 @@ import {
 import {
   useProducts,
 } from './hooks/useProducts'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/common/Button'
 import { Plus } from 'lucide-react'
 
 export const ProductsPage = () => {
+  const [productOpen, setProductOpen] = useState(false)
   const [unitOpen, setUnitOpen] = useState(false)
   const [categoryOpen, setCategoryOpen] = useState(false)
   const [page, setPage] = useState(1)
@@ -37,6 +38,7 @@ export const ProductsPage = () => {
   const limit = 5
 
   const { data: units = [] } = useBaseUnits()
+  const { data: allUnits = [] } = useAllUnits()
   const { data: categoriesTree = [] } = useParentCategories()
   const { data: categories = [] } = useCategories()
 
@@ -53,6 +55,12 @@ export const ProductsPage = () => {
 
   const createUnit = useCreateUnit()
   const createCategory = useCreateCategory()
+  const createProduct = useCreateProduct()
+
+  const handleCreateProduct = async (data) => {
+    await createProduct.mutateAsync(data)
+    setProductOpen(false)
+  }
 
   const handleCreateUnit = async (data) => {
     await createUnit.mutateAsync(data)
@@ -69,6 +77,17 @@ export const ProductsPage = () => {
       <PageHeader
         title='Productos'
         description='Gestion de productos, categorias y unidades'
+        actions={
+          <div className='flex items-bottom gap-2'>
+            <Button
+              onClick={() => setProductOpen(true)}
+              className='text-sm'
+            >
+              <Plus className='mr-2 h-4 w-4' /> Nuevo Producto
+            </Button>
+          </div>
+        }
+        actionsPosition='center'
       />
 
       <motion.div
@@ -91,6 +110,15 @@ export const ProductsPage = () => {
         setCategoryOpen={setCategoryOpen}
         categoriesTree={categoriesTree}
         units={units}
+      />
+
+      <ProductForm
+        open={productOpen}
+        onOpenChange={setProductOpen}
+        units={allUnits}
+        categories={categories}
+        onSubmit={handleCreateProduct}
+        loading={createProduct.isPending}
       />
 
       <UnitForm
