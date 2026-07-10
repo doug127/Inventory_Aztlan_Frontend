@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@/components/common/Button'
+import { Input } from '@/components/common/Input'
 import { productSchema } from '../schemas/productSchema'
 
 
@@ -121,32 +122,18 @@ export const ProductForm = ({
             <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
               {/* Nombre */}
               <div>
-                <label className={labelClass} htmlFor='product-name'>
-                  Nombre
-                </label>
-                <input
-                  id='product-name'
-                  type='text'
-                  placeholder='Nombre del producto'
-                  className={fieldClass}
+                <Input
+                  label='Nombre'
                   {...register('name')}
                 />
-                <ErrorMessage message={errors.name?.message} />
               </div>
 
               {/* Codigo */} 
               <div>
-                <label className={labelClass} htmlFor='product-code'>
-                  Codigo
-                </label>
-                <input
-                  id='product-code'
-                  type='text'
-                  placeholder='Codigo interno'
-                  className={fieldClass}
+                <Input
+                  label='Codigo'
                   {...register('code')}
                 />
-                <ErrorMessage message={errors.code?.message} />
               </div>
             </div>
 
@@ -194,48 +181,30 @@ export const ProductForm = ({
             {/* Contenido, Stock Minimo y Stock Maximo */}
             <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
               <div>
-                <label className={labelClass} htmlFor='product-content'>
-                  Contenido
-                </label>
-                <input
-                  id='product-content'
+                <Input
+                  label='Contenido'
                   type='number'
-                  placeholder='1'
                   step='1'
-                  className={fieldClass}
                   {...register('content_quantity', { valueAsNumber: true })}
                 />
-                <ErrorMessage message={errors.content_quantity?.message} />
               </div>
 
               <div>
-                <label className={labelClass} htmlFor='product-min-stock'>
-                  Stock minimo
-                </label>
-                <input
-                  id='product-min-stock'
+                <Input
+                  label='Stock minimo'
                   type='number'
-                  placeholder='0'
                   step='1'
-                  className={fieldClass}
                   {...register('min_stock', { valueAsNumber: true })}
                 />
-                <ErrorMessage message={errors.min_stock?.message} />
               </div>
 
               <div>
-                <label className={labelClass} htmlFor='product-max-stock'>
-                  Stock maximo
-                </label>
-                <input
-                  id='product-max-stock'
+                <Input
+                  label='Stock maximo'
                   type='number'
-                  placeholder='100'
                   step='1'
-                  className={fieldClass}
                   {...register('max_stock', { valueAsNumber: true })}
                 />
-                <ErrorMessage message={errors.max_stock?.message} />
               </div>
             </div>
 
