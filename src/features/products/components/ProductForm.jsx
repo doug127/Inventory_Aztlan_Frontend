@@ -1,10 +1,10 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@/components/common/Button'
 import { Input } from '@/components/common/Input'
 import { productSchema } from '../schemas/productSchema'
-
+import { CategoryTreeSelect } from '../features/categories/components/CategoryTreeSelect'
 
 const ErrorMessage = ({ message }) => {
   if (!message) return null
@@ -22,12 +22,16 @@ export const ProductForm = ({
   onSubmit,
   loading,
   units = [],
-  categories = [],
+  categoriesTree = [],
 }) => {
+  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
+
   const {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(productSchema),
@@ -48,7 +52,7 @@ export const ProductForm = ({
   focus:border-black focus:ring-2 focus:ring-gray-200 focus:outline-none`
 
   const labelClass = 'block mb-2 text-sm font-medium text-gray-700'
-
+  console.log("categories", categoriesTree);
 
   useEffect(() => {
     if (!open) return
@@ -62,6 +66,8 @@ export const ProductForm = ({
       min_stock: undefined,
       max_stock: undefined,
     })
+
+    setSelectedCategoryId(null);
   }, [open, reset])
 
   if (!open) return null
@@ -71,7 +77,31 @@ export const ProductForm = ({
   const submitForm = handleSubmit(async (data) => {
     await onSubmit(data)
   })
+  
+  const findCategoryById = (tree, id) => {
+    for (const node of tree) {
 
+      if (node.id === id) {
+        return node;
+      }
+
+      if (node.children?.length) {
+
+        const result = findCategoryById(
+          node.children,
+          id
+        );
+
+        if (result) {
+          return result;
+        }
+      }
+    }
+
+    return null;
+  };
+
+  // console.log("Categories:", categories);
   return (
     <div
       className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-6 backdrop-blur-[2px]'
@@ -140,21 +170,46 @@ export const ProductForm = ({
             {/* Categoria y Unidad */}
             <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
               <div>
-                <label className={labelClass} htmlFor='product-category'>
-                  Categoria
-                </label>
-                <select
-                  id='product-category'
-                  className={fieldClass}
-                  {...register('product_category_id', { valueAsNumber: true })}
-                >
-                  <option value=''>Seleccionar categoria</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
+                  {/* <label className={labelClass} htmlFor='product-category'>
+                    Categoria
+                  </label>
+                  <select
+                    id='product-category'
+                    className={fieldClass}
+                    {...register('product_category_id', { valueAsNumber: true })}
+                  >
+                    <option value=''>Seleccionar categoria</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select> */}
+                  <input
+                    type="hidden"
+                    {...register("product_category_id", {
+                      valueAsNumber: true,
+                    })}
+                  />
+                  
+                  <CategoryTreeSelect
+                    tree={categoriesTree}
+                    value={findCategoryById(categoriesTree, selectedCategoryId)}
+                    onChange={(category)=>{
+
+                      setSelectedCategoryId(category.id);
+
+                      setValue(
+                        "product_category_id",
+                        category.id,
+                        {
+                          shouldValidate:true,
+                          shouldDirty:true
+                        }
+                      );
+
+                    }}
+                  />
                 <ErrorMessage message={errors.product_category_id?.message} />
               </div>
 

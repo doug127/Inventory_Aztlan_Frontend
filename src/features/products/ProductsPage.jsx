@@ -116,7 +116,7 @@ export const ProductsPage = () => {
         open={productOpen}
         onOpenChange={setProductOpen}
         units={allUnits}
-        categories={categories}
+        categoriesTree={categoriesTree}
         onSubmit={handleCreateProduct}
         loading={createProduct.isPending}
       />
