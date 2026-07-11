@@ -16,11 +16,16 @@ export const Input = ({
   const [validationError, setValidationError] = useState("");
 
   const inputRef = useRef(null);
-  const [hasValue, setHasValue] = useState(false);
+  const value = props.value !== undefined && props.value !== null ? String(props.value) : "";
+  
+  const [hasValue, setHasValue] = useState(Boolean(props.value));
 
-  const value = props.value ?? "";
+  useEffect(() => {
+    setHasValue(value !== "");
+  }, [value]);
+
   const updateValueState = () => {
-    setHasValue(!!inputRef.current?.value);
+    setHasValue(inputRef.current?.value !== "");
   };
   useEffect(() => {
     if (!value) {

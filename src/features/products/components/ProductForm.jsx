@@ -52,7 +52,6 @@ export const ProductForm = ({
   focus:border-black focus:ring-2 focus:ring-gray-200 focus:outline-none`
 
   const labelClass = 'block mb-2 text-sm font-medium text-gray-700'
-  console.log("categories", categoriesTree);
 
   useEffect(() => {
     if (!open) return
@@ -72,7 +71,9 @@ export const ProductForm = ({
 
   if (!open) return null
 
-  const closeModal = () => onOpenChange(false)
+  const closeModal = () => {
+    reset();
+    onOpenChange(false)};
 
   const submitForm = handleSubmit(async (data) => {
     await onSubmit(data)
@@ -101,7 +102,6 @@ export const ProductForm = ({
     return null;
   };
 
-  // console.log("Categories:", categories);
   return (
     <div
       className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-6 backdrop-blur-[2px]'
@@ -170,21 +170,6 @@ export const ProductForm = ({
             {/* Categoria y Unidad */}
             <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
               <div>
-                  {/* <label className={labelClass} htmlFor='product-category'>
-                    Categoria
-                  </label>
-                  <select
-                    id='product-category'
-                    className={fieldClass}
-                    {...register('product_category_id', { valueAsNumber: true })}
-                  >
-                    <option value=''>Seleccionar categoria</option>
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </select> */}
                   <input
                     type="hidden"
                     {...register("product_category_id", {
@@ -239,6 +224,7 @@ export const ProductForm = ({
                 <Input
                   label='Contenido'
                   type='number'
+                  min='0'
                   step='1'
                   {...register('content_quantity', { valueAsNumber: true })}
                 />
@@ -248,6 +234,7 @@ export const ProductForm = ({
                 <Input
                   label='Stock minimo'
                   type='number'
+                  min='0'
                   step='1'
                   {...register('min_stock', { valueAsNumber: true })}
                 />
@@ -257,6 +244,7 @@ export const ProductForm = ({
                 <Input
                   label='Stock maximo'
                   type='number'
+                  min='0'
                   step='1'
                   {...register('max_stock', { valueAsNumber: true })}
                 />
