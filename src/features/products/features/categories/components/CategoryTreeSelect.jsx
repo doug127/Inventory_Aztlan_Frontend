@@ -93,39 +93,6 @@ export const CategoryTreeSelect = ({
             shadow-xl
           "
         >
-          <div className="border-b p-3">
-            <div className="relative">
-              <Search
-                className="
-                  absolute
-                  left-3
-                  top-1/2
-                  h-4
-                  w-4
-                  -translate-y-1/2
-                  text-gray-400
-                "
-              />
-
-              <input
-                type="text"
-                placeholder="Buscar categoría..."
-                className="
-                  w-full
-                  rounded-lg
-                  border
-                  border-gray-200
-                  py-2
-                  pl-9
-                  pr-3
-                  text-sm
-                  outline-none
-                  focus:border-gray-400
-                "
-              />
-            </div>
-          </div>
-
           <div className="max-h-80 overflow-y-auto p-2">
             {tree.length === 0 ? (
               <div className="py-4 text-center text-sm text-gray-400">

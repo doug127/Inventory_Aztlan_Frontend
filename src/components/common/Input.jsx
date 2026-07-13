@@ -27,6 +27,7 @@ export const Input = ({
   const updateValueState = () => {
     setHasValue(inputRef.current?.value !== "");
   };
+  
   useEffect(() => {
     if (!value) {
       setValidationError("");

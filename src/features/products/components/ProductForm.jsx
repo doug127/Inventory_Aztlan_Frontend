@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@/components/common/Button'
 import { Input } from '@/components/common/Input'
+import { Select } from '@/components/common/Select'
 import { productSchema } from '../schemas/productSchema'
 import { CategoryTreeSelect } from '../features/categories/components/CategoryTreeSelect'
 
@@ -199,21 +200,14 @@ export const ProductForm = ({
               </div>
 
               <div>
-                <label className={labelClass} htmlFor='product-unit'>
-                  Unidad
-                </label>
-                <select
-                  id='product-unit'
-                  className={fieldClass}
+                <Select
+                  options={units.map((unit) => ({
+                    value: unit.id,
+                    label: unit.name,
+                  }))}
                   {...register('unit_id', { valueAsNumber: true })}
-                >
-                  <option value=''>Seleccionar unidad</option>
-                  {units.map((unit) => (
-                    <option key={unit.id} value={unit.id}>
-                      {unit.name} ({unit.code})
-                    </option>
-                  ))}
-                </select>
+                  placeholder='Selecciona una unidad'
+                />
                 <ErrorMessage message={errors.unit_id?.message} />
               </div>
             </div>
