@@ -8,6 +8,7 @@ import {
 import { CategoryTreeNode } from "./CategoryTreeNode";
 
 export const CategoryTreeSelect = ({
+  disabled = false,
   tree = [],
   value = null,
   onChange,
@@ -46,8 +47,11 @@ export const CategoryTreeSelect = ({
     >
       <button
         type="button"
-        onClick={() => setOpen((prev) => !prev)}
-        className="
+        onClick={() => {
+          if (disabled) return;
+          setOpen(!open);
+        }}
+        className={`
           flex w-full items-center justify-between
           rounded-lg border border-gray-300
           bg-white px-3 py-2.5
@@ -57,7 +61,11 @@ export const CategoryTreeSelect = ({
           focus:outline-none
           focus:ring-2
           focus:ring-gray-200
-        "
+          ${disabled
+            ? "cursor-not-allowed bg-gray-100 opacity-60"
+            : ""
+          }
+        `}
       >
         <div className="flex items-center gap-2 overflow-hidden">
           <FolderTree className="h-4 w-4 text-gray-500" />

@@ -4,7 +4,8 @@ import { PageHeader } from '@/components/common/PageHeader'
 import { ProductForm } from './components/ProductForm'
 import { UnitForm } from '@/features/products/features/units/components/UnitForm'
 import { CategoryForm } from '@/features/products/features/categories/components/CategoryForm'
-import { GridCategoryUnit } from '@/features/products/components/GridCategoryUnit'
+import { GridUnit } from '@/features/products/features/units/layouts/GridUnit'
+import { GridCategory } from '@/features/products/features/categories/layouts/GridCategory'
 import { ProductsTable } from '@/features/products/components/ProductsTable'
 import { useCreateProduct } from './hooks/useProducts'
 import {
@@ -22,6 +23,7 @@ import {
 } from './hooks/useProducts'
 import { Button } from '@/components/common/Button'
 import { Plus } from 'lucide-react'
+
 
 export const ProductsPage = () => {
   const [productOpen, setProductOpen] = useState(false)
@@ -42,6 +44,7 @@ export const ProductsPage = () => {
   const { data: categoriesTree = [] } = useParentCategories()
   const { data: categories = [] } = useCategories()
 
+
   const {
     data: products = [],
     isLoading: productsLoading,
@@ -52,7 +55,7 @@ export const ProductsPage = () => {
     unit: filters.unit,
     category_product: filters.category, 
   })
-
+  console.log(categories);
   const createUnit = useCreateUnit()
   const createCategory = useCreateCategory()
   const createProduct = useCreateProduct()
@@ -105,12 +108,20 @@ export const ProductsPage = () => {
         />
       </motion.div>
 
-      <GridCategoryUnit
-        setUnitOpen={setUnitOpen}
-        setCategoryOpen={setCategoryOpen}
-        categoriesTree={categoriesTree}
-        units={units}
-      />
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+
+        {/* CATEGORIES */}
+        <GridCategory
+          setCategoryOpen={setCategoryOpen}
+          categoriesTree={categoriesTree}
+        />
+
+        {/* UNITS */}
+        <GridUnit
+          setUnitOpen={setUnitOpen}
+          units={units}
+        />
+      </div>
 
       <ProductForm
         open={productOpen}
@@ -121,21 +132,22 @@ export const ProductsPage = () => {
         loading={createProduct.isPending}
       />
 
-      <UnitForm
+      <CategoryForm
+        open={categoryOpen}
+        onOpenChange={setCategoryOpen}
+        category={categories}
+        categoriesTree={categoriesTree}
+        onSubmit={handleCreateCategory}
+        loading={createCategory.isPending}
+      />
+      {/* <UnitForm
         open={unitOpen}
         onOpenChange={setUnitOpen}
         units={units}
         onSubmit={handleCreateUnit}
         loading={createUnit.isPending}
-      />
+      /> */}
 
-      <CategoryForm
-        open={categoryOpen}
-        onOpenChange={setCategoryOpen}
-        categories={categories}
-        onSubmit={handleCreateCategory}
-        loading={createCategory.isPending}
-      />
     </div>
   )
 }

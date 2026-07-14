@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@/components/common/Button'
+import { ButtonCloseModal } from '@/components/common/ButtonCloseModal'
 import { Input } from '@/components/common/Input'
 import { Select } from '@/components/common/Select'
 import { productSchema } from '../schemas/productSchema'
 import { CategoryTreeSelect } from '../features/categories/components/CategoryTreeSelect'
+import { MessageError } from '@/components/common/MessageError'
 
-const ErrorMessage = ({ message }) => {
+export const ErrorMessage = ({ message }) => {
   if (!message) return null
 
   return (
@@ -47,13 +49,6 @@ export const ProductForm = ({
     },
   })
 
-  const fieldClass =
-  `w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 
-  shadow-sm transition-all duration-200 placeholder:text-gray-400 
-  focus:border-black focus:ring-2 focus:ring-gray-200 focus:outline-none`
-
-  const labelClass = 'block mb-2 text-sm font-medium text-gray-700'
-
   useEffect(() => {
     if (!open) return
 
@@ -72,9 +67,6 @@ export const ProductForm = ({
 
   if (!open) return null
 
-  const closeModal = () => {
-    reset();
-    onOpenChange(false)};
 
   const submitForm = handleSubmit(async (data) => {
     await onSubmit(data)
@@ -103,6 +95,11 @@ export const ProductForm = ({
     return null;
   };
 
+  const closeModal = () => {
+    reset();
+    onOpenChange(false)
+  };
+
   return (
     <div
       className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-6 backdrop-blur-[2px]'
@@ -123,30 +120,9 @@ export const ProductForm = ({
             </div>
 
             {/* Botón de cerrar modal */}
-            <button
-              type='button'
+            <ButtonCloseModal
               onClick={closeModal}
-              className='cursor-pointer w-10 h-10 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors'
-              aria-label='Cerrar modal'
-            >
-              <svg
-                className='w-5 h-5'
-                aria-hidden='true'
-                xmlns='http://www.w3.org/2000/svg'
-                width='24'
-                height='24'
-                fill='none'
-                viewBox='0 0 24 24'
-              >
-                <path
-                  stroke='currentColor'
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth='2'
-                  d='M6 18 17.94 6M18 18 6.06 6'
-                />
-              </svg>
-            </button>
+            />
           </div>
 
           <form onSubmit={submitForm} className='space-y-5 p-6'>
@@ -157,6 +133,11 @@ export const ProductForm = ({
                   label='Nombre'
                   {...register('name')}
                 />
+                {errors.name && (
+                  <MessageError
+                    message={errors.name.message}
+                  />
+                )}
               </div>
 
               {/* Codigo */} 
@@ -165,6 +146,11 @@ export const ProductForm = ({
                   label='Codigo'
                   {...register('code')}
                 />
+                {errors.code && (
+                  <MessageError
+                    message={errors.code.message}
+                  />
+                )}
               </div>
             </div>
 
@@ -222,6 +208,11 @@ export const ProductForm = ({
                   step='1'
                   {...register('content_quantity', { valueAsNumber: true })}
                 />
+                {errors.content_quantity && (
+                  <MessageError
+                    message={errors.content_quantity.message}
+                  />
+                )}
               </div>
 
               <div>
@@ -232,6 +223,11 @@ export const ProductForm = ({
                   step='1'
                   {...register('min_stock', { valueAsNumber: true })}
                 />
+                {errors.min_stock && (
+                  <MessageError
+                    message={errors.min_stock.message}
+                  />
+                )}
               </div>
 
               <div>
@@ -242,15 +238,18 @@ export const ProductForm = ({
                   step='1'
                   {...register('max_stock', { valueAsNumber: true })}
                 />
+                {errors.max_stock && (
+                  <MessageError
+                    message={errors.max_stock.message}
+                  />
+                )}
               </div>
             </div>
 
             <div className='flex flex-col-reverse gap-3 border-t border-gray-100 px-6 py-4 sm:flex-row sm:justify-end'>
               <Button
-                type='button'
-                variant='neutral'
                 onClick={closeModal}
-                className='w-full sm:w-auto'
+                variant='neutral'
               >
                 Cancelar
               </Button>
