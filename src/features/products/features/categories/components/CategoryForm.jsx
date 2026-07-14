@@ -24,8 +24,6 @@ export const CategoryForm = ({
   const [categoryOpen, setCategoryOpen] = useState(false)
   const [isBaseCategory, setIsBaseCategory] = useState(true);
   
-  console.log(category);
-  
   const {
     register,
     handleSubmit,
@@ -100,10 +98,10 @@ export const CategoryForm = ({
             <div className='flex rounded-2xl items-center justify-between border-b border-gray-100 bg-gray-50 px-6 py-5'>
               <div>
                 <h3 id='product-modal-title' className='text-xl font-semiblod text-gray-900'>
-                  Nuevo producto
+                  Nuevo Categoría
                 </h3>
                 <p className='mt-1 text-sm text-gray-500'>
-                  Completa los datos principales del producto.
+                  Completa los datos principales de la categoría.
                 </p>
               </div>
   

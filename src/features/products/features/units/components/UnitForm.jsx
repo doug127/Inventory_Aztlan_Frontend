@@ -1,28 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-
 import { unitSchema } from '../schemas/unitSchema'
-
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetFooter,
-  SheetTitle,
-} from '@/components/ui/sheet'
+import { Button } from '@/components/common/button'
+import { Input } from '@/components/common/input'
+import { MessageError } from '@/components/common/MessageError'
+import { ButtonCloseModal } from '@/components/common/ButtonCloseModal'
+import { Select } from '@/components/common/Select'
 
 export const UnitForm = ({
   open,
@@ -46,24 +30,16 @@ export const UnitForm = ({
   } = useForm({
     resolver: zodResolver(unitSchema),
 
-    defaultValues: isEditing
-      ? {
-          name: unit.name,
-          code: unit.code,
-          is_active: unit.is_active,
-          base_unit_id: unit.base_unit?.id ?? null,
-          conversion_factor: unit.conversion_factor,
-        }
-      : {
-          name: '',
-          code: '',
-          is_active: true,
-          base_unit_id: null,
-          conversion_factor: 1,
-        },
+    defaultValues: {
+      name: '',
+      code: '',
+      is_active: true,
+      base_unit_id: null,
+      conversion_factor: 1,
+    },
   })
 
-  const [exampleValue, setExampleValue] = useState(5)
+  const [exampleValue, setExampleValue] = useState("")
   const conversionResult =
   exampleValue && watch('conversion_factor')
     ? exampleValue * watch('conversion_factor')
@@ -79,29 +55,30 @@ export const UnitForm = ({
   const formattedResult = conversionResult.toFixed(decimals)
   
   const baseUnits = units
+
+  const unitOptions = [
+    {
+      value: "",
+      label: "Unidad base",
+    },
+    ...baseUnits.map((u) => ({
+      value: u.id,
+      label: `${u.name} (${u.code})`,
+    })),
+  ];
   
   useEffect(() => {
-    if (open) {
+    if (!open) return
     
-      const values = isEditing
-        ? {
-            name: unit.name,
-            code: unit.code,
-            is_active: unit.is_active,
-            base_unit_id: unit.base_unit?.id ?? null,
-            conversion_factor: unit.conversion_factor,
-          }
-        : {
-            name: '',
-            code: '',
-            is_active: true,
-            base_unit_id: null,
-            conversion_factor: 1,
-          }
-
-      reset(values)
-    }
-  }, [open, unit, reset, isEditing])
+    reset({
+        name: unit?.name ?? "",
+        code: unit?.code ?? "",
+        is_active: unit?.is_active ?? false,
+        base_unit_id: unit?.base_unit?.id ?? null,
+        conversion_factor: unit?.conversion_factor ?? null,
+    })
+    
+  }, [open, unit, reset])
 
   // Si NO tiene unidad base → factor = 1
   useEffect(() => {
@@ -110,244 +87,202 @@ export const UnitForm = ({
     }
   }, [watch('base_unit_id'), setValue])
 
-  const handleFormSubmit = (data) => {
-
-    // 🔥 si es unidad base:
-    // conversion_factor = 1 automáticamente
+  const submitForm = handleSubmit( async (data) => {
     if (data.base_unit_id === null) {
       data.conversion_factor = 1
     }
 
-    onSubmit(data)
+    data.is_active = true;
+
+    await onSubmit(data)
+
+    closeModal();
+  })
+
+  const closeModal = () => {
+    reset()
+    onOpenChange(false);
   }
 
+  if (!open) return null;
+
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className='sm:max-w-md'>
-
-        <SheetHeader>
-          <SheetTitle>
-            {isEditing ? 'Editar unidad' : 'Nueva unidad'}
-          </SheetTitle>
-        </SheetHeader>
-
-        <form
-          onSubmit={handleSubmit(handleFormSubmit)}
-          className='space-y-4 py-4'
-        >
-
-          {/* NAME */}
-
-          <div className='space-y-1.5'>
-            <Label>Nombre</Label>
-
-            <Input
-              placeholder='Kilogramo'
-              {...register('name')}
-              className={errors.name ? 'border-destructive' : ''}
-            />
-
-            {errors.name && (
-              <p className='text-xs text-destructive'>
-                {errors.name.message}
-              </p>
-            )}
-          </div>
-
-          {/* CODE */}
-
-          <div className='space-y-1.5'>
-            <Label>Código</Label>
-
-            <Input
-              placeholder='KG'
-              {...register('code')}
-              className={errors.code ? 'border-destructive' : ''}
-            />
-
-            {errors.code && (
-              <p className='text-xs text-destructive'>
-                {errors.code.message}
-              </p>
-            )}
-          </div>
-
-          {/* BASE UNIT */}
-            
-          <div className='space-y-1.5'>
-            <Label>Unidad base</Label>
-
-            <Select
-              value={ watch('base_unit_id') === null
-                ? 'Sin unidad base'
-                : baseUnits.find(
-                    (u) => u.id === watch('base_unit_id')
-                  )?.name
-              }
-              onValueChange={(val) =>
-                setValue(
-                  'base_unit_id',
-                  val === 'null'
-                    ? null
-                    : Number(val),
-                  {
-                    shouldValidate: true,
-                    shouldDirty: true,
-                  }
-                )
-              }
-            >
-              <SelectTrigger
-                className={
-                  errors.base_unit_id
-                    ? 'border-destructive'
-                    : ''
-                }
-              >
-                <SelectValue placeholder='Sin unidad base' />
-              </SelectTrigger>
-
-              <SelectContent>
-
-                <SelectItem value='null'>
-                  Sin unidad base
-                </SelectItem>
-
-                {baseUnits.map((u) => (
-                  <SelectItem
-                    key={u.id}
-                    value={u.id.toString()}
-                  >
-                    {u.name} ({u.code})
-                  </SelectItem>
-                ))}
-
-              </SelectContent>
-            </Select>
-
-            {errors.base_unit_id && (
-              <p className='text-xs text-destructive'>
-                {errors.base_unit_id.message}
-              </p>
-            )}
-          </div>
-
-          {/* CONVERSION */}
-
-          <div className='space-y-1.5'>
-            <Label>Factor de conversión</Label>
-
-            <Input
-              type='number'
-              step='0.01'
-              disabled={watch('base_unit_id') === null}
-              {...register('conversion_factor', {
-                valueAsNumber: true,
-              })}
-              className={
-                errors.conversion_factor
-                  ? 'border-destructive'
-                  : ''
-              }
-            />
-
-            {errors.conversion_factor && (
-              <p className='text-xs text-destructive'>
-                {errors.conversion_factor.message}
-              </p>
-            )}
-          </div>
-
-          <div className='mt-2 rounded-lg border p-3 bg-muted/30 space-y-2'>
-
-            <Label className='text-xs text-muted-foreground'>
-              Ejemplo de conversión
-            </Label>
-
-            <div className='flex items-center gap-3'>
-
-              {/* INPUT */}
-              <div className='flex items-center gap-2'>
-                <span className='text-xs text-muted-foreground'>Input:</span>
-
-                <Input
-                  type='number'
-                  value={exampleValue}
-                  onChange={(e) => setExampleValue(Number(e.target.value))}
-                  className='h-8 w-24'
-                />
+    <div
+      className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-6 backdrop-blur-[2px]'
+      role='dialog'
+      aria-modal='true'
+      aria-labelledby='category-modal-title'
+    >
+      <div className='relative w-full max-w-lg max-h-full'>
+         <div className='relative w-full rounded-2xl bg-white border border-gray-200 shadow-2xl overflor-hidden'>
+            <div className='flex rounded-2xl items-center justify-between border-b border-gray-100 bg-gray-50 px-6 py-5'>
+              <div>
+                <h3 id='product-modal-title' className='text-xl font-semiblod text-gray-900'>
+                  Nueva Unidad
+                </h3>
+                <p className='mt-1 text-sm text-gray-500'>
+                  Completa los datos principales de la Unidad.
+                </p>
               </div>
 
-              {/* ICON / SEPARADOR */}
-              <span className='text-muted-foreground text-sm'>
-                →
-              </span>
-
-              {/* RESULTADO */}
-              <div className='flex items-center gap-2'>
-                <span className='text-xs text-muted-foreground'>Resultado:</span>
-
-                <div className='h-8 min-w-[60px] flex items-center px-2 rounded-md bg-background border text-sm font-medium'>
-                  {formattedResult}
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          {/* STATUS */}
-
-          {isEditing && (
-            <div className='flex items-center gap-3'>
-
-              <input
-                type='checkbox'
-                id='is_active'
-                {...register('is_active')}
-                className='h-4 w-4 rounded border'
+              <ButtonCloseModal
+                onClick={closeModal}
               />
-
-              <Label htmlFor='is_active'>
-                Unidad activa
-              </Label>
-
             </div>
-          )}
 
-          {/* SERVER ERROR */}
+              <form
+                onSubmit={submitForm}
+                className='space-y-5 py-6 px-6'
+              >
+                <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+                  <div>
+                    {/* NAME */}
 
-          {serverError && (
-            <div className='rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive'>
-              {serverError}
-            </div>
-          )}
+                    <Input
+                      label='Nombre'
+                      maxLength='50'
+                      {...register('name')}
+                    />
+                    {errors.name && (
+                      <MessageError message={errors.name.message}/>
+                    )}
+                  </div>
 
-          <SheetFooter className='pt-4'>
+                  {/* CODE */}
 
-            <Button
-              type='button'
-              variant='outline'
-              onClick={() => onOpenChange(false)}
-            >
-              Cancelar
-            </Button>
+                  <div>
+                    <Input
+                      label='Código'
+                      maxLength='4'
+                      {...register('code')}
+                    />
 
-            <Button
-              type='submit'
-              disabled={loading}
-            >
-              {loading
-                ? 'Guardando...'
-                : isEditing
-                  ? 'Guardar cambios'
-                  : 'Crear unidad'}
-            </Button>
+                    {errors.code && (
+                      <MessageError message={errors.code.message}/>
+                    )}
 
-          </SheetFooter>
+                </div>
 
-        </form>
+                </div>
 
-      </SheetContent>
-    </Sheet>
+                  
+                <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+                  {/* BASE UNIT */}
+                  <div className=''>
+                    <Select
+                      {...register("base_unit_id", {
+                        setValueAs: (value) => 
+                          value === "" ? null : Number(value),
+                      })}
+                      error={errors.base_unit_id?.message}
+                      options={unitOptions}
+                    />
+
+                    {errors.base_unit_id && (
+                      <MessageError message={errors.base_unit_id.message} />
+                    )}
+                  </div>
+
+                  {/* CONVERSION */}
+
+                  <div>
+                    <Input
+                      type='number'
+                      step='0.01'
+                      min='0'
+                      disabled={watch('base_unit_id') === null}
+                      {...register('conversion_factor', {
+                        valueAsNumber: true,
+                      })}
+                    />
+
+                    {errors.conversion_factor && (
+                      <MessageError message={errors.conversion_factor.message} />
+                    )}
+                  </div>
+                </div>
+
+                
+
+                <div className='space-y-1.5'>
+                </div>
+
+                <div className='mt-2 rounded-lg border p-3 bg-muted/30 space-y-2'>
+                  <div className='flex items-center gap-3'>
+
+                    {/* INPUT */}
+                    <div className='flex items-center gap-2'>
+                      <span className='text-xs text-muted-foreground'>Ejemplo de Conversión:</span>
+
+                      <Input
+                        type='text'
+                        value={exampleValue}
+                        min='0'
+                        maxLength='3'
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        onChange={(e) => {
+                          const value = e.target.value;
+
+                          if(/^\d*$/.test(value)){
+                            setExampleValue(value);
+                          }
+                        }}
+                        className='h-8 w-24'
+                      />
+                    </div>
+
+                    {/* ICON / SEPARADOR */}
+                    <span className='text-muted-foreground text-sm'>
+                      →
+                    </span>
+
+                    {/* RESULTADO */}
+                    <div className='flex items-center gap-2'>
+                      <span className='text-xs text-muted-foreground'>Resultado:</span>
+
+                      <div className='h-8 min-w-[60px] flex items-center px-2 rounded-md bg-background border text-sm font-medium'>
+                        {formattedResult}
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+
+                {/* SERVER ERROR */}
+
+                {serverError && (
+                  <div className='rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive'>
+                    {serverError}
+                  </div>
+                )}
+
+                <div className='flex flex-col-reverse gap-3 px-2 py-4 sm:flex-row sm:justify-end'>
+
+                  <Button
+                    type='button'
+                    variant='neutral'
+                    onClick={() => onOpenChange(false)}
+                  >
+                    Cancelar
+                  </Button>
+
+                  <Button
+                    type='submit'
+                    variant='primary'
+                    disabled={loading}
+                  >
+                    {loading
+                      ? 'Guardando...'
+                      : isEditing
+                        ? 'Guardar cambios'
+                        : 'Crear unidad'}
+                  </Button>
+                </div>
+              </form>
+          </div>
+        </div>
+      </div>
+      
   )
 }

@@ -33,7 +33,6 @@ export const ProductForm = ({
     register,
     handleSubmit,
     reset,
-    watch,
     setValue,
     formState: { errors },
   } = useForm({

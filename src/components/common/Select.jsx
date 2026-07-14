@@ -21,22 +21,8 @@ export const Select = forwardRef(
             defaultValue=""
             {...props}
             className={`
-              peer
-              block
-              w-full
-              appearance-none
-              bg-transparent
-              border-0
-              border-b-2
-              py-2.5
-              pr-10
-              pl-0
-              text-sm
-              text-gray-900
-              focus:outline-none
-              focus:ring-0
-              transition-colors
-              hover:border-gray-400
+              peer block w-full appearance-none bg-transparent border-0 border-b-2 py-2.5 pr-10
+              pl-0 text-sm text-gray-900 focus:outline-none focus:ring-0 transition-colors hover:border-gray-400
               ${
                 error
                   ? "border-red-500 focus:border-red-500"
@@ -59,7 +45,6 @@ export const Select = forwardRef(
               </option>
             ))}
           </select>
-
           <ChevronDown
             size={18}
             className="pointer-events-none absolute right-1 top-1/2 -translate-y-1/2 text-gray-500"

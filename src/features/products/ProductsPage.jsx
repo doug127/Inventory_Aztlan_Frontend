@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { PageHeader } from '@/components/common/PageHeader'
 import { ProductForm } from './components/ProductForm'
@@ -44,7 +44,10 @@ export const ProductsPage = () => {
   const { data: categoriesTree = [] } = useParentCategories()
   const { data: categories = [] } = useCategories()
 
-
+  useEffect(() => {
+      console.log(categories);
+  }, [categories]);
+  
   const {
     data: products = [],
     isLoading: productsLoading,
@@ -55,7 +58,6 @@ export const ProductsPage = () => {
     unit: filters.unit,
     category_product: filters.category, 
   })
-  console.log(categories);
   const createUnit = useCreateUnit()
   const createCategory = useCreateCategory()
   const createProduct = useCreateProduct()
@@ -140,14 +142,17 @@ export const ProductsPage = () => {
         onSubmit={handleCreateCategory}
         loading={createCategory.isPending}
       />
-      {/* <UnitForm
+      <UnitForm
         open={unitOpen}
         onOpenChange={setUnitOpen}
         units={units}
         onSubmit={handleCreateUnit}
         loading={createUnit.isPending}
-      /> */}
+      />
 
     </div>
   )
 }
+
+
+
