@@ -4,20 +4,21 @@ import { HIERARCHY } from '@/lib/constants.js'
 import { Package } from 'lucide-react'
 import { NavigationButtons } from '@/components/common/NavigationButtons'
 import { Table } from '@/components/common/Table'
-import { columns } from '../utils/columns.jsx'
 import { Action } from '@/components/common/Action'
 import { Search } from '@/components/common/Search'
+import { TABLE } from '@/lib/constants.js'
 
-export const ProductsTable = ({
-  products = [],
+export const DataTable = ({
+  title = 'Titulo',
+  data = [],
   loading,
   page,
   setPage,
   limit,
+  columns,
+  searchFields = [],
   filters,
   setFilters,
-  units = [],
-  categories = [],
   onEdit
 }) => {
   const [searchTerm, setSearchTerm] = useState('')
@@ -33,18 +34,10 @@ export const ProductsTable = ({
     return [...pages].sort((a, b) => a - b)
   }
 
-  const getValue = (obj, path) => {
-    return path.split('.').reduce((acc, key) => acc?.[key], obj)
-  }
+  const tableMinHeight = TABLE.HEADER_HEIGHT + TABLE.ROW_HEIGHT * (TABLE.MIN_ROWS /0.9);
 
-  const ROW_HEIGHT = 40;
-  const HEADER_HEIGHT = 44;
-  const MIN_ROWS = 5;
-
-  const tableMinHeight = HEADER_HEIGHT + ROW_HEIGHT * (MIN_ROWS /0.9);
-
-  const rows = products?.data ?? []
-  const meta = products?.meta ?? {}
+  const rows = data?.data ?? []
+  const meta = data?.meta ?? {}
   const currentPage = meta.page ?? page ?? 1
   const totalPages = meta.totalPages ?? 1
   const total = meta.total ?? rows.length
@@ -53,25 +46,29 @@ export const ProductsTable = ({
   const visiblePages = getVisiblePages(currentPage, totalPages)
 
   const userHierarchy = useAuthStore((s) => s.user?.hierarchy_level ?? 0)
-  const canManageProducts = userHierarchy >= HIERARCHY.ADMIN;
+  const canManageData = userHierarchy >= HIERARCHY.ADMIN;
 
-  const filteredProducts = useMemo(() => {
+  const getValue = (obj, path) => {
+    return path.split('.').reduce((acc, key) => acc?.[key], obj)
+  }
+
+  const filteredData = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase()
 
     if (!normalizedSearch) return rows
 
-    return rows.filter((product) => {
-      const category = product.category_product?.name ?? ''
-      const unit = product.unit?.name ?? product.unit?.code ?? ''
+    return rows.filter((row) => 
+      searchFields.some((field) => {
+        const value = getValue(row, field);
 
-      return (
-        product.name?.toLowerCase().includes(normalizedSearch) ||
-        product.code?.toLowerCase().includes(normalizedSearch) ||
-        category.toLowerCase().includes(normalizedSearch) ||
-        unit.toLowerCase().includes(normalizedSearch)
-      )
-    })
-  }, [rows, searchTerm])
+        if (value == null) return false;
+
+        return String(value)
+          .toLowerCase()
+          .includes(normalizedSearch);
+      })
+    )
+  }, [rows, searchTerm, searchFields]);
 
   return (
     <div className='flex rounded-3xl border-gray-100 shadow-sm'>
@@ -86,16 +83,16 @@ export const ProductsTable = ({
 
                 <div>
                   <h3 className='text-lg font-medium text-gray-900'>
-                    Lista de Productos
+                    {title}
                   </h3>
                   <p className='text-sm text-gray-500 mt-0.5'>
-                    {filteredProducts.length} productos en esta pagina
+                    {filteredData.length} {title.toLowerCase()} en la pagina
                   </p>
                 </div>
               </div>
               
               <div className='relative w-full md:w-64'>
-                <Search value={searchTerm} />
+                <Search value={searchTerm} onChange={setSearchTerm}/>
               </div>
 
             </div>
@@ -107,10 +104,10 @@ export const ProductsTable = ({
             hoveredRow={hoveredRow}
             setHoveredRow={setHoveredRow}
             tableMinHeight={tableMinHeight}
-            data={filteredProducts}
+            data={filteredData}
             getValue={getValue}
             actions={
-              canManageProducts
+              canManageData
                 ? (product) => <Action data={product} onEdit={() => onEdit(product)} />
                 : null
             }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { PageHeader } from '@/components/common/PageHeader'
 import { ProductForm } from './components/ProductForm'
@@ -6,7 +6,8 @@ import { UnitForm } from '@/features/products/features/units/components/UnitForm
 import { CategoryForm } from '@/features/products/features/categories/components/CategoryForm'
 import { GridUnit } from '@/features/products/features/units/layouts/GridUnit'
 import { GridCategory } from '@/features/products/features/categories/layouts/GridCategory'
-import { ProductsTable } from '@/features/products/components/ProductsTable'
+import { DataTable } from '@/components/layouts/DataTable'
+import { productColumns } from './utils/productColumns.jsx'
 import { useProducts, useCreateProduct, useUpdateProduct } from './hooks/useProducts'
 import {
   useBaseUnits,
@@ -74,25 +75,25 @@ export const ProductsPage = () => {
     setCategoryOpen(false)
   }
 
-  const openCreateProduct = () => {
-    setSelectedProduct(null);
-    setProductOpen(true);
-  };
+  // const openCreateProduct = () => {
+  //   setSelectedProduct(null);
+  //   setProductOpen(true);
+  // };
   
   const openEditProduct = (product) => {
     setSelectedProduct(product);
     setProductOpen(true);
   };
 
-  const handleEditProduct = async (id, data) => {
-    await updateProduct.mutateAsync({
-      id: selectedProduct.id,
-      ...data
-    });
+  // const handleEditProduct = async (id, data) => {
+  //   await updateProduct.mutateAsync({
+  //     id: selectedProduct.id,
+  //     ...data
+  //   });
 
-    setSelectedProduct(null);
-    setProductOpen(false);
-  }
+  //   setSelectedProduct(null);
+  //   setProductOpen(false);
+  // }
 
   const handleSubmitProduct = async (data) => {
     if (selectedProduct) {
@@ -135,12 +136,15 @@ export const ProductsPage = () => {
         transition={{ duration: 0.4 }}
         className='w-full'
       >
-        <ProductsTable
-          products={products}
+        <DataTable
+          title='Productos'
+          data={products}
           loading={productsLoading}
           page={page}
           setPage={setPage}
           limit={limit}
+          columns={productColumns}
+          searchFields={["name"]}
           onEdit={openEditProduct}
         />
       </motion.div>

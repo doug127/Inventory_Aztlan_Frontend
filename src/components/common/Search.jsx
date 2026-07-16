@@ -1,7 +1,9 @@
 
 
 export const Search = ({
-    value
+    value,
+    onChange,
+    placeholder = "Buscar producto...",
 }) => {
 
 
@@ -9,9 +11,9 @@ export const Search = ({
         <>
             <input
             type='text'
-            placeholder='Buscar producto...'
+            placeholder={placeholder}
             value={value}
-            onChange={(event) => setSearchTerm(event.target.value)}
+            onChange={(event) => onChange(event.target.value)}
             className='w-full px-3 py-1.5 pl-8 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-gray-400 focus:bg-white transition-all duration-200 placeholder:text-gray-400'
             />
             <svg

@@ -1,4 +1,4 @@
-export const columns = [
+export const productColumns = [
   {
     key: "name",
     title: "Producto",
