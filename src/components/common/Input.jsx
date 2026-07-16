@@ -18,15 +18,15 @@ export const Input = ({
   const inputRef = useRef(null);
   const value = props.value !== undefined && props.value !== null ? String(props.value) : "";
   
-  const [hasValue, setHasValue] = useState(Boolean(props.value));
-
-  useEffect(() => {
-    setHasValue(value !== "");
-  }, [value]);
+  const [hasValue, setHasValue] = useState(false);
 
   const updateValueState = () => {
-    setHasValue(inputRef.current?.value !== "");
+    setHasValue(Boolean(inputRef.current?.value));
   };
+
+  useEffect(() => {
+    updateValueState();
+  });
   
   useEffect(() => {
     if (!value) {

@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 import { useAuthStore } from '@/stores/authStore.js'
 import { HIERARCHY } from '@/lib/constants.js'
 import { Package } from 'lucide-react'
-import { Card, CardContent } from '@/components/ui/card'
 import { NavigationButtons } from '@/components/common/NavigationButtons'
 import { Table } from '@/components/common/Table'
 import { columns } from '../utils/columns.jsx'
@@ -76,60 +75,59 @@ export const ProductsTable = ({
 
   return (
     <div className='flex rounded-3xl border-gray-100 shadow-sm'>
-    <Card className='h-full overflow-hidden'>
-      <CardContent className='flex h-full flex-col min-h-0 p-0'>
-        <div className='basis-[15%] shrink-0 px-6 py-4 border-b border-gray-100'>
-          <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
-            <div className='flex items-center gap-3'>
-              <div className='flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-gray-600'>
-                <Package className='h-5 w-5' />
+      <div className='group/card flex h-full flex-col gap-6 overflow-hidden rounded-2xl bg-card py-6 text-sm text-card-foreground ring-1 ring-foreground/10 has-[>img:first-child]:pt-0 data-[size=sm]:gap-4 data-[size=sm]:py-4 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl'>
+        <div className='flex h-full min-h-0 flex-col p-0 px-6 group-data-[size=sm]/card:px-4'>
+          <div className='basis-[15%] shrink-0 px-6 py-4 border-b border-gray-100'>
+            <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
+              <div className='flex items-center gap-3'>
+                <div className='flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-gray-600'>
+                  <Package className='h-5 w-5' />
+                </div>
+
+                <div>
+                  <h3 className='text-lg font-medium text-gray-900'>
+                    Lista de Productos
+                  </h3>
+                  <p className='text-sm text-gray-500 mt-0.5'>
+                    {filteredProducts.length} productos en esta pagina
+                  </p>
+                </div>
+              </div>
+              
+              <div className='relative w-full md:w-64'>
+                <Search value={searchTerm} />
               </div>
 
-              <div>
-                <h3 className='text-lg font-medium text-gray-900'>
-                  Lista de Productos
-                </h3>
-                <p className='text-sm text-gray-500 mt-0.5'>
-                  {filteredProducts.length} productos en esta pagina
-                </p>
-              </div>
             </div>
-            
-            <div className='relative w-full md:w-64'>
-              <Search value={searchTerm} />
-            </div>
-
           </div>
-        </div>
 
-        <Table
-          columns={columns}
-          loading={loading}
-          hoveredRow={hoveredRow}
-          setHoveredRow={setHoveredRow}
-          tableMinHeight={tableMinHeight}
-          data={filteredProducts}
-          getValue={getValue}
-          actions={
-            canManageProducts
-              ? (product) => <Action data={product} onEdit={() => onEdit(product)} />
-              : null
-          }
-        />
-        
-        <NavigationButtons
-          currentPage={currentPage}
-          totalPages={totalPages}
-          setPage={setPage}
-          from={from}
-          to={to}
-          total={total}
-          visiblePages={visiblePages}
-          meta={meta}
-        />
-        
-      </CardContent>
-    </Card>
+          <Table
+            columns={columns}
+            loading={loading}
+            hoveredRow={hoveredRow}
+            setHoveredRow={setHoveredRow}
+            tableMinHeight={tableMinHeight}
+            data={filteredProducts}
+            getValue={getValue}
+            actions={
+              canManageProducts
+                ? (product) => <Action data={product} onEdit={() => onEdit(product)} />
+                : null
+            }
+          />
+          
+          <NavigationButtons
+            currentPage={currentPage}
+            totalPages={totalPages}
+            setPage={setPage}
+            from={from}
+            to={to}
+            total={total}
+            visiblePages={visiblePages}
+            meta={meta}
+          />
+        </div>
+      </div>
     </div>
   )
 }
