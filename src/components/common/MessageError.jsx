@@ -1,5 +1,3 @@
-
-
 export const MessageError = ({ message }) => {
   if (!message) return null
   return (

@@ -7,29 +7,28 @@ import { CategoryForm } from '@/features/products/features/categories/components
 import { GridUnit } from '@/features/products/features/units/layouts/GridUnit'
 import { GridCategory } from '@/features/products/features/categories/layouts/GridCategory'
 import { ProductsTable } from '@/features/products/components/ProductsTable'
-import { useCreateProduct } from './hooks/useProducts'
+import { useProducts, useCreateProduct, useUpdateProduct } from './hooks/useProducts'
 import {
   useBaseUnits,
   useAllUnits,
   useCreateUnit,
+  useUpdateUnit
 } from '@/features/products/features/units/hooks/useUnits'
 import {
   useCategories,
   useParentCategories,
   useCreateCategory,
 } from '@/features/products/features/categories/hooks/useCategories'
-import {
-  useProducts,
-} from './hooks/useProducts'
 import { Button } from '@/components/common/Button'
 import { Plus } from 'lucide-react'
 
 
 export const ProductsPage = () => {
-  const [productOpen, setProductOpen] = useState(false)
   const [unitOpen, setUnitOpen] = useState(false)
   const [categoryOpen, setCategoryOpen] = useState(false)
   const [page, setPage] = useState(1)
+  const [selectedProduct, setSelectedProduct] = useState(null)
+  const [productOpen, setProductOpen] = useState(false)
 
   const [filters, setFilters] = useState({
     search: '',
@@ -44,10 +43,6 @@ export const ProductsPage = () => {
   const { data: categoriesTree = [] } = useParentCategories()
   const { data: categories = [] } = useCategories()
 
-  useEffect(() => {
-      console.log(categories);
-  }, [categories]);
-  
   const {
     data: products = [],
     isLoading: productsLoading,
@@ -61,11 +56,13 @@ export const ProductsPage = () => {
   const createUnit = useCreateUnit()
   const createCategory = useCreateCategory()
   const createProduct = useCreateProduct()
+  const updateProduct = useUpdateProduct()
+  const updateUnit = useUpdateUnit()
 
-  const handleCreateProduct = async (data) => {
-    await createProduct.mutateAsync(data)
-    setProductOpen(false)
-  }
+  // const handleCreateProduct = async (data) => {
+  //   await createProduct.mutateAsync(data)
+  //   setProductOpen(false)
+  // }
 
   const handleCreateUnit = async (data) => {
     await createUnit.mutateAsync(data)
@@ -77,6 +74,40 @@ export const ProductsPage = () => {
     setCategoryOpen(false)
   }
 
+  const openCreateProduct = () => {
+    setSelectedProduct(null);
+    setProductOpen(true);
+  };
+  
+  const openEditProduct = (product) => {
+    setSelectedProduct(product);
+    setProductOpen(true);
+  };
+
+  const handleEditProduct = async (id, data) => {
+    await updateProduct.mutateAsync({
+      id: selectedProduct.id,
+      ...data
+    });
+
+    setSelectedProduct(null);
+    setProductOpen(false);
+  }
+
+  const handleSubmitProduct = async (data) => {
+    if (selectedProduct) {
+      await updateProduct.mutateAsync({
+        id: selectedProduct.id,
+        data,
+      });
+    } else {
+      await createProduct.mutateAsync(data);
+    }
+
+    setProductOpen(false);
+    setSelectedProduct(null);
+  };
+  
   return (
     <div className='space-y-6'>
       <PageHeader
@@ -85,7 +116,10 @@ export const ProductsPage = () => {
         actions={
           <div className='flex items-bottom gap-2'>
             <Button
-              onClick={() => setProductOpen(true)}
+              onClick={() =>{ 
+                setSelectedProduct(null)
+                setProductOpen(true)
+              }}
               className='text-sm'
             >
               <Plus className='mr-2 h-4 w-4' /> Nuevo Producto
@@ -107,6 +141,7 @@ export const ProductsPage = () => {
           page={page}
           setPage={setPage}
           limit={limit}
+          onEdit={openEditProduct}
         />
       </motion.div>
 
@@ -128,10 +163,15 @@ export const ProductsPage = () => {
       <ProductForm
         open={productOpen}
         onOpenChange={setProductOpen}
+        product={selectedProduct}
         units={allUnits}
         categoriesTree={categoriesTree}
-        onSubmit={handleCreateProduct}
-        loading={createProduct.isPending}
+        onSubmit={handleSubmitProduct}
+        loading={
+          selectedProduct
+            ? updateProduct.isPending
+            : createProduct.isPending
+        }
       />
 
       <CategoryForm

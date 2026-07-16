@@ -31,3 +31,20 @@ export const useCreateProduct = () => {
     }
   })
 }
+
+export const useUpdateProduct = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, data }) => productsService.update(id, data),
+    onSuccess: () => {
+      toast.success('Producto actualizado exitosamente')
+      queryClient.invalidateQueries(['products'])
+    },
+    onError: (error) => {
+      toast.error('Error al actualizar el producto')
+      console.error('Error updating product:', error)
+    }
+  })
+}
+

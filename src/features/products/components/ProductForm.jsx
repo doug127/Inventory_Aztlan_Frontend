@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@/components/common/Button'
@@ -9,30 +9,20 @@ import { productSchema } from '../schemas/productSchema'
 import { CategoryTreeSelect } from '../features/categories/components/CategoryTreeSelect'
 import { MessageError } from '@/components/common/MessageError'
 
-export const ErrorMessage = ({ message }) => {
-  if (!message) return null
-
-  return (
-    <p className='mt-1 text-xs text-red-600'>
-      {message}
-    </p>
-  )
-}
-
 export const ProductForm = ({
   open,
   onOpenChange,
   onSubmit,
   loading,
+  product,
   units = [],
   categoriesTree = [],
 }) => {
-  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
-
   const {
     register,
     handleSubmit,
     reset,
+    watch,
     setValue,
     formState: { errors },
   } = useForm({
@@ -40,33 +30,42 @@ export const ProductForm = ({
     defaultValues: {
       name: '',
       code: '',
-      product_category_id: null,
+      category_product_id: null,
       unit_id: null,
       content_quantity: undefined,
       min_stock: undefined,
       max_stock: undefined,
-    },
+    }
   })
+
+  const categoryId = watch("category_product_id");
 
   useEffect(() => {
     if (!open) return
 
-    reset({
-      name: '',
-      code: '',
-      product_category_id: null,
-      unit_id: null,
-      content_quantity: undefined,
-      min_stock: undefined,
-      max_stock: undefined,
-    })
-
-    setSelectedCategoryId(null);
-  }, [open, reset])
-
-  if (!open) return null
-
-
+    if (product){
+      reset({
+        name: product.name,
+        code: product.code,
+        category_product_id: product.category_product?.id ?? null,
+        unit_id: product.unit?.id ?? null,
+        content_quantity: product.content_quantity,
+        min_stock: product.min_stock,
+        max_stock: product.max_stock,
+      });
+    } else {
+      reset({
+        name: '',
+        code: '',
+        category_product_id: null,
+        unit_id: null,
+        content_quantity: '',
+        min_stock: '',
+        max_stock: '',
+      });
+    }
+  }, [product, open]);
+  
   const submitForm = handleSubmit(async (data) => {
     await onSubmit(data)
   })
@@ -74,9 +73,7 @@ export const ProductForm = ({
   const findCategoryById = (tree, id) => {
     for (const node of tree) {
 
-      if (node.id === id) {
-        return node;
-      }
+      if (node.id === id) return node;
 
       if (node.children?.length) {
 
@@ -85,14 +82,17 @@ export const ProductForm = ({
           id
         );
 
-        if (result) {
-          return result;
-        }
+        if (result) return result;
       }
     }
-
     return null;
   };
+
+  const selectedCategory = useMemo(() => {
+    return findCategoryById(categoriesTree, categoryId);
+  }, [categoriesTree, categoryId]);
+  
+  if (!open) return null
 
   const closeModal = () => {
     reset();
@@ -158,20 +158,20 @@ export const ProductForm = ({
               <div>
                   <input
                     type="hidden"
-                    {...register("product_category_id", {
+                    {...register("category_product_id", {
                       valueAsNumber: true,
                     })}
                   />
                   
                   <CategoryTreeSelect
                     tree={categoriesTree}
-                    value={findCategoryById(categoriesTree, selectedCategoryId)}
+                    value={
+                      selectedCategory
+                      // categoryId != null ? findCategoryById(categoriesTree, categoryId) : initialCategory
+                    }
                     onChange={(category)=>{
-
-                      setSelectedCategoryId(category.id);
-
                       setValue(
-                        "product_category_id",
+                        "category_product_id",
                         category.id,
                         {
                           shouldValidate:true,
@@ -181,7 +181,7 @@ export const ProductForm = ({
 
                     }}
                   />
-                <ErrorMessage message={errors.product_category_id?.message} />
+                <MessageError message={errors.category_product_id?.message} />
               </div>
 
               <div>
@@ -193,7 +193,7 @@ export const ProductForm = ({
                   {...register('unit_id', { valueAsNumber: true })}
                   placeholder='Selecciona una unidad'
                 />
-                <ErrorMessage message={errors.unit_id?.message} />
+                <MessageError message={errors.unit_id?.message} />
               </div>
             </div>
 

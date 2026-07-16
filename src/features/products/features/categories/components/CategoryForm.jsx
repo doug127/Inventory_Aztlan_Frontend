@@ -6,7 +6,6 @@ import { ButtonCloseModal } from '@/components/common/ButtonCloseModal'
 import { MessageError } from '@/components/common/MessageError'
 import { Input } from '@/components/common/Input'
 import { Button } from '@/components/common/button'
-import { ErrorMessage } from '@/features/products/components/ProductForm'
 import { CategoryTreeSelect } from './CategoryTreeSelect'
 
 

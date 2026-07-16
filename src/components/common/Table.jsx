@@ -7,9 +7,11 @@ export const Table = ({
   hoveredRow, 
   setHoveredRow, 
   tableMinHeight, 
-  filteredProducts,
-  getValue
+  data,
+  getValue,
+  actions
 }) => {
+ 
   return (
     <div 
       className='basis-[70%] flex-1 min-h-0 overflow-y-auto overflow-x-auto md:overflow-x-hiden ' 
@@ -23,7 +25,7 @@ export const Table = ({
           <tr className="border-b border-gray-100">
             {columns.map((column, index) => {
               const isFirst = index === 0
-              const isLast = index === columns.length - 1
+              const isLast = !actions && index === columns.length - 1
 
               return (
                 <th
@@ -35,8 +37,16 @@ export const Table = ({
                 >
                   {column.title}
                 </th>
+                
               )
             })}
+            {actions && (
+                <th
+                    className="rounded-tr-md w-32 bg-blue-500 px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-white"
+                >
+                    Acciones
+                </th>
+            )}
           </tr>
         </thead>
 
@@ -54,7 +64,7 @@ export const Table = ({
                   <p className='text-sm'>Cargando productos...</p>
                 </td>
               </motion.tr>
-            ) : filteredProducts.length === 0 ? (
+            ) : data.length === 0 ? (
               <motion.tr
                 key='empty'
                 initial={{ opacity: 0 }}
@@ -79,7 +89,7 @@ export const Table = ({
                 </td>
               </motion.tr>
             ) : (
-              filteredProducts.map((product, index) => (
+              data.map((product, index) => (
                 <motion.tr
                   key={product.id ?? product.code}
                   initial={{ opacity: 0, y: 15 }}
@@ -110,6 +120,11 @@ export const Table = ({
                       </td>
                     );
                 })}
+                {actions && (
+                    <td className="w-32 px-6 text-center">
+                        {actions(product)}
+                    </td>
+                )}
                 </motion.tr>
               ))
             )}

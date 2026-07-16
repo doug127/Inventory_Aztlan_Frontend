@@ -1,23 +1,25 @@
 import { useMemo, useState } from 'react'
-import { motion } from 'framer-motion'
+import { useAuthStore } from '@/stores/authStore.js'
+import { HIERARCHY } from '@/lib/constants.js'
 import { Package } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { NavigationButtons } from '@/components/common/NavigationButtons'
 import { Table } from '@/components/common/Table'
 import { columns } from '../utils/columns.jsx'
+import { Action } from '@/components/common/Action'
+import { Search } from '@/components/common/Search'
 
 export const ProductsTable = ({
   products = [],
   loading,
-
   page,
   setPage,
   limit,
   filters,
   setFilters,
-
-   units = [],
-    categories = [],
+  units = [],
+  categories = [],
+  onEdit
 }) => {
   const [searchTerm, setSearchTerm] = useState('')
   const [hoveredRow, setHoveredRow] = useState(null)
@@ -50,6 +52,9 @@ export const ProductsTable = ({
   const from = total === 0 ? 0 : ((currentPage - 1) * limit) + 1
   const to = Math.min(currentPage * limit, total)
   const visiblePages = getVisiblePages(currentPage, totalPages)
+
+  const userHierarchy = useAuthStore((s) => s.user?.hierarchy_level ?? 0)
+  const canManageProducts = userHierarchy >= HIERARCHY.ADMIN;
 
   const filteredProducts = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase()
@@ -89,29 +94,11 @@ export const ProductsTable = ({
                 </p>
               </div>
             </div>
-
+            
             <div className='relative w-full md:w-64'>
-              <input
-                type='text'
-                placeholder='Buscar producto...'
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                className='w-full px-3 py-1.5 pl-8 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-gray-400 focus:bg-white transition-all duration-200 placeholder:text-gray-400'
-              />
-              <svg
-                className='absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400'
-                fill='none'
-                stroke='currentColor'
-                viewBox='0 0 24 24'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'
-                />
-              </svg>
+              <Search value={searchTerm} />
             </div>
+
           </div>
         </div>
 
@@ -121,8 +108,13 @@ export const ProductsTable = ({
           hoveredRow={hoveredRow}
           setHoveredRow={setHoveredRow}
           tableMinHeight={tableMinHeight}
-          filteredProducts={filteredProducts}
+          data={filteredProducts}
           getValue={getValue}
+          actions={
+            canManageProducts
+              ? (product) => <Action data={product} onEdit={() => onEdit(product)} />
+              : null
+          }
         />
         
         <NavigationButtons

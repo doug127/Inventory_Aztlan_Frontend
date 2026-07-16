@@ -20,7 +20,7 @@ export const useCreateUnit = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: unitsService.create,
+    mutationFn: (data) => unitsService.create(data),
 
     onSuccess: () => {
       toast.success('Unidad creada')

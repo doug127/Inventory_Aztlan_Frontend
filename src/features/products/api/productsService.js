@@ -1,7 +1,6 @@
 import { api } from '@/lib/api'
 
 export const productsService = {
-
   getAll: async ({
     page = 1,
     limit = 5,
@@ -23,10 +22,7 @@ export const productsService = {
     }
 
     if (category_product) {
-      params.append(
-        'category_product',
-        category_product
-      )
+      params.append('category_product', category_product)
     }
 
     const res =
@@ -39,6 +35,15 @@ export const productsService = {
     const res =
       await api.post('/products/create', data)
     return res
-  }
+  },
 
+  update: async (id, data) => {
+    const res = await api.put(`/products/update/${id}`, data)
+    return res
+  },
+
+  delete: async (id) => {
+    const res = await api.delete(`/products/delete/${id}`)
+    return res
+  }
 }
