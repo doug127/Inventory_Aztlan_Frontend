@@ -25,12 +25,13 @@ import { Plus } from 'lucide-react'
 
 
 export const ProductsPage = () => {
-  const [unitOpen, setUnitOpen] = useState(false)
   const [categoryOpen, setCategoryOpen] = useState(false)
   const [page, setPage] = useState(1)
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [productOpen, setProductOpen] = useState(false)
-
+  const [selectedUnit, setSelectedUnit] = useState(null)
+  const [unitOpen, setUnitOpen] = useState(false)
+  
   const [filters, setFilters] = useState({
     search: '',
     unit: '',
@@ -40,10 +41,12 @@ export const ProductsPage = () => {
   const limit = 5
 
   const { data: units = [] } = useBaseUnits()
-  const { data: allUnits = [] } = useAllUnits()
+  const { 
+    data: unitsResponse = {},
+    isLoading: unitsLoading
+  } = useAllUnits({page, limit})
   const { data: categoriesTree = [] } = useParentCategories()
   const { data: categories = [] } = useCategories()
-
   const {
     data: products = [],
     isLoading: productsLoading,
@@ -54,21 +57,14 @@ export const ProductsPage = () => {
     unit: filters.unit,
     category_product: filters.category, 
   })
+  
+  const unitsAll = unitsResponse.data;
+  
   const createUnit = useCreateUnit()
   const createCategory = useCreateCategory()
   const createProduct = useCreateProduct()
   const updateProduct = useUpdateProduct()
   const updateUnit = useUpdateUnit()
-
-  // const handleCreateProduct = async (data) => {
-  //   await createProduct.mutateAsync(data)
-  //   setProductOpen(false)
-  // }
-
-  const handleCreateUnit = async (data) => {
-    await createUnit.mutateAsync(data)
-    setUnitOpen(false)
-  }
 
   const handleCreateCategory = async (data) => {
     await createCategory.mutateAsync(data)
@@ -85,15 +81,15 @@ export const ProductsPage = () => {
     setProductOpen(true);
   };
 
-  // const handleEditProduct = async (id, data) => {
-  //   await updateProduct.mutateAsync({
-  //     id: selectedProduct.id,
-  //     ...data
-  //   });
+  const openCreateUnit = () => {
+    setSelectedUnit(null);
+    setUnitOpen(true)
+  }
 
-  //   setSelectedProduct(null);
-  //   setProductOpen(false);
-  // }
+  const openEditUnit = (unit) => {
+    setSelectedUnit(unit);
+    setUnitOpen(true)
+  }
 
   const handleSubmitProduct = async (data) => {
     if (selectedProduct) {
@@ -108,6 +104,17 @@ export const ProductsPage = () => {
     setProductOpen(false);
     setSelectedProduct(null);
   };
+
+  const handleSubmitUnit = async (data) => {
+    if (selectedUnit) {
+      await updateUnit.mutateAsync({
+        id: selectedUnit.id,
+        data
+      });
+    } else {
+      await createUnit.mutateAsync(data);
+    }
+  }
   
   return (
     <div className='space-y-6'>
@@ -149,7 +156,7 @@ export const ProductsPage = () => {
         />
       </motion.div>
 
-      <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+      <div className='grid grid-cols-1 lg:grid-cols-[0.8fr_1.5fr] gap-6'>
 
         {/* CATEGORIES */}
         <GridCategory
@@ -159,8 +166,13 @@ export const ProductsPage = () => {
 
         {/* UNITS */}
         <GridUnit
-          setUnitOpen={setUnitOpen}
-          units={units}
+          onCreate={openCreateUnit}
+          page={page}
+          setPage={setPage}
+          limit={limit}
+          units={unitsResponse}
+          loading={unitsLoading}
+          onEdit={openEditUnit}
         />
       </div>
 
@@ -168,7 +180,7 @@ export const ProductsPage = () => {
         open={productOpen}
         onOpenChange={setProductOpen}
         product={selectedProduct}
-        units={allUnits}
+        units={unitsAll}
         categoriesTree={categoriesTree}
         onSubmit={handleSubmitProduct}
         loading={
@@ -189,9 +201,14 @@ export const ProductsPage = () => {
       <UnitForm
         open={unitOpen}
         onOpenChange={setUnitOpen}
+        unit={selectedUnit}
         units={units}
-        onSubmit={handleCreateUnit}
-        loading={createUnit.isPending}
+        onSubmit={handleSubmitUnit}
+        loading={
+          selectedUnit
+            ? updateUnit.isPending
+            : createUnit.isPending
+        }
       />
 
     </div>

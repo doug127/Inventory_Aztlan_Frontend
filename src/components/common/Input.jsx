@@ -11,23 +11,22 @@ export const Input = ({
   className = "",
   ...props
 }) => {
-  const [focused, setFocused] = useState(false);
+  // const [focused, setFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [validationError, setValidationError] = useState("");
-
   const inputRef = useRef(null);
+  // const [hasValue, setHasValue] = useState(false);
+
   const value = props.value !== undefined && props.value !== null ? String(props.value) : "";
   
-  const [hasValue, setHasValue] = useState(false);
+  // const updateValueState = () => {
+  //   setHasValue(Boolean(inputRef.current?.value));
+  // };
 
-  const updateValueState = () => {
-    setHasValue(Boolean(inputRef.current?.value));
-  };
+  // useEffect(() => {
+  //   updateValueState();
+  // });
 
-  useEffect(() => {
-    updateValueState();
-  });
-  
   useEffect(() => {
     if (!value) {
       setValidationError("");
@@ -88,20 +87,10 @@ export const Input = ({
 
   return (
     <div className="relative flex w-full flex-col">
-      <label
-        className={`pointer-events-none absolute left-3 transition-all duration-200
-        ${
-          focused || hasValue
-            ? "-top-2 bg-white px-1 text-xs text-gray-600"
-            : "top-2.5 text-sm text-gray-400"
-        }`}
-      >
-        {label}
-      </label>
-
-      <div className="flex">
+      <div className="relative flex">
         <input
           {...props}
+          placeholder=" "
           ref={(element) => {
             inputRef.current = element;
 
@@ -120,19 +109,19 @@ export const Input = ({
           }
           onChange={(e) => {
             props.onChange?.(e);
-            updateValueState();
+            // updateValueState();
           }}
           onFocus={(e) => {
-            setFocused(true);
+            // setFocused(true);
             props.onFocus?.(e);
           }}
           onBlur={(e) => {
-            setFocused(false);
-            updateValueState();
+            // setFocused(false);
+            // updateValueState();
             props.onBlur?.(e);
           }}
           className={`
-            w-full rounded-lg border bg-white px-3 py-2.5 text-sm
+            peer w-full rounded-lg border bg-white px-3 py-2.5 text-sm
             outline-none transition-all
             ${
               error || validationError
@@ -143,6 +132,17 @@ export const Input = ({
             ${className}
           `}
         />
+
+        <label
+          className="pointer-events-none absolute left-3 top-2.5 text-sm text-gray-400 transition-all duration-200
+            peer-[&:is(:focus,:not(:placeholder-shown))]:-top-2
+            peer-[&:is(:focus,:not(:placeholder-shown))]:bg-white
+            peer-[&:is(:focus,:not(:placeholder-shown))]:px-1
+            peer-[&:is(:focus,:not(:placeholder-shown))]:text-xs
+            peer-[&:is(:focus,:not(:placeholder-shown))]:text-gray-600"
+        >
+          {label}
+        </label>
 
         {type === "password" && (
           <button
@@ -157,13 +157,27 @@ export const Input = ({
             )}
           </button>
         )}
+        {(error || validationError) && (
+          <span className="mt-1 text-sm text-red-500">{error || validationError}</span>
+        )}
       </div>
+      {/* <label
+        className={`pointer-events-none absolute left-3 transition-all duration-200
+        ${
+          focused || hasValue
+            ? "-top-2 bg-white px-1 text-xs text-gray-600"
+            : "top-2.5 text-sm text-gray-400"
+        }`}
+      >
+        {label}
+      </label> */}
 
-      {(error || validationError) && (
+
+      {/* {(error || validationError) && (
         <span className="mt-1 text-sm text-red-500">
           {error || validationError}
         </span>
-      )}
+      )} */}
     </div>
   );
 };

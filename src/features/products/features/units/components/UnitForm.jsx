@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { unitSchema } from '../schemas/unitSchema'
-import { Button } from '@/components/common/button'
-import { Input } from '@/components/common/input'
+import { Button } from '@/components/common/Button'
+import { Input } from '@/components/common/Input'
 import { MessageError } from '@/components/common/MessageError'
 import { ButtonCloseModal } from '@/components/common/ButtonCloseModal'
 import { Select } from '@/components/common/Select'
@@ -17,8 +17,6 @@ export const UnitForm = ({
   units = [],
   serverError,
 }) => {
-
-  const isEditing = !!unit
 
   const {
     register,
@@ -70,17 +68,27 @@ export const UnitForm = ({
   useEffect(() => {
     if (!open) return
     
-    reset({
-        name: unit?.name ?? "",
-        code: unit?.code ?? "",
-        is_active: unit?.is_active ?? false,
-        base_unit_id: unit?.base_unit?.id ?? null,
-        conversion_factor: unit?.conversion_factor ?? null,
-    })
+    if (unit){
+      reset({
+        name: unit.name, 
+        code: unit.code,
+        is_active: unit.is_active,
+        base_unit_id: unit.base_unit?.id,
+        conversion_factor: unit.conversion_factor,
+      })
+    } else {
+      reset({
+        name: "",
+        code: "",
+        is_active: false,
+        base_unit_id: null,
+        conversion_factor: null,
+      })
+    }
     
-  }, [open, unit, reset])
+  }, [unit, open])
 
-  // Si NO tiene unidad base → factor = 1
+  // Si no tiene unidad base entonces factor = 1
   useEffect(() => {
     if (watch('base_unit_id') === null) {
       setValue('conversion_factor', 1)
@@ -99,12 +107,12 @@ export const UnitForm = ({
     closeModal();
   })
 
+  if (!open) return null;
+
   const closeModal = () => {
     reset()
     onOpenChange(false);
   }
-
-  if (!open) return null;
 
   return (
     <div
@@ -187,6 +195,7 @@ export const UnitForm = ({
 
                   <div>
                     <Input
+                      label='Factor de conversión'
                       type='number'
                       step='0.01'
                       min='0'
@@ -273,10 +282,7 @@ export const UnitForm = ({
                     disabled={loading}
                   >
                     {loading
-                      ? 'Guardando...'
-                      : isEditing
-                        ? 'Guardar cambios'
-                        : 'Crear unidad'}
+                      ? 'Guardando...' : 'Crear unidad'}
                   </Button>
                 </div>
               </form>

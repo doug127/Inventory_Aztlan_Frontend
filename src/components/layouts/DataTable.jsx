@@ -15,7 +15,7 @@ export const DataTable = ({
   page,
   setPage,
   limit,
-  columns,
+  columns = [],
   searchFields = [],
   filters,
   setFilters,
@@ -82,9 +82,6 @@ export const DataTable = ({
                 </div>
 
                 <div>
-                  <h3 className='text-lg font-medium text-gray-900'>
-                    {title}
-                  </h3>
                   <p className='text-sm text-gray-500 mt-0.5'>
                     {filteredData.length} {title.toLowerCase()} en la pagina
                   </p>

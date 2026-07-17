@@ -24,7 +24,7 @@ export const REASONS_BY_TYPE = {
 }
 
 export const TABLE = {
-   ROW_HEIGHT: 40,
+  ROW_HEIGHT: 40,
   HEADER_HEIGHT: 44,
   MIN_ROWS: 5,
 }

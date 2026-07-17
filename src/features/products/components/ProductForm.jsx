@@ -30,7 +30,7 @@ export const ProductForm = ({
     defaultValues: {
       name: '',
       code: '',
-      category_product_id: null,
+      product_category_id: null,
       unit_id: null,
       content_quantity: undefined,
       min_stock: undefined,
@@ -38,7 +38,7 @@ export const ProductForm = ({
     }
   })
 
-  const categoryId = watch("category_product_id");
+  const categoryId = watch("product_category_id");
 
   useEffect(() => {
     if (!open) return
@@ -47,7 +47,7 @@ export const ProductForm = ({
       reset({
         name: product.name,
         code: product.code,
-        category_product_id: product.category_product?.id ?? null,
+        product_category_id: product.category_product?.id ?? null,
         unit_id: product.unit?.id ?? null,
         content_quantity: product.content_quantity,
         min_stock: product.min_stock,
@@ -57,7 +57,7 @@ export const ProductForm = ({
       reset({
         name: '',
         code: '',
-        category_product_id: null,
+        product_category_id: null,
         unit_id: null,
         content_quantity: '',
         min_stock: '',
@@ -66,10 +66,21 @@ export const ProductForm = ({
     }
   }, [product, open]);
   
-  const submitForm = handleSubmit(async (data) => {
-    await onSubmit(data)
-  })
+  // const submitForm = handleSubmit(async (data) => {
+  //   console.log(data)
+  //   await onSubmit(data)
+  // })
   
+  const submitForm = handleSubmit(
+    async (data) => {
+      console.log("SUBMIT", data);
+      await onSubmit(data);
+    },
+    (errors) => {
+      console.log("ERRORES", errors);
+    }
+  );
+
   const findCategoryById = (tree, id) => {
     for (const node of tree) {
 
@@ -158,7 +169,7 @@ export const ProductForm = ({
               <div>
                   <input
                     type="hidden"
-                    {...register("category_product_id", {
+                    {...register("product_category_id", {
                       valueAsNumber: true,
                     })}
                   />
@@ -171,7 +182,7 @@ export const ProductForm = ({
                     }
                     onChange={(category)=>{
                       setValue(
-                        "category_product_id",
+                        "product_category_id",
                         category.id,
                         {
                           shouldValidate:true,
@@ -181,7 +192,7 @@ export const ProductForm = ({
 
                     }}
                   />
-                <MessageError message={errors.category_product_id?.message} />
+                <MessageError message={errors.product_category_id?.message} />
               </div>
 
               <div>
@@ -255,6 +266,7 @@ export const ProductForm = ({
 
               <Button
                 type='submit'
+                variant='primary'
                 disabled={loading}
                 className='w-full sm:w-auto bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium'
               >

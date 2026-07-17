@@ -107,7 +107,10 @@ export const Table = ({
                   }`}
                 >
                   {columns.map((column) => {
-                    const value = getValue(product, column.field) ?? "-";
+                    const rawValue = column.render
+                      ? column.render(product)
+                      : getValue(product, column.field);
+                    const value = rawValue ?? "-";
 
                     return (
                       <td key={column.key} className="h-10 px-6 align-middle overflow-hidden">
@@ -115,7 +118,7 @@ export const Table = ({
                           className={`block w-full truncate ${column.className}`}
                           title={String(value)}
                         >
-                          {getValue(product, column.field)}
+                          {value}
                         </span>
                       </td>
                     );

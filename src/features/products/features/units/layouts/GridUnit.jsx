@@ -1,12 +1,21 @@
 import { PermissionGate } from '@/features/auth/PermissionGate'
 import { HIERARCHY } from '@/lib/constants'
+import { motion } from 'framer-motion'
 import { Plus, Ruler } from 'lucide-react'
 import { Button } from '@/components/common/Button'
+import { DataTable } from '@/components/layouts/DataTable'
+import { unitColumns } from '../utils/unitColumns'
 
 export const GridUnit = ({
-    setUnitOpen,
+    onCreate,
     units,
+    page = 1,
+    setPage,
+    limit=5,
+    loading,
+    onEdit,
 }) => {
+    
     return (
         <div className='rounded-2xl border bg-card'>
 
@@ -28,40 +37,34 @@ export const GridUnit = ({
 
             <PermissionGate minHierarchy={HIERARCHY.ADMIN}>
               <Button
-                onClick={() => setUnitOpen(true)}
+                onClick={onCreate}
                 variant='primary'
               >
                 <Plus className='h-4 w-4 mr-2' />
                 Nueva unidad
               </Button>
             </PermissionGate>
-
           </div>
 
-          {/* UNITS LIST */}
-
           <div className='p-4 space-y-2 max-h-[650px] overflow-auto'>
-            {units.length === 0 && (
-              <div className='text-sm text-muted-foreground'>
-                No hay unidades registradas
-              </div>
-            )}
-            {units.map((unit) => (
-              <div
-                key={unit.id}
-                className='flex items-center justify-between rounded-xl border px-4 py-3'
-              >
-                <div>
-                  <p className='font-medium'>
-                    {unit.name}
-                  </p>
-
-                  <p className='text-sm text-muted-foreground'>
-                    {unit.code}
-                  </p>
-                </div>
-              </div>
-            ))}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className='w-full'
+            >
+              <DataTable  
+                title='Unidades'
+                data={units}
+                columns={unitColumns}
+                page={page}
+                setPage={setPage}
+                limit={limit}
+                searchFields={["name"]}
+                loading={loading}
+                onEdit={onEdit}
+              />              
+            </motion.div>
           </div>
         </div>
     )
