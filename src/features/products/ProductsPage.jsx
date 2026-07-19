@@ -32,6 +32,8 @@ export const ProductsPage = () => {
   const [productOpen, setProductOpen] = useState(false)
   const [selectedUnit, setSelectedUnit] = useState(null)
   const [unitOpen, setUnitOpen] = useState(false)
+  const [productsSearch, setProductsSearch] = useState('')
+  const [unitsSearch, setUnitsSearch] = useState('')
   
   const [filters, setFilters] = useState({
     search: '',
@@ -47,7 +49,8 @@ export const ProductsPage = () => {
     isLoading: unitsLoading
   } = useAllUnits({
     page: unitsPage, 
-    limit
+    limit,
+    name: unitsSearch,
   })
   const { data: categoriesTree = [] } = useParentCategories()
   const { data: categories = [] } = useCategories()
@@ -57,7 +60,7 @@ export const ProductsPage = () => {
   } = useProducts({ 
     page: productsPage, 
     limit,
-    name: filters.search,
+    name: productsSearch,
     unit: filters.unit,
     category_product: filters.category, 
   })
@@ -157,6 +160,12 @@ export const ProductsPage = () => {
           columns={productColumns}
           searchFields={["name"]}
           onEdit={openEditProduct}
+          searchValue={productsSearch}
+          onSearchChange={(value) => {
+            setProductsSearch(value)
+            setProductsPage(1)
+          }}
+          searchPlaceholder='Buscar producto...'
         />
       </motion.div>
 
@@ -172,11 +181,17 @@ export const ProductsPage = () => {
         <GridUnit
           onCreate={openCreateUnit}
           page={unitsPage}
-          onPageChange={setUnitsPage}
+          setPage={setUnitsPage}
           limit={limit}
           units={unitsResponse}
           loading={unitsLoading}
           onEdit={openEditUnit}
+          searchValue={unitsSearch}
+          onSearchChange={(value) => {
+            setUnitsSearch(value)
+            setUnitsPage(1)
+          }}
+          searchPlaceholder='Buscar unidad...'
         />
       </div>
 

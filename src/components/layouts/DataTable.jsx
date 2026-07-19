@@ -13,15 +13,19 @@ export const DataTable = ({
   data = [],
   loading,
   page,
+  setPage,
   onPageChange,
   limit,
   columns = [],
   searchFields = [],
   filters,
   setFilters,
-  onEdit
+  onEdit,
+  searchValue,
+  onSearchChange,
+  searchPlaceholder = 'Buscar producto...',
 }) => {
-  const [searchTerm, setSearchTerm] = useState('')
+  const [internalSearchTerm, setInternalSearchTerm] = useState('')
   const [hoveredRow, setHoveredRow] = useState(null)
   const getVisiblePages = (currentPage, totalPages) => {
   if (!totalPages) return []
@@ -52,10 +56,24 @@ export const DataTable = ({
     return path.split('.').reduce((acc, key) => acc?.[key], obj)
   }
 
-  const filteredData = useMemo(() => {
-    const normalizedSearch = searchTerm.trim().toLowerCase()
+  const resolvedSearchTerm = searchValue ?? internalSearchTerm
+  const isServerSearchEnabled = typeof onSearchChange === 'function'
 
-    if (!normalizedSearch) return rows
+  const handleSearchChange = (nextValue) => {
+    if (isServerSearchEnabled) {
+      onSearchChange(nextValue)
+      return
+    }
+
+    setInternalSearchTerm(nextValue)
+  }
+
+  const handlePageChange = typeof onPageChange === 'function' ? onPageChange : setPage
+
+  const filteredData = useMemo(() => {
+    const normalizedSearch = resolvedSearchTerm.trim().toLowerCase()
+
+    if (!normalizedSearch || isServerSearchEnabled) return rows
 
     return rows.filter((row) => 
       searchFields.some((field) => {
@@ -68,7 +86,7 @@ export const DataTable = ({
           .includes(normalizedSearch);
       })
     )
-  }, [rows, searchTerm, searchFields]);
+  }, [rows, resolvedSearchTerm, searchFields, isServerSearchEnabled]);
 
   return (
     <div className='flex rounded-3xl border-gray-100 shadow-sm'>
@@ -89,7 +107,7 @@ export const DataTable = ({
               </div>
               
               <div className='relative w-full md:w-64'>
-                <Search value={searchTerm} onChange={setSearchTerm}/>
+                <Search value={resolvedSearchTerm} onChange={handleSearchChange} placeholder={searchPlaceholder} />
               </div>
 
             </div>
@@ -113,7 +131,7 @@ export const DataTable = ({
           <NavigationButtons
             currentPage={currentPage}
             totalPages={totalPages}
-            onPageChange={onPageChange}
+            onPageChange={handlePageChange}
             from={from}
             to={to}
             total={total}

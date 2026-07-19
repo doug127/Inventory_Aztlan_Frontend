@@ -14,6 +14,9 @@ export const GridUnit = ({
     limit=5,
     loading,
     onEdit,
+    searchValue,
+    onSearchChange,
+    searchPlaceholder,
 }) => {
     
     return (
@@ -63,6 +66,9 @@ export const GridUnit = ({
                 searchFields={["name"]}
                 loading={loading}
                 onEdit={onEdit}
+                searchValue={searchValue}
+                onSearchChange={onSearchChange}
+                searchPlaceholder={searchPlaceholder}
               />              
             </motion.div>
           </div>
