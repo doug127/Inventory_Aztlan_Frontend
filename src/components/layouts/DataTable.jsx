@@ -13,7 +13,7 @@ export const DataTable = ({
   data = [],
   loading,
   page,
-  setPage,
+  onPageChange,
   limit,
   columns = [],
   searchFields = [],
@@ -113,7 +113,7 @@ export const DataTable = ({
           <NavigationButtons
             currentPage={currentPage}
             totalPages={totalPages}
-            setPage={setPage}
+            onPageChange={onPageChange}
             from={from}
             to={to}
             total={total}

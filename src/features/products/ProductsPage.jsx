@@ -26,7 +26,8 @@ import { Plus } from 'lucide-react'
 
 export const ProductsPage = () => {
   const [categoryOpen, setCategoryOpen] = useState(false)
-  const [page, setPage] = useState(1)
+  const [productsPage, setProductsPage] = useState(1)
+  const [unitsPage, setUnitsPage] = useState(1)
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [productOpen, setProductOpen] = useState(false)
   const [selectedUnit, setSelectedUnit] = useState(null)
@@ -44,14 +45,17 @@ export const ProductsPage = () => {
   const { 
     data: unitsResponse = {},
     isLoading: unitsLoading
-  } = useAllUnits({page, limit})
+  } = useAllUnits({
+    page: unitsPage, 
+    limit
+  })
   const { data: categoriesTree = [] } = useParentCategories()
   const { data: categories = [] } = useCategories()
   const {
     data: products = [],
     isLoading: productsLoading,
   } = useProducts({ 
-    page, 
+    page: productsPage, 
     limit,
     name: filters.search,
     unit: filters.unit,
@@ -147,8 +151,8 @@ export const ProductsPage = () => {
           title='Productos'
           data={products}
           loading={productsLoading}
-          page={page}
-          setPage={setPage}
+          page={productsPage}
+          onPageChange={setProductsPage}
           limit={limit}
           columns={productColumns}
           searchFields={["name"]}
@@ -167,8 +171,8 @@ export const ProductsPage = () => {
         {/* UNITS */}
         <GridUnit
           onCreate={openCreateUnit}
-          page={page}
-          setPage={setPage}
+          page={unitsPage}
+          onPageChange={setUnitsPage}
           limit={limit}
           units={unitsResponse}
           loading={unitsLoading}

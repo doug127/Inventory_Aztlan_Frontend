@@ -1,6 +1,6 @@
 
 
-export const NavigationButtons = ({ currentPage, totalPages, setPage, from, to, total, visiblePages, meta }) => {
+export const NavigationButtons = ({ currentPage, totalPages, onPageChange, from, to, total, visiblePages, meta }) => {
     return (
         <nav
           className='basis-[15%] shrink-0 flex items-center flex-column flex-wrap md:flex-row justify-between px-6 py-4 border-t border-gray-100'
@@ -22,7 +22,7 @@ export const NavigationButtons = ({ currentPage, totalPages, setPage, from, to, 
               <button
                 type='button'
                 disabled={!meta.hasPreviousPage}
-                onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                onClick={() => onPageChange((prev) => Math.max(prev - 1, 1))}
                 className='flex cursor-pointer items-center justify-center text-gray-600 bg-white box-border border border-gray-200 hover:bg-gray-50 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-50 font-medium rounded-l-lg text-sm px-3 h-9 focus:outline-none transition-colors duration-200'
               >
                 Anterior
@@ -43,7 +43,7 @@ export const NavigationButtons = ({ currentPage, totalPages, setPage, from, to, 
                   <button
                     type='button'
                     aria-current={item === currentPage ? 'page' : undefined}
-                    onClick={() => setPage(item)}
+                    onClick={() => onPageChange(item)}
                     className={`flex cursor-pointer items-center justify-center box-border border border-gray-200 font-medium text-sm w-9 h-9 focus:outline-none transition-colors duration-200 ${
                       item === currentPage
                         ? 'bg-blue-500 text-white shadow-sm'
@@ -60,7 +60,7 @@ export const NavigationButtons = ({ currentPage, totalPages, setPage, from, to, 
               <button
                 type='button'
                 disabled={!meta.hasNextPage}
-                onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+                onClick={() => onPageChange((prev) => Math.min(prev + 1, totalPages))}
                 className='flex cursor-pointer items-center justify-center text-gray-600 bg-white box-border border border-gray-200 hover:bg-gray-50 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-50 font-medium rounded-r-lg text-sm px-3 h-9 focus:outline-none transition-colors duration-200'
               >
                 Siguiente
