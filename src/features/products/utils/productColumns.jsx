@@ -48,4 +48,13 @@ export const productColumns = [
     field: "max_stock",
     className: "text-sm font-medium text-gray-700",
   },
+  {
+    key: 'is_active',
+    title: 'Estado',
+    width: 'w-1/6',
+    field: 'is_active',
+    className: "text-sm font-medium text-gray-700",
+    render: (product) =>
+      product.is_active ? 'Activo' : 'Eliminado',
+  },
 ];

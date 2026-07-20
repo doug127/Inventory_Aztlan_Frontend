@@ -21,6 +21,7 @@ export const DataTable = ({
   filters,
   setFilters,
   onEdit,
+  onDelete,
   searchValue,
   onSearchChange,
   searchPlaceholder = 'Buscar producto...',
@@ -88,6 +89,24 @@ export const DataTable = ({
     )
   }, [rows, resolvedSearchTerm, searchFields, isServerSearchEnabled]);
 
+  const visibleColumns = useMemo(() => {
+    const hasIsActive = rows.some(
+      (row) => Object.prototype.hasOwnProperty.call(row, 'is_active')
+    );
+
+    return columns.filter((column) => {
+    const isStatusColumn =
+      column.key === 'is_active' ||
+      column.field === 'is_active';
+
+    if (isStatusColumn && !hasIsActive) {
+      return false;
+    }
+
+    return true;
+  });
+  }, [columns, rows]);
+
   return (
     <div className='flex rounded-3xl border-gray-100 shadow-sm'>
       <div className='group/card flex h-full flex-col gap-6 overflow-hidden rounded-2xl bg-card py-6 text-sm text-card-foreground ring-1 ring-foreground/10 has-[>img:first-child]:pt-0 data-[size=sm]:gap-4 data-[size=sm]:py-4 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl'>
@@ -114,7 +133,7 @@ export const DataTable = ({
           </div>
 
           <Table
-            columns={columns}
+            columns={visibleColumns}
             loading={loading}
             hoveredRow={hoveredRow}
             setHoveredRow={setHoveredRow}
@@ -123,7 +142,9 @@ export const DataTable = ({
             getValue={getValue}
             actions={
               canManageData
-                ? (product) => <Action data={product} onEdit={() => onEdit(product)} />
+                ? (element) => <Action 
+                    data={element} onEdit={() => onEdit?.(element)} onDelete={() => onDelete?.(element)}
+                  />
                 : null
             }
           />

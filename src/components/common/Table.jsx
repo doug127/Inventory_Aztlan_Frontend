@@ -9,9 +9,10 @@ export const Table = ({
   tableMinHeight, 
   data,
   getValue,
-  actions
+  actions,
 }) => {
- 
+  
+  const totalColumns = columns.length + (actions ? 1 : 0);
   return (
     <div 
       className='basis-[70%] flex-1 min-h-0 overflow-y-auto overflow-x-auto md:overflow-x-hiden ' 
@@ -59,7 +60,7 @@ export const Table = ({
                 exit={{ opacity: 0 }}
                 className="h-10 border-b border-gray-50 transition-colors"
               >
-                <td colSpan={columns.length} className='px-6 py-12 text-center text-gray-400'>
+                <td colSpan={totalColumns} className='px-6 py-12 text-center text-gray-400'>
                   <Package className='w-12 h-12 mx-auto mb-4 opacity-50' />
                   <p className='text-sm'>Cargando productos...</p>
                 </td>
@@ -71,7 +72,7 @@ export const Table = ({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               >
-                <td colSpan={columns.length} className='px-6 py-12 text-center text-gray-400'>
+                <td colSpan={totalColumns} className='px-6 py-12 text-center text-gray-400'>
                   <svg
                     className='w-12 h-12 mx-auto mb-3 opacity-50'
                     fill='none'
@@ -89,17 +90,17 @@ export const Table = ({
                 </td>
               </motion.tr>
             ) : (
-              data.map((product, index) => (
+              data.map((elements, index) => (
                 <motion.tr
-                  key={product.id ?? product.code}
+                  key={elements.id ?? elements.code}
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -15 }}
                   transition={{ duration: 0.5, delay: index * 0.05 }}
-                  onMouseEnter={() => setHoveredRow(product.id ?? product.code)}
+                  onMouseEnter={() => setHoveredRow(elements.id ?? elements.code)}
                   onMouseLeave={() => setHoveredRow(null)}
                   className={`border-b border-gray-50 transition-colors duration-150 ${
-                    hoveredRow === (product.id ?? product.code)
+                    hoveredRow === (elements.id ?? elements.code)
                       ? 'bg-gray-300'
                       : index % 2 === 0
                         ? 'bg-white'
@@ -108,8 +109,8 @@ export const Table = ({
                 >
                   {columns.map((column) => {
                     const rawValue = column.render
-                      ? column.render(product)
-                      : getValue(product, column.field);
+                      ? column.render(elements)
+                      : getValue(elements, column.field);
                     const value = rawValue ?? "-";
 
                     return (
@@ -125,7 +126,7 @@ export const Table = ({
                 })}
                 {actions && (
                     <td className="w-32 px-6 text-center">
-                        {actions(product)}
+                        {actions(elements)}
                     </td>
                 )}
                 </motion.tr>

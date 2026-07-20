@@ -8,7 +8,7 @@ import { GridUnit } from '@/features/products/features/units/layouts/GridUnit'
 import { GridCategory } from '@/features/products/features/categories/layouts/GridCategory'
 import { DataTable } from '@/components/layouts/DataTable'
 import { productColumns } from './utils/productColumns.jsx'
-import { useProducts, useCreateProduct, useUpdateProduct } from './hooks/useProducts'
+import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from './hooks/useProducts'
 import {
   useBaseUnits,
   useAllUnits,
@@ -27,13 +27,14 @@ import { Plus } from 'lucide-react'
 export const ProductsPage = () => {
   const [categoryOpen, setCategoryOpen] = useState(false)
   const [productsPage, setProductsPage] = useState(1)
-  const [unitsPage, setUnitsPage] = useState(1)
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [productOpen, setProductOpen] = useState(false)
+  const [unitsPage, setUnitsPage] = useState(1)
   const [selectedUnit, setSelectedUnit] = useState(null)
   const [unitOpen, setUnitOpen] = useState(false)
   const [productsSearch, setProductsSearch] = useState('')
   const [unitsSearch, setUnitsSearch] = useState('')
+
   
   const [filters, setFilters] = useState({
     search: '',
@@ -67,37 +68,40 @@ export const ProductsPage = () => {
   
   const unitsAll = unitsResponse.data;
   
-  const createUnit = useCreateUnit()
-  const createCategory = useCreateCategory()
   const createProduct = useCreateProduct()
   const updateProduct = useUpdateProduct()
+  const deleteProduct = useDeleteProduct()
+  const createUnit = useCreateUnit()
   const updateUnit = useUpdateUnit()
+  const createCategory = useCreateCategory()
 
-  const handleCreateCategory = async (data) => {
-    await createCategory.mutateAsync(data)
-    setCategoryOpen(false)
-  }
-
+  
   // const openCreateProduct = () => {
   //   setSelectedProduct(null);
   //   setProductOpen(true);
   // };
   
-  const openEditProduct = (product) => {
-    setSelectedProduct(product);
-    setProductOpen(true);
-  };
-
+  
   const openCreateUnit = () => {
     setSelectedUnit(null);
     setUnitOpen(true)
   }
+
+  const openEditProduct = (product) => {
+    setSelectedProduct(product);
+    setProductOpen(true);
+  };
 
   const openEditUnit = (unit) => {
     setSelectedUnit(unit);
     setUnitOpen(true)
   }
 
+  const handleCreateCategory = async (data) => {
+    await createCategory.mutateAsync(data)
+    setCategoryOpen(false)
+  }
+  
   const handleSubmitProduct = async (data) => {
     if (selectedProduct) {
       await updateProduct.mutateAsync({
@@ -111,6 +115,16 @@ export const ProductsPage = () => {
     setProductOpen(false);
     setSelectedProduct(null);
   };
+
+  const handleDeleteProduct = async (product) => {
+    const confirmed = window.confirm(
+      `¿Deseas eliminar el producto "${product.name}"?`
+    )
+
+    if (!confirmed) return
+
+    deleteProduct.mutate(product.id)
+  }
 
   const handleSubmitUnit = async (data) => {
     if (selectedUnit) {
@@ -160,6 +174,7 @@ export const ProductsPage = () => {
           columns={productColumns}
           searchFields={["name"]}
           onEdit={openEditProduct}
+          onDelete={handleDeleteProduct}
           searchValue={productsSearch}
           onSearchChange={(value) => {
             setProductsSearch(value)
