@@ -2,7 +2,7 @@ export const unitColumns = [
   {
     key: "name",
     title: "Unidad",
-    width: "w-[28%] min-w-[220px]",
+    width: "w-[22%] min-w-[220px]",
     field: "name",
     className: "text-sm font-medium text-gray-900",
   },
@@ -30,5 +30,13 @@ export const unitColumns = [
     width: "w-[16%] min-w-[140px]",
     field: "conversion_factor",
     className: "text-sm text-gray-700",
+  },
+  {
+    key: "is_active",
+    title: "Estado",
+    width: "w-[16%] min-w-[140px]",
+    field: "conversion_factor",
+    className: "text-sm text-gray-500",
+    render: (unit) => unit.is_active ? 'Activo' : 'Eliminado',
   },
 ];
