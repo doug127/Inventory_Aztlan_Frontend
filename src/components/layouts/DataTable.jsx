@@ -108,9 +108,9 @@ export const DataTable = ({
   }, [columns, rows]);
 
   return (
-    <div className='flex rounded-3xl border-gray-100 shadow-sm'>
-      <div className='group/card flex h-full flex-col gap-6 overflow-hidden rounded-2xl bg-card py-6 text-sm text-card-foreground ring-1 ring-foreground/10 has-[>img:first-child]:pt-0 data-[size=sm]:gap-4 data-[size=sm]:py-4 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl'>
-        <div className='flex h-full min-h-0 flex-col p-0 px-6 group-data-[size=sm]/card:px-4'>
+    <div className='flex w-full min-w-0 rounded-3xl border-gray-100 shadow-sm'>
+      <div className='group/card w-full min-w-0 flex h-full flex-col gap-6 overflow-hidden rounded-2xl bg-card py-6 text-sm text-card-foreground ring-1 ring-foreground/10 has-[>img:first-child]:pt-0 data-[size=sm]:gap-4 data-[size=sm]:py-4 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl'>
+        <div className='flex w-full min-w-0 h-full min-h-0 flex-col p-0 px-6 group-data-[size=sm]/card:px-4'>
           <div className='basis-[15%] shrink-0 px-6 py-4 border-b border-gray-100'>
             <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
               <div className='flex items-center gap-3'>

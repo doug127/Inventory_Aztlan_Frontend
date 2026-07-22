@@ -11,17 +11,18 @@ export const Table = ({
   getValue,
   actions,
 }) => {
-  
+    
   const totalColumns = columns.length + (actions ? 1 : 0);
+  const classAction = 'w-[8%] xl:min-w-0 px-6 text-center'
   return (
     <div 
-      className='basis-[70%] flex-1 min-h-0 overflow-y-auto overflow-x-auto md:overflow-x-hiden ' 
+      className='basis-[70%] flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-auto' 
       style={{
         minHeight: tableMinHeight,
         maxHeight: tableMinHeight,
       }}
     >
-      <table className='w-full table-fixed min-w-[900px] lg:min-w-full'>
+      <table className='w-full min-w-[1440px] min-[1440px]:min-w-full table-fixed '>
         <thead className="sticky top-0 z-10 ">
           <tr className="border-b border-gray-100">
             {columns.map((column, index) => {
@@ -43,7 +44,7 @@ export const Table = ({
             })}
             {actions && (
                 <th
-                    className="rounded-tr-md w-32 bg-blue-500 px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-white"
+                className={`rounded-tr-md ${classAction} bg-blue-500 py-3 text-xs font-medium uppercase tracking-wider text-white`}
                 >
                     Acciones
                 </th>
@@ -125,7 +126,7 @@ export const Table = ({
                     );
                 })}
                 {actions && (
-                    <td className="w-32 px-6 text-center">
+                  <td className={classAction}>
                         {actions(elements)}
                     </td>
                 )}
