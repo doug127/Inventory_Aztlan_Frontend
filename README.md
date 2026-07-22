@@ -44,10 +44,10 @@
 
 ## Fase 3 · Maestros (Core Data)
 > En orden de dependencia: Units → Categories → Products → Warehouses
-- [ ] 3.1 Unidades (Units)
+- [x] 3.1 Unidades (Units)
       - CRUD completo
       - Selector de unidad base + factor de conversión
-- [ ] 3.2 Categorías de Productos
+- [x] 3.2 Categorías de Productos
       - CRUD con soporte de jerarquía (parent_id)
       - Componente de árbol o selector en cascada
 - [ ] 3.3 Productos

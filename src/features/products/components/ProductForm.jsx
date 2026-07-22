@@ -1,374 +1,281 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command'
-import { ChevronsUpDown, Check } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { Button } from '@/components/common/Button'
+import { ButtonCloseModal } from '@/components/common/ButtonCloseModal'
+import { Input } from '@/components/common/Input'
+import { Select } from '@/components/common/Select'
 import { productSchema } from '../schemas/productSchema'
+import { CategoryTreeSelect } from '../features/categories/components/CategoryTreeSelect'
+import { MessageError } from '@/components/common/MessageError'
 
 export const ProductForm = ({
   open,
   onOpenChange,
   onSubmit,
   loading,
+  product,
   units = [],
-  categories = [],
+  categoriesTree = [],
 }) => {
-
-  const [unitOpen, setUnitOpen] =
-    useState(false)
-
-  const [categoryOpen, setCategoryOpen] =
-    useState(false)
-
   const {
     register,
     handleSubmit,
-    setValue,
-    watch,
     reset,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(productSchema),
-
     defaultValues: {
       name: '',
       code: '',
       product_category_id: null,
       unit_id: null,
-      content_quantity: 1,
-      min_stock: 0,
-      max_stock: 0,
-    },
+      content_quantity: undefined,
+      min_stock: undefined,
+      max_stock: undefined,
+    }
   })
 
+  const categoryId = watch("product_category_id");
+
   useEffect(() => {
-    if (open) {
+    if (!open) return
+
+    if (product){
+      reset({
+        name: product.name,
+        code: product.code,
+        product_category_id: product.category_product?.id ?? null,
+        unit_id: product.unit?.id ?? null,
+        content_quantity: product.content_quantity,
+        min_stock: product.min_stock,
+        max_stock: product.max_stock,
+      });
+    } else {
       reset({
         name: '',
         code: '',
         product_category_id: null,
         unit_id: null,
-        content_quantity: 1,
-        min_stock: 0,
-        max_stock: 0,
-      })
+        content_quantity: '',
+        min_stock: '',
+        max_stock: '',
+      });
     }
+  }, [product, open]);
+  
+  // const submitForm = handleSubmit(async (data) => {
+  //   console.log(data)
+  //   await onSubmit(data)
+  // })
+  
+  const submitForm = handleSubmit(
+    async (data) => {
+      console.log("SUBMIT", data);
+      await onSubmit(data);
+    },
+    (errors) => {
+      console.log("ERRORES", errors);
+    }
+  );
 
-  }, [open, reset])
+  const findCategoryById = (tree, id) => {
+    for (const node of tree) {
+
+      if (node.id === id) return node;
+
+      if (node.children?.length) {
+
+        const result = findCategoryById(
+          node.children,
+          id
+        );
+
+        if (result) return result;
+      }
+    }
+    return null;
+  };
+
+  const selectedCategory = useMemo(() => {
+    return findCategoryById(categoriesTree, categoryId);
+  }, [categoriesTree, categoryId]);
+  
+  if (!open) return null
+
+  const closeModal = () => {
+    reset();
+    onOpenChange(false)
+  };
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={onOpenChange}
+    <div
+      className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-6 backdrop-blur-[2px]'
+      role='dialog'
+      aria-modal='true'
+      aria-labelledby='product-modal-title'
     >
-      <DialogContent className='sm:max-w-2xl'>
+      <div className='relative w-full max-w-2xl max-h-full'>
+        <div className='relative w-full rounded-2xl bg-white border border-gray-200 shadow-2xl overflor-hidden'>
+          <div className='flex rounded-2xl items-center justify-between border-b border-gray-100 bg-gray-50 px-6 py-5'>
+            <div>
+              <h3 id='product-modal-title' className='text-xl font-semiblod text-gray-900'>
+                Nuevo producto
+              </h3>
+              <p className='mt-1 text-sm text-gray-500'>
+                Completa los datos principales del producto.
+              </p>
+            </div>
 
-        <DialogHeader>
-          <DialogTitle>
-            Nuevo producto
-          </DialogTitle>
-        </DialogHeader>
-
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className='space-y-4'
-        >
-          {/* NAME */}
-
-          <div className='space-y-1.5'>
-            <Label>
-              Nombre
-            </Label>
-
-            <Input
-              {...register('name')}
+            {/* Botón de cerrar modal */}
+            <ButtonCloseModal
+              onClick={closeModal}
             />
-
-            {errors.name && (
-              <p className='text-xs text-destructive'>
-                {errors.name.message}
-              </p>
-            )}
-
-          </div>
-          {/* CODE */}
-
-          <div className='space-y-1.5'>
-            <Label>
-              Código
-            </Label>
-
-            <Input {...register('code')}/>
-
-            {errors.code && (
-              <p className='text-xs text-destructive'>
-                {errors.code.message}
-              </p>
-            )}
-
           </div>
 
-          {/* CATEGORY */}
-
-          <div className='space-y-1.5'>
-            <Label>
-              Categoría
-            </Label>
-
-            <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
-              <PopoverTrigger className={cn(
-                'flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-accent cursor-pointer',
-                errors.product_category_id && 'border-destructive'
-              )}>
-    
-                  {
-                    watch('product_category_id')
-                      ? categories.find(
-                          (c) =>
-                            c.id ===
-                            watch('product_category_id')
-                        )?.name
-                      : 'Seleccionar categoría'
-                  }
-                  <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
-                </PopoverTrigger>
-
-              <PopoverContent className='w-[400px] p-0'>
-                <Command>
-                  <CommandInput placeholder='Buscar categoría...' />
-                  <CommandList>
-                    <CommandEmpty>
-                      No se encontraron categorías
-                    </CommandEmpty>
-                    <CommandGroup>
-                      {categories.map((category) => (
-                        <CommandItem
-                          key={category.id}
-                          value={category.name}
-                          onSelect={() => {
-                            setValue(
-                              'product_category_id',
-                              category.id,
-                              {
-                                shouldValidate: true,
-                                shouldDirty: true,
-                              }
-                            )
-                            setCategoryOpen(false)
-                          }}
-                        >
-
-                          <Check
-                            className={cn(
-                              'mr-2 h-4 w-4',
-                              watch('product_category_id') === category.id
-                                ? 'opacity-100'
-                                : 'opacity-0'
-                            )}
-                          />
-
-                          {category.name}
-
-                        </CommandItem>
-
-                      ))}
-
-                    </CommandGroup>
-
-                  </CommandList>
-
-                </Command>
-
-              </PopoverContent>
-
-            </Popover>
-
-          </div>
-
-          {/* UNIT */}
-
-          <div className='space-y-1.5'>
-
-            <Label>
-              Unidad
-            </Label>
-
-            <Popover
-              open={unitOpen}
-              onOpenChange={setUnitOpen}
-            >
-
-              <PopoverTrigger className={cn(
-                'flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-accent cursor-pointer',
-                errors.unit_id && 'border-destructive'
-              )}>
-
-                
-                  {
-                    watch('unit_id')
-                      ? units.find(
-                          (u) =>
-                            u.id ===
-                            watch('unit_id')
-                        )?.name
-                      : 'Seleccionar unidad'
-                  }
-
-                  <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
-
-                </PopoverTrigger>
-
-              <PopoverContent className='w-[400px] p-0'>
-
-                <Command>
-
-                  <CommandInput placeholder='Buscar unidad...' />
-
-                  <CommandList>
-
-                    <CommandEmpty>
-                      No se encontraron unidades
-                    </CommandEmpty>
-
-                    <CommandGroup>
-
-                      {units.map((unit) => (
-
-                        <CommandItem
-                          key={unit.id}
-                          value={unit.name}
-                          onSelect={() => {
-
-                            setValue(
-                              'unit_id',
-                              unit.id,
-                              {
-                                shouldValidate: true,
-                                shouldDirty: true,
-                              }
-                            )
-
-                            setUnitOpen(false)
-                          }}
-                        >
-
-                          <Check
-                            className={cn(
-                              'mr-2 h-4 w-4',
-                              watch('unit_id') === unit.id
-                                ? 'opacity-100'
-                                : 'opacity-0'
-                            )}
-                          />
-
-                          {unit.name}
-
-                        </CommandItem>
-
-                      ))}
-
-                    </CommandGroup>
-
-                  </CommandList>
-
-                </Command>
-
-              </PopoverContent>
-
-            </Popover>
-
-          </div>
-
-          {/* NUMBERS */}
-
-          <div className='grid grid-cols-3 gap-4'>
-
-            <div className='space-y-1.5'>
-
-              <Label>
-                Contenido
-              </Label>
-
-              <Input
-                type='number'
-                {...register(
-                  'content_quantity',
-                  {
-                    valueAsNumber: true,
-                  }
+          <form onSubmit={submitForm} className='space-y-5 p-6'>
+            <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+              {/* Nombre */}
+              <div>
+                <Input
+                  label='Nombre'
+                  {...register('name')}
+                />
+                {errors.name && (
+                  <MessageError
+                    message={errors.name.message}
+                  />
                 )}
-              />
+              </div>
 
+              {/* Codigo */} 
+              <div>
+                <Input
+                  label='Codigo'
+                  {...register('code')}
+                />
+                {errors.code && (
+                  <MessageError
+                    message={errors.code.message}
+                  />
+                )}
+              </div>
             </div>
 
-            <div className='space-y-1.5'>
+            {/* Categoria y Unidad */}
+            <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+              <div>
+                  <input
+                    type="hidden"
+                    {...register("product_category_id", {
+                      valueAsNumber: true,
+                    })}
+                  />
+                  
+                  <CategoryTreeSelect
+                    tree={categoriesTree}
+                    value={
+                      selectedCategory
+                      // categoryId != null ? findCategoryById(categoriesTree, categoryId) : initialCategory
+                    }
+                    onChange={(category)=>{
+                      setValue(
+                        "product_category_id",
+                        category.id,
+                        {
+                          shouldValidate:true,
+                          shouldDirty:true
+                        }
+                      );
 
-              <Label>
-                Stock mínimo
-              </Label>
+                    }}
+                  />
+                <MessageError message={errors.product_category_id?.message} />
+              </div>
 
-              <Input
-                type='number'
-                {...register(
-                  'min_stock',
-                  {
-                    valueAsNumber: true,
-                  }
-                )}
-              />
-
+              <div>
+                <Select
+                  options={units.map((unit) => ({
+                    value: unit.id,
+                    label: unit.name,
+                  }))}
+                  {...register('unit_id', { valueAsNumber: true })}
+                  placeholder='Selecciona una unidad'
+                />
+                <MessageError message={errors.unit_id?.message} />
+              </div>
             </div>
 
-            <div className='space-y-1.5'>
-
-              <Label>
-                Stock máximo
-              </Label>
-
-              <Input
-                type='number'
-                {...register(
-                  'max_stock',
-                  {
-                    valueAsNumber: true,
-                  }
+            {/* Contenido, Stock Minimo y Stock Maximo */}
+            <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
+              <div>
+                <Input
+                  label='Contenido'
+                  type='number'
+                  min='0'
+                  step='1'
+                  {...register('content_quantity', { valueAsNumber: true })}
+                />
+                {errors.content_quantity && (
+                  <MessageError
+                    message={errors.content_quantity.message}
+                  />
                 )}
-              />
+              </div>
 
+              <div>
+                <Input
+                  label='Stock minimo'
+                  type='number'
+                  min='0'
+                  step='1'
+                  {...register('min_stock', { valueAsNumber: true })}
+                />
+                {errors.min_stock && (
+                  <MessageError
+                    message={errors.min_stock.message}
+                  />
+                )}
+              </div>
+
+              <div>
+                <Input
+                  label='Stock maximo'
+                  type='number'
+                  min='0'
+                  step='1'
+                  {...register('max_stock', { valueAsNumber: true })}
+                />
+                {errors.max_stock && (
+                  <MessageError
+                    message={errors.max_stock.message}
+                  />
+                )}
+              </div>
             </div>
 
-          </div>
+            <div className='flex flex-col-reverse gap-3 border-t border-gray-100 px-6 py-4 sm:flex-row sm:justify-end'>
+              <Button
+                onClick={closeModal}
+                variant='neutral'
+              >
+                Cancelar
+              </Button>
 
-          {/* ACTIONS */}
-
-          <div className='flex justify-end pt-2'>
-
-            <Button
-              type='submit'
-              disabled={loading}
-            >
-              Crear producto
-            </Button>
-
-          </div>
-
-        </form>
-
-      </DialogContent>
-
-    </Dialog>
+              <Button
+                type='submit'
+                variant='primary'
+                disabled={loading}
+                className='w-full sm:w-auto bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium'
+              >
+                {loading ? 'Creando...' : 'Crear producto'}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   )
 }

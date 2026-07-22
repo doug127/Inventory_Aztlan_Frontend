@@ -22,3 +22,9 @@ export const REASONS_BY_TYPE = {
   TRANSFER: ['TRASLADO'],
   ADJUST:   ['AJUSTE'],
 }
+
+export const TABLE = {
+  ROW_HEIGHT: 40,
+  HEADER_HEIGHT: 44,
+  MIN_ROWS: 5,
+}

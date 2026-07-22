@@ -1,41 +1,19 @@
-// CategoryForm.jsx
-
 import { useState, useEffect } from 'react'
-import { useForm, Controller } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { categorySchema } from '../schemas/categorySchema'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Check, ChevronsUpDown } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command'
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetFooter,
-} from '@/components/ui/sheet'
+import { ButtonCloseModal } from '@/components/common/ButtonCloseModal'
+import { MessageError } from '@/components/common/MessageError'
+import { Input } from '@/components/common/Input'
+import { Button } from '@/components/common/button'
+import { CategoryTreeSelect } from './CategoryTreeSelect'
+
 
 export const CategoryForm = ({
   open,
   onOpenChange,
   category = null,
-  categories = [],
+  categoriesTree = [],
   onSubmit,
   loading,
   serverError,
@@ -43,229 +21,226 @@ export const CategoryForm = ({
 
   const isEditing = !!category
   const [categoryOpen, setCategoryOpen] = useState(false)
-
+  const [isBaseCategory, setIsBaseCategory] = useState(true);
+  
   const {
     register,
     handleSubmit,
     setValue,
     watch,
     reset,
-    control,
+    // control,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(categorySchema),
-
-    defaultValues: isEditing
-      ? {
-          name: category.name,
-          description: category.description || '',
-          parent_id: category.parent_id ?? null,
-        }
-      : {
-          name: '',
-          description: '',
-          parent_id: null,
-        },
+    
+    defaultValues: {
+      name: '',
+      description: '',
+      parent_id: null,
+    },
   })
+  
+  const selectedParentId = watch("parent_id");
 
   useEffect(() => {
-    if (open) {
+    if (!open) return;
+    
+    reset({
+      name: category?.name ?? "",
+      description: category?.description ?? "",
+      parent_id: category?.parent_id ?? null,
+    });
 
-      const values = isEditing
-        ? {
-            name: category.name,
-            description: category.description || '',
-            parent_id: category.parent_id ?? null,
-          }
-        : {
-            name: '',
-            description: '',
-            parent_id: null,
-          }
+    setIsBaseCategory(category?.parent_id == null);
+  }, [open, category, reset])
 
-      reset(values)
+  const findCategoryById = (tree, id) => {
+    for (const node of tree) {
+
+      if (node.id === id) return node;
+
+      if (node.children?.length) {
+
+        const result = findCategoryById(node.children, id);
+
+        if (result) return result;
+      }
     }
-  }, [open, category, reset, isEditing])
 
-  const handleFormSubmit = (data) => {
-    console.log('Form data raw:', data)
-    const payload = {
-      name: data.name.trim(),
-      description: data.description?.trim() || undefined,
-      parent_id: data.parent_id ?? null,
-    }
-    onSubmit(payload)
+    return null;
+  };
+
+
+  const submitForm = handleSubmit(async (data) => {
+    await onSubmit(data);
+
+    closeModal();
+  })
+
+  const closeModal = () => {
+    reset()
+    onOpenChange(false)
   }
 
+  if (!open) return null;
+
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className='sm:max-w-md'>
-
-        <SheetHeader>
-          <SheetTitle>
-            {isEditing
-              ? 'Editar categoría'
-              : 'Nueva categoría'}
-          </SheetTitle>
-        </SheetHeader>
-
-        <form
-          onSubmit={handleSubmit(handleFormSubmit)}
-          className='space-y-4 py-4'
-        >
-
-          {/* NAME */}
-
-          <div className='space-y-1.5'>
-            <Label>Nombre</Label>
-
-            <Input
-              placeholder='Herramientas'
-              {...register('name')}
-              className={
-                errors.name
-                  ? 'border-destructive'
-                  : ''
-              }
-            />
-
-            {errors.name && (
-              <p className='text-xs text-destructive'>
-                {errors.name.message}
-              </p>
-            )}
-          </div>
-
-          {/* DESCRIPTION */}
-
-          <div className='space-y-1.5'>
-            <Label>Descripción</Label>
-
-            <Textarea
-              placeholder='Descripción de la categoría'
-              {...register('description')}
-              className={
-                errors.description
-                  ? 'border-destructive'
-                  : ''
-              }
-            />
-
-            {errors.description && (
-              <p className='text-xs text-destructive'>
-                {errors.description.message}
-              </p>
-            )}
-          </div>
-
-          {/* PARENT CATEGORY */}
-
-         <div className='space-y-1.5'>
-            <Label>Categoría padre</Label>
-
-            <Controller
-              name='parent_id'
-              control={control}
-              render={({ field }) => (
-                <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
-                  <PopoverTrigger>
-                    <div
-                      role='combobox'
-                      className={cn(
-                        'flex h-9 w-full items-center justify-between rounded-4xl border border-input bg-input/30 px-3 py-2 text-sm',
-                        errors.parent_id && 'border-destructive'
-                      )}
-                    >
-                      {field.value === null
-                        ? 'Sin categoría padre'
-                        : categories.find((cat) => cat.id === field.value)?.name ?? 'Sin categoría padre'
-                      }
-                      <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
-                    </div>
-                  </PopoverTrigger>
-
-                  <PopoverContent className='w-[var(--radix-popover-trigger-width)] p-0' align='start'>
-                    <Command>
-                      <CommandInput placeholder='Buscar categoría...' />
-                      <CommandList>
-                        <CommandEmpty>No se encontraron categorías</CommandEmpty>
-                        <CommandGroup>
-
-                          <CommandItem
-                            value='Sin categoría padre'
-                            onSelect={() => {
-                              field.onChange(null)
-                              setCategoryOpen(false)
-                            }}
-                          >
-                            <Check className={cn('mr-2 h-4 w-4', field.value === null ? 'opacity-100' : 'opacity-0')} />
-                            Sin categoría padre
-                          </CommandItem>
-
-                          {categories.map((cat) => {
-                            if (category?.id === cat.id) return null
-                            return (
-                              <CommandItem
-                                key={cat.id}
-                                value={cat.name}
-                                onSelect={() => {
-                                  field.onChange(cat.id)
-                                  setCategoryOpen(false)
-                                }}
-                              >
-                                <Check className={cn('mr-2 h-4 w-4', field.value === cat.id ? 'opacity-100' : 'opacity-0')} />
-                                {cat.name}
-                              </CommandItem>
-                            )
-                          })}
-
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-              )}
-            />
-
-            {errors.parent_id && (
-              <p className='text-xs text-destructive'>{errors.parent_id.message}</p>
-            )}
-          </div>
-
-          {/* SERVER ERROR */}
-
-          {serverError && (
-            <div className='rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive'>
-              {serverError}
+    <div
+      className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-6 backdrop-blur-[2px]'
+      role='dialog'
+      aria-modal='true'
+      aria-labelledby='category-modal-title'
+    >
+      <div className='relative w-full max-w-lg max-h-full'>
+         <div className='relative w-full rounded-2xl bg-white border border-gray-200 shadow-2xl overflor-hidden'>
+            <div className='flex rounded-2xl items-center justify-between border-b border-gray-100 bg-gray-50 px-6 py-5'>
+              <div>
+                <h3 id='product-modal-title' className='text-xl font-semiblod text-gray-900'>
+                  Nuevo Categoría
+                </h3>
+                <p className='mt-1 text-sm text-gray-500'>
+                  Completa los datos principales de la categoría.
+                </p>
+              </div>
+  
+              {/* Botón de cerrar modal */}
+              <ButtonCloseModal
+                onClick={closeModal}
+              />
             </div>
-          )}
 
-          <SheetFooter className='pt-4'>
-
-            <Button
-              type='button'
-              variant='outline'
-              onClick={() => onOpenChange(false)}
+            <form
+              onSubmit={submitForm}
+              className='space-y-5 p-6'
             >
-              Cancelar
-            </Button>
 
-            <Button
-              type='submit'
-              disabled={loading}
-            >
-              {loading
-                ? 'Guardando...'
-                : isEditing
-                  ? 'Guardar cambios'
-                  : 'Crear categoría'}
-            </Button>
+              {/* NAME */}
 
-          </SheetFooter>
+              <div className='grid grid-cols-1 gap-4'>
+                <div>
+                  <Input
+                    label='Nombre'
+                    {...register('name')}
+                  />
+                  {errors.name && (
+                    <MessageError message={errors.name.message} />
+                  )}
+                </div>
+              </div>
 
-        </form>
+              {/* DESCRIPTION */}
 
-      </SheetContent>
-    </Sheet>
+              <div className='grid grid-cols-1 gap-4'>
+                
+                <Input
+                  label='Descripción'
+                  type='textarea'
+                  {...register('description')}
+                />
+                {errors.description && (
+                  <MessageError message={errors.description.message} />
+                )}
+              </div>
+
+              {/* PARENT CATEGORY */}
+
+              <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                  <input
+                    id="isBaseCategory"
+                    type="checkbox"
+                    checked={isBaseCategory}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+
+                      setIsBaseCategory(checked);
+
+                      if (checked) {
+                        setValue("parent_id", null, {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
+                      }
+                    }}
+                    className="h-4 w-4 rounded border-gray-300"
+                  />
+
+                  <label
+                    htmlFor="isBaseCategory"
+                    className="text-sm text-gray-700"
+                  >
+                    Categoría base
+                  </label>
+                </div>
+                  <input
+                    type="hidden"
+                    {...register("parent_id", {
+                      setValueAs: (value) =>
+                        value === "" || value == null
+                          ? null
+                          : Number(value),
+                    })}
+                  />
+
+                  <CategoryTreeSelect
+                    disabled={isBaseCategory}
+                    tree={categoriesTree}
+                    value={findCategoryById(
+                      categoriesTree,
+                      selectedParentId
+                    )}
+                    onChange={(categorySelected) => {
+                      setValue(
+                        "parent_id",
+                        categorySelected?.id ?? null,
+                        {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        }
+                      );
+                    }}
+                  />
+
+                  {errors.parent_id && (
+                    <MessageError
+                      message={errors.parent_id.message}
+                    />
+                  )}
+              </div>
+
+              {/* SERVER ERROR */}
+
+              {serverError && (
+                <div className='rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive'>
+                  {serverError}
+                </div>
+              )}
+
+              <div className='flex flex-col-reverse gap-3 px-2 py-4 sm:flex-row sm:justify-end'>
+                <Button
+                  type='button'
+                  variant='neutral'
+                  onClick={() => onOpenChange(false)}
+                >
+                  Cancelar
+                </Button>
+
+                  <Button
+                    type='submit'
+                    disabled={loading}
+                  >
+                    {loading
+                      ? 'Guardando...'
+                      : isEditing
+                        ? 'Guardar cambios'
+                        : 'Crear categoría'}
+                  </Button>
+              </div>
+            </form>
+
+        </div>
+      </div>
+    </div>
   )
 }

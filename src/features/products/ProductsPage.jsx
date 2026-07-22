@@ -1,37 +1,41 @@
 import { useState } from 'react'
+import { motion } from 'framer-motion'
 import { PageHeader } from '@/components/common/PageHeader'
 import { ProductForm } from './components/ProductForm'
 import { UnitForm } from '@/features/products/features/units/components/UnitForm'
 import { CategoryForm } from '@/features/products/features/categories/components/CategoryForm'
-import { GridCategoryUnit } from '@/features/products/components/GridCategoryUnit'
-import { ProductsTable } from '@/features/products/components/ProductsTable'
-import { useCreateProduct } from './hooks/useProducts'
+import { GridUnit } from '@/features/products/features/units/layouts/GridUnit'
+import { GridCategory } from '@/features/products/features/categories/layouts/GridCategory'
+import { DataTable } from '@/components/layouts/DataTable'
+import { productColumns } from './utils/productColumns.jsx'
+import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from './hooks/useProducts'
 import {
   useBaseUnits,
   useAllUnits,
   useCreateUnit,
+  useUpdateUnit
 } from '@/features/products/features/units/hooks/useUnits'
 import {
   useCategories,
   useParentCategories,
   useCreateCategory,
 } from '@/features/products/features/categories/hooks/useCategories'
-import {
-  useProducts,
-} from './hooks/useProducts'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/common/Button'
 import { Plus } from 'lucide-react'
 
+
 export const ProductsPage = () => {
-
-  const [unitOpen, setUnitOpen] = useState(false)
-
   const [categoryOpen, setCategoryOpen] = useState(false)
-
+  const [productsPage, setProductsPage] = useState(1)
+  const [selectedProduct, setSelectedProduct] = useState(null)
   const [productOpen, setProductOpen] = useState(false)
+  const [unitsPage, setUnitsPage] = useState(1)
+  const [selectedUnit, setSelectedUnit] = useState(null)
+  const [unitOpen, setUnitOpen] = useState(false)
+  const [productsSearch, setProductsSearch] = useState('')
+  const [unitsSearch, setUnitsSearch] = useState('')
 
-  const [page, setPage] = useState(1)
-
+  
   const [filters, setFilters] = useState({
     search: '',
     unit: '',
@@ -40,125 +44,210 @@ export const ProductsPage = () => {
 
   const limit = 5
 
-  // UNITS
-  const { data: units = [] } =
-    useBaseUnits()
-
-  // const { data: allUnits = [] } =
-  //   useAllUnits()
-
-  // CATEGORY TREE
-  const { data: categoriesTree = [] } =
-    useParentCategories()
-
-  // FLAT CATEGORIES
-  const { data: categories = [] } =
-    useCategories()
-
-  // PRODUCTS
+  const { data: units = [] } = useBaseUnits()
+  const { 
+    data: unitsResponse = {},
+    isLoading: unitsLoading
+  } = useAllUnits({
+    page: unitsPage, 
+    limit,
+    name: unitsSearch,
+  })
+  const { data: categoriesTree = [] } = useParentCategories()
+  const { data: categories = [] } = useCategories()
   const {
     data: products = [],
     isLoading: productsLoading,
   } = useProducts({ 
-    page, 
+    page: productsPage, 
     limit,
-    name: filters.search,
+    name: productsSearch,
     unit: filters.unit,
     category_product: filters.category, 
   })
-
-    // MUTATIONS
+  
+  const unitsAll = unitsResponse.data;
+  
+  const createProduct = useCreateProduct()
+  const updateProduct = useUpdateProduct()
+  const deleteProduct = useDeleteProduct()
   const createUnit = useCreateUnit()
-
+  const updateUnit = useUpdateUnit()
   const createCategory = useCreateCategory()
 
-  const createProduct = useCreateProduct()
-
-  const handleCreateProduct = async (data) => {
-    console.log(data)
-    await createProduct.mutateAsync(data)
-    setProductOpen(false)
+  
+  // const openCreateProduct = () => {
+  //   setSelectedProduct(null);
+  //   setProductOpen(true);
+  // };
+  
+  
+  const openCreateUnit = () => {
+    setSelectedUnit(null);
+    setUnitOpen(true)
   }
 
-  // HANDLERS
-  const handleCreateUnit = async (data) => {
-    await createUnit.mutateAsync(data)
-    setUnitOpen(false)
+  const openEditProduct = (product) => {
+    setSelectedProduct(product);
+    setProductOpen(true);
+  };
+
+  const openEditUnit = (unit) => {
+    setSelectedUnit(unit);
+    setUnitOpen(true)
   }
 
   const handleCreateCategory = async (data) => {
     await createCategory.mutateAsync(data)
     setCategoryOpen(false)
   }
+  
+  const handleSubmitProduct = async (data) => {
+    if (selectedProduct) {
+      await updateProduct.mutateAsync({
+        id: selectedProduct.id,
+        data,
+      });
+    } else {
+      await createProduct.mutateAsync(data);
+    }
 
+    setProductOpen(false);
+    setSelectedProduct(null);
+  };
+
+  const handleDeleteProduct = async (product) => {
+    const confirmed = window.confirm(
+      `¿Deseas eliminar el producto "${product.name}"?`
+    )
+
+    if (!confirmed) return
+
+    deleteProduct.mutate(product.id)
+  }
+
+  const handleSubmitUnit = async (data) => {
+    if (selectedUnit) {
+      await updateUnit.mutateAsync({
+        id: selectedUnit.id,
+        data
+      });
+    } else {
+      await createUnit.mutateAsync(data);
+    }
+  }
+  
   return (
     <div className='space-y-6'>
-
       <PageHeader
         title='Productos'
-        description='Gestión de productos, categorías y unidades'
+        description='Gestion de productos, categorias y unidades'
+        actions={
+          <div className='flex items-bottom gap-2'>
+            <Button
+              onClick={() =>{ 
+                setSelectedProduct(null)
+                setProductOpen(true)
+              }}
+              className='text-sm'
+            >
+              <Plus className='mr-2 h-4 w-4' /> Nuevo Producto
+            </Button>
+          </div>
+        }
+        actionsPosition='center'
       />
-      <Button
-        onClick={() => setProductOpen(true)}
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className='w-full'
       >
-        <Plus className='h-4 w-4 mr-2' />
-        Nuevo producto
-      </Button>
+        <DataTable
+          title='Productos'
+          data={products}
+          loading={productsLoading}
+          page={productsPage}
+          onPageChange={setProductsPage}
+          limit={limit}
+          columns={productColumns}
+          searchFields={["name"]}
+          onEdit={openEditProduct}
+          onDelete={handleDeleteProduct}
+          searchValue={productsSearch}
+          onSearchChange={(value) => {
+            setProductsSearch(value)
+            setProductsPage(1)
+          }}
+          searchPlaceholder='Buscar producto...'
+        />
+      </motion.div>
+
+      <div className='grid grid-cols-1 lg:grid-cols-[0.8fr_1.5fr] gap-6'>
+
+        {/* CATEGORIES */}
+        <GridCategory
+          setCategoryOpen={setCategoryOpen}
+          categoriesTree={categoriesTree}
+        />
+
+        {/* UNITS */}
+        <GridUnit
+          onCreate={openCreateUnit}
+          page={unitsPage}
+          setPage={setUnitsPage}
+          limit={limit}
+          units={unitsResponse}
+          loading={unitsLoading}
+          onEdit={openEditUnit}
+          searchValue={unitsSearch}
+          onSearchChange={(value) => {
+            setUnitsSearch(value)
+            setUnitsPage(1)
+          }}
+          searchPlaceholder='Buscar unidad...'
+        />
+      </div>
+
       <ProductForm
         open={productOpen}
         onOpenChange={setProductOpen}
-
-        units={units}
-
-        categories={categories}
-
-        onSubmit={handleCreateProduct}
-
-        loading={createProduct.isPending}
-      />
-
-      {/* PRODUCTS TABLE */}
-      <ProductsTable
-        products={products}
-        loading={productsLoading}
-
-        page={page}
-        setPage={setPage}
-        
-        limit={limit}
-        filters={filters}
-        setFilters={setFilters}
-
-        units={units}
-        categories={categories}
-      />
-
-      {/* GRID SUPERIOR */}
-      <GridCategoryUnit
-        setUnitOpen={setUnitOpen}
-        setCategoryOpen={setCategoryOpen}
+        product={selectedProduct}
+        units={unitsAll}
         categoriesTree={categoriesTree}
-        units={units}
+        onSubmit={handleSubmitProduct}
+        loading={
+          selectedProduct
+            ? updateProduct.isPending
+            : createProduct.isPending
+        }
       />
 
-      {/* UNIT FORM */}
-      <UnitForm
-        open={unitOpen}
-        onOpenChange={setUnitOpen}
-        units={units}
-        onSubmit={handleCreateUnit}
-        loading={createUnit.isPending}
-      />
-
-      {/* CATEGORY FORM */}
       <CategoryForm
         open={categoryOpen}
         onOpenChange={setCategoryOpen}
-        categories={categories}
+        category={categories}
+        categoriesTree={categoriesTree}
         onSubmit={handleCreateCategory}
         loading={createCategory.isPending}
+      />
+      <UnitForm
+        open={unitOpen}
+        onOpenChange={setUnitOpen}
+        unit={selectedUnit}
+        units={units}
+        onSubmit={handleSubmitUnit}
+        loading={
+          selectedUnit
+            ? updateUnit.isPending
+            : createUnit.isPending
+        }
       />
 
     </div>
   )
 }
+
+
+

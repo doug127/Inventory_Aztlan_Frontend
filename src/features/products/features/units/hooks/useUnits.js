@@ -2,10 +2,18 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { unitsService } from '../api/unitsService'
 
-export const useAllUnits = () => {
+export const useAllUnits = ({
+  page = 1,
+  limit = 5,
+  name = '',
+  code = '',
+  base_unit = ''
+} = {}) => {
+
   return useQuery({
-    queryKey: ['units'],
-    queryFn: unitsService.getAll,
+    queryKey: ['units', page, limit, name, code, base_unit],
+    queryFn: () => unitsService.getAll({page, limit, name, code, base_unit}),
+    keepPreviousData: true
   })
 }
 
@@ -20,7 +28,7 @@ export const useCreateUnit = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: unitsService.create,
+    mutationFn: (data) => unitsService.create(data),
 
     onSuccess: () => {
       toast.success('Unidad creada')

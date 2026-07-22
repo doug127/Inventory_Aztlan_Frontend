@@ -8,7 +8,7 @@ export const productSchema = z.object({
         }),
     product_category_id: z.number().positive(),
     unit_id: z.number().positive(),
-    content_quantity: z.number().positive(),
-    min_stock: z.number().nonnegative(),
-    max_stock: z.number().nonnegative(),
+    content_quantity: z.number({ invalid_type_error: 'Debe ser un número' }).positive(),
+    min_stock: z.number({ invalid_type_error: 'Debe ser un número' }).nonnegative(),
+    max_stock: z.number({ invalid_type_error: 'Debe ser un número' }).nonnegative(),
 });

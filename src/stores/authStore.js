@@ -2,6 +2,7 @@ import { User } from '@hugeicons/core-free-icons'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { authService } from '@/features/auth/authService'
+import { queryClient } from '../lib/queryClient'
 
 export const useAuthStore = create(
   persist(
@@ -20,6 +21,7 @@ export const useAuthStore = create(
           console.error(e)
         } finally {
           set({ user: null })
+          queryClient.clear()
         }
       },
 
