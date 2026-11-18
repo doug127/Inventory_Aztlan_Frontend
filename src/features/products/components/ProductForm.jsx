@@ -6,7 +6,7 @@ import { ButtonCloseModal } from '@/components/common/ButtonCloseModal'
 import { Input } from '@/components/common/Input'
 import { Select } from '@/components/common/Select'
 import { productSchema } from '../schemas/productSchema'
-import { CategoryTreeSelect } from '../features/categories/components/CategoryTreeSelect'
+import { CategoryTreeSelect } from '@/features/product-categories/CategoryTreeSelect'
 import { MessageError } from '@/components/common/MessageError'
 
 export const ProductForm = ({

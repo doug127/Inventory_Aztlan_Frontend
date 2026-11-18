@@ -2,24 +2,18 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { PageHeader } from '@/components/common/PageHeader'
 import { ProductForm } from './components/ProductForm'
-import { CategoryForm } from '@/features/products/features/categories/components/CategoryForm'
-import { GridCategory } from '@/features/products/features/categories/layouts/GridCategory'
 import { DataTable } from '@/components/layouts/DataTable'
 import { productColumns } from './utils/productColumns.jsx'
 import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from './hooks/useProducts'
 // Las unidades se gestionan en /units (HU-202); aquí solo se necesitan para el selector del producto.
 import { useUnitOptions } from '@/features/units/unitsApi'
-import {
-  useCategories,
-  useParentCategories,
-  useCreateCategory,
-} from '@/features/products/features/categories/hooks/useCategories'
+// Las categorías se gestionan en /product-categories (HU-203); aquí solo se necesita el árbol activo.
+import { useCategoryOptions } from '@/features/product-categories/productCategoriesApi'
 import { Button } from '@/components/common/Button'
 import { Plus } from 'lucide-react'
 
 
 export const ProductsPage = () => {
-  const [categoryOpen, setCategoryOpen] = useState(false)
   const [productsPage, setProductsPage] = useState(1)
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [productOpen, setProductOpen] = useState(false)
@@ -35,8 +29,7 @@ export const ProductsPage = () => {
   const limit = 5
 
   const { data: unitOptions = [] } = useUnitOptions()
-  const { data: categoriesTree = [] } = useParentCategories()
-  const { data: categories = [] } = useCategories()
+  const { data: categoriesTree = [] } = useCategoryOptions()
   const {
     data: products = [],
     isLoading: productsLoading,
@@ -52,7 +45,6 @@ export const ProductsPage = () => {
   const createProduct = useCreateProduct()
   const updateProduct = useUpdateProduct()
   const deleteProduct = useDeleteProduct()
-  const createCategory = useCreateCategory()
 
   
   // const openCreateProduct = () => {
@@ -66,10 +58,6 @@ export const ProductsPage = () => {
     setProductOpen(true);
   };
 
-  const handleCreateCategory = async (data) => {
-    await createCategory.mutateAsync(data)
-    setCategoryOpen(false)
-  }
   
   const handleSubmitProduct = async (data) => {
     if (selectedProduct) {
@@ -100,7 +88,7 @@ export const ProductsPage = () => {
     <div className='space-y-6'>
       <PageHeader
         title='Productos'
-        description='Gestion de productos y categorias'
+        description='Gestión de productos'
         actions={
           <div className='flex items-bottom gap-2'>
             <Button
@@ -143,16 +131,6 @@ export const ProductsPage = () => {
         />
       </motion.div>
 
-      <div className='grid grid-cols-1 gap-6 lg:max-w-xl'>
-
-        {/* CATEGORIES */}
-        <GridCategory
-          setCategoryOpen={setCategoryOpen}
-          categoriesTree={categoriesTree}
-        />
-
-      </div>
-
       <ProductForm
         open={productOpen}
         onOpenChange={setProductOpen}
@@ -167,14 +145,6 @@ export const ProductsPage = () => {
         }
       />
 
-      <CategoryForm
-        open={categoryOpen}
-        onOpenChange={setCategoryOpen}
-        category={categories}
-        categoriesTree={categoriesTree}
-        onSubmit={handleCreateCategory}
-        loading={createCategory.isPending}
-      />
 
     </div>
   )
