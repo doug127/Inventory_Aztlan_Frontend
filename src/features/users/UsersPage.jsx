@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { PageHeader } from '@/components/common/PageHeader'
-import { DataTable } from '@/components/common/DataTable'
+import { DataTable } from '@/components/layouts/DataTable'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { PermissionGate } from '@/features/auth/PermissionGate'

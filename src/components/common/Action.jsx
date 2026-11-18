@@ -4,12 +4,9 @@ import { HIERARCHY } from "@/lib/constants";
 import { Pencil, Trash2} from 'lucide-react'
 
 export const Action = ({onEdit, onDelete}) => {
-    const userHierarchy = useAuthStore(
-        (s) => s.user?.hierarchy_level ?? 0
+    const isSuperadmin = useAuthStore(
+        (s) => s.user?.role?.hierarchy === HIERARCHY.SUPERADMIN
     );
-
-    const isSuperadmin = 
-        userHierarchy === HIERARCHY.SUPERADMIN
 
     return (
         <div className="flex justify-center gap-2">

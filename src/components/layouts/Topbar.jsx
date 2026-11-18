@@ -1,5 +1,5 @@
 import { useAuthStore } from '@/stores/authStore'
-import { LogOut, User } from 'lucide-react'
+import { KeyRound, LogOut, User } from 'lucide-react'
 import { 
   DropdownMenu, DropdownMenuContent, 
   DropdownMenuItem, DropdownMenuLabel, 
@@ -15,7 +15,7 @@ export const Topbar = () => {
   
   const handleLogout = async () => {
     await logout()
-    navigate('/login')
+    navigate('/login', { replace: true })
   }
 
   return (
@@ -35,7 +35,7 @@ export const Topbar = () => {
             <User className='h-4 w-4 text-muted-foreground' />
           </div>
           <span className='text-sm text-foreground font-medium'>
-            {user?.full_name ?? 'Usuario'}
+            {user?.fullName ?? 'Usuario'}
           </span>
         </DropdownMenuTrigger>
 
@@ -48,6 +48,14 @@ export const Topbar = () => {
           </DropdownMenuLabel>
 
           <DropdownMenuSeparator className='border-border/50 my-1' />
+
+          <DropdownMenuItem
+            onClick={() => navigate('/change-password')}
+            className='flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer select-none hover:bg-muted transition-colors duration-200'
+          >
+            <KeyRound className='h-4 w-4' />
+            Cambiar contraseña
+          </DropdownMenuItem>
 
           <DropdownMenuItem
             onClick={handleLogout}

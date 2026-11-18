@@ -26,16 +26,11 @@ const NAV_ITEMS = [
 
 export const Sidebar = () => {
   const { sidebarOpen, toggleSidebar } = useUiStore()
-  const _hasHydrated = useAuthStore((s) => s._hasHydrated)
-  const user = useAuthStore((s) => s.user)
+  const hasHierarchy = useAuthStore((s) => s.hasHierarchy)
+  // Se suscribe al usuario para recalcular el menú cuando cambie la sesión.
+  useAuthStore((s) => s.user)
 
-  const visibleItems = _hasHydrated
-    ? NAV_ITEMS.filter(
-        (item) =>
-          !item.minHierarchy ||
-          (user?.hierarchy_level ?? 0) >= item.minHierarchy
-      )
-    : []
+  const visibleItems = NAV_ITEMS.filter((item) => item.minHierarchy == null || hasHierarchy(item.minHierarchy))
     
   return (
     <aside

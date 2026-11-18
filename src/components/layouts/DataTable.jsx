@@ -50,8 +50,7 @@ export const DataTable = ({
   const to = Math.min(currentPage * limit, total)
   const visiblePages = getVisiblePages(currentPage, totalPages)
 
-  const userHierarchy = useAuthStore((s) => s.user?.hierarchy_level ?? 0)
-  const canManageData = userHierarchy >= HIERARCHY.ADMIN;
+  const canManageData = useAuthStore((s) => s.hasHierarchy(HIERARCHY.ADMIN));
 
   const getValue = (obj, path) => {
     return path.split('.').reduce((acc, key) => acc?.[key], obj)

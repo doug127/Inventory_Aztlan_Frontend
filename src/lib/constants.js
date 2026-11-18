@@ -1,7 +1,11 @@
+// Jerarquía de roles del backend (roles.hierarchy): menor número = mayor rango.
+// Se usa con hasHierarchy(min) / <PermissionGate minHierarchy={...}>.
 export const HIERARCHY = {
-  USER: 1,
-  ADMIN: 2,
-  SUPERADMIN: 3,
+  SUPERADMIN: 0,
+  ADMIN: 1,
+  ALMACENISTA: 2,
+  USUARIO: 3,
+  USER: 3, // alias anterior: cualquier usuario autenticado
 }
 
 export const MOVEMENT_TYPES = {

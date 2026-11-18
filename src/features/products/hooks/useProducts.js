@@ -15,7 +15,7 @@ export const useProducts = ({
   );
 
   return useQuery({
-    queryKey: ['products', user?.id, user?.hierarchy_level, page, limit, name, unit, category_product],
+    queryKey: ['products', user?.id, user?.role?.code, page, limit, name, unit, category_product],
     queryFn: () => productsService.getAll({ page, limit, name, unit, category_product }),
     enabled: !!user?.id,
     placeholderData: (previousData) => previousData,

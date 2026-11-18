@@ -1,42 +1,50 @@
-import { User } from '@hugeicons/core-free-icons'
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
-import { authService } from '@/features/auth/authService'
 import { queryClient } from '../lib/queryClient'
 
-export const useAuthStore = create(
-  persist(
-    (set, get) => ({
-      user: null,
-      _hasHydrated: false,
+// Estado de la sesión. El access token vive SOLO en memoria (nunca en localStorage): al recargar
+// la página, AuthProvider recupera la sesión con la cookie httpOnly del refresh token.
+//
+// status: 'checking'      → verificando la sesión al arrancar
+//         'authenticated' → hay usuario y access token
+//         'anonymous'     → sin sesión
+//
+// user (lo que devuelve el backend):
+//   { id, username, email, fullName, role: { code, name, hierarchy }, mustChangePassword, lastLoginAt }
+//   role.hierarchy: 0 = SUPERADMIN (mayor rango), 1 = ADMIN, 2 = ALMACENISTA, 3 = USUARIO
+export const useAuthStore = create((set, get) => ({
+  user: null,
+  accessToken: null,
+  status: 'checking',
 
-      setHasHydrated: (val) => set({ _hasHydrated: val }),
+  // Compatibilidad con los componentes que esperaban la hidratación de localStorage.
+  _hasHydrated: true,
 
-      setAuth: ( user ) => set({ user }),
+  setSession: ({ accessToken, user }) => set({ accessToken, user, status: 'authenticated' }),
 
-      logout: async () => {
-        try {
-          await authService.logout()
-        } catch (e) {
-          console.error(e)
-        } finally {
-          set({ user: null })
-          queryClient.clear()
-        }
-      },
+  setAccessToken: (accessToken) => set({ accessToken }),
 
-      hasHierarchy: (minLevel) => {
-        const user = get().user
-        if (!user) return false
-        return (user.hierarchy_level ?? 0) >= minLevel
-      },
-    }),
-    {
-      name: 'auth-storage', // key en localStorage
-      partialize: (state) => ({ user: state.user}), 
-      onRehydrateStorage: () => (state) => {
-        state?.setHasHydrated(true)
-      }
+  setUser: (user) => set({ user }),
+
+  clearSession: () => {
+    set({ user: null, accessToken: null, status: 'anonymous' })
+    queryClient.clear()
+  },
+
+  /** Cierra la sesión en el servidor (revoca el refresh token) y limpia el estado local. */
+  logout: async () => {
+    try {
+      const { authService } = await import('@/features/auth/authService')
+      await authService.logout()
+    } catch {
+      // Aunque el servidor no responda, la sesión local se cierra igual.
+    } finally {
+      get().clearSession()
     }
-  )
-)
+  },
+
+  /** ¿El usuario tiene al menos ese rango? (hierarchy menor = mayor rango) */
+  hasHierarchy: (minHierarchy) => {
+    const hierarchy = get().user?.role?.hierarchy
+    return Number.isInteger(hierarchy) && hierarchy <= minHierarchy
+  },
+}))

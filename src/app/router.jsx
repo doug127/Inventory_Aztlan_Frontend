@@ -1,8 +1,8 @@
 import { lazy, Suspense } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { AppLayout } from '@/components/layouts/AppLayout'
-import { AuthLayout } from '@/components/layouts/AuthLayout'
-import { ProtectedRoute } from '@/features/auth/ProtectedRoute'
+import { ProtectedRoute, SessionRoute } from '@/features/auth/ProtectedRoute'
+import { PublicRoute } from '@/features/auth/PublicRoute'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 import { HIERARCHY } from '@/lib/constants'
 import { ForbiddenPage } from '@/components/common/ForbiddenPage'
@@ -10,7 +10,16 @@ import { PermissionRoute } from '@/features/auth/PermissionRoute'
 
 // Lazy imports — cada módulo se carga solo cuando se navega a él
 const LoginPage = lazy(() =>
-  import('@/features/auth/LoginPage').then((m) => ({ default: m.LoginPage }))
+  import('@/features/auth/pages/LoginPage').then((m) => ({ default: m.LoginPage }))
+)
+const ForgotPasswordPage = lazy(() =>
+  import('@/features/auth/pages/ForgotPasswordPage').then((m) => ({ default: m.ForgotPasswordPage }))
+)
+const ResetPasswordPage = lazy(() =>
+  import('@/features/auth/pages/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage }))
+)
+const ChangePasswordPage = lazy(() =>
+  import('@/features/auth/pages/ChangePasswordPage').then((m) => ({ default: m.ChangePasswordPage }))
 )
 const DashboardPage = lazy(() =>
   import('@/features/dashboard/DashboardPage').then((m) => ({ default: m.DashboardPage }))
@@ -38,19 +47,21 @@ const UsersPage = lazy(() =>
 const Page = ({ children }) => <Suspense fallback={<LoadingSpinner />}>{children}</Suspense>
 
 export const router = createBrowserRouter([
-  // ─── Rutas públicas ───────────────────────────────────────────────────────
+  // ─── Acceso sin sesión ────────────────────────────────────────────────────
   {
-    element: <AuthLayout />,
+    element: <PublicRoute />,
     children: [
-      {
-        path: '/login',
-        element: (
-          <Page>
-            <LoginPage />
-          </Page>
-        ),
-      },
+      { path: '/login', element: <Page><LoginPage /></Page> },
+      { path: '/forgot-password', element: <Page><ForgotPasswordPage /></Page> },
     ],
+  },
+  // Enlace del correo de recuperación: funciona con o sin sesión iniciada.
+  { path: '/reset-password', element: <Page><ResetPasswordPage /></Page> },
+
+  // ─── Con sesión, aunque falte cambiar la contraseña temporal ─────────────
+  {
+    element: <SessionRoute />,
+    children: [{ path: '/change-password', element: <Page><ChangePasswordPage /></Page> }],
   },
 
   // ─── Ruta 403 Forbidden ───────────────────────────────────────────────────────
