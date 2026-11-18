@@ -12,6 +12,7 @@ import {
   Users,
   Truck,
   ChevronLeft,
+  ShieldCheck,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
@@ -22,6 +23,7 @@ const NAV_ITEMS = [
   { to: '/warehouses', label: 'Almacenes', icon: Warehouse, minHierarchy: HIERARCHY.USER },
   { to: '/assets', label: 'Activos', icon: Truck, minHierarchy: HIERARCHY.USER },
   { to: '/users', label: 'Usuarios', icon: Users, minHierarchy: HIERARCHY.ADMIN },
+  { to: '/admin/security-log', label: 'Bitácora', icon: ShieldCheck, minHierarchy: HIERARCHY.SUPERADMIN },
 ]
 
 export const Sidebar = () => {

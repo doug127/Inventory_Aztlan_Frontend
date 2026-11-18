@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { queryClient } from '../lib/queryClient'
+import { queryClient } from '@/app/queryClient'
 
 // Estado de la sesión. El access token vive SOLO en memoria (nunca en localStorage): al recargar
 // la página, AuthProvider recupera la sesión con la cookie httpOnly del refresh token.

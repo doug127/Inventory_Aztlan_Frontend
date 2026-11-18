@@ -39,6 +39,9 @@ const WarehousesPage = lazy(() =>
 const AssetsPage = lazy(() =>
   import('@/features/assets/AssetsPage').then((m) => ({ default: m.AssetsPage }))
 )
+const SecurityLogPage = lazy(() =>
+  import('@/features/security-log/SecurityLogPage').then((m) => ({ default: m.SecurityLogPage }))
+)
 const UsersPage = lazy(() =>
   import('@/features/users/UsersPage').then((m) => ({ default: m.UsersPage }))
 )
@@ -129,6 +132,11 @@ export const router = createBrowserRouter([
             children: [
               { path: '/users', element: <Page><UsersPage /></Page> },
             ],
+          },
+          // Bitácora de seguridad: solo el SUPERADMIN (el backend también lo exige)
+          {
+            element: <PermissionRoute minHierarchy={HIERARCHY.SUPERADMIN} />,
+            children: [{ path: '/admin/security-log', element: <Page><SecurityLogPage /></Page> }],
           },
         ],
       },
