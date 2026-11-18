@@ -2,19 +2,13 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { PageHeader } from '@/components/common/PageHeader'
 import { ProductForm } from './components/ProductForm'
-import { UnitForm } from '@/features/products/features/units/components/UnitForm'
 import { CategoryForm } from '@/features/products/features/categories/components/CategoryForm'
-import { GridUnit } from '@/features/products/features/units/layouts/GridUnit'
 import { GridCategory } from '@/features/products/features/categories/layouts/GridCategory'
 import { DataTable } from '@/components/layouts/DataTable'
 import { productColumns } from './utils/productColumns.jsx'
 import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from './hooks/useProducts'
-import {
-  useBaseUnits,
-  useAllUnits,
-  useCreateUnit,
-  useUpdateUnit
-} from '@/features/products/features/units/hooks/useUnits'
+// Las unidades se gestionan en /units (HU-202); aquí solo se necesitan para el selector del producto.
+import { useUnitOptions } from '@/features/units/unitsApi'
 import {
   useCategories,
   useParentCategories,
@@ -29,11 +23,7 @@ export const ProductsPage = () => {
   const [productsPage, setProductsPage] = useState(1)
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [productOpen, setProductOpen] = useState(false)
-  const [unitsPage, setUnitsPage] = useState(1)
-  const [selectedUnit, setSelectedUnit] = useState(null)
-  const [unitOpen, setUnitOpen] = useState(false)
   const [productsSearch, setProductsSearch] = useState('')
-  const [unitsSearch, setUnitsSearch] = useState('')
 
   
   const [filters, setFilters] = useState({
@@ -44,15 +34,7 @@ export const ProductsPage = () => {
 
   const limit = 5
 
-  const { data: units = [] } = useBaseUnits()
-  const { 
-    data: unitsResponse = {},
-    isLoading: unitsLoading
-  } = useAllUnits({
-    page: unitsPage, 
-    limit,
-    name: unitsSearch,
-  })
+  const { data: unitOptions = [] } = useUnitOptions()
   const { data: categoriesTree = [] } = useParentCategories()
   const { data: categories = [] } = useCategories()
   const {
@@ -66,13 +48,10 @@ export const ProductsPage = () => {
     category_product: filters.category, 
   })
   
-  const unitsAll = unitsResponse.data;
   
   const createProduct = useCreateProduct()
   const updateProduct = useUpdateProduct()
   const deleteProduct = useDeleteProduct()
-  const createUnit = useCreateUnit()
-  const updateUnit = useUpdateUnit()
   const createCategory = useCreateCategory()
 
   
@@ -82,20 +61,10 @@ export const ProductsPage = () => {
   // };
   
   
-  const openCreateUnit = () => {
-    setSelectedUnit(null);
-    setUnitOpen(true)
-  }
-
   const openEditProduct = (product) => {
     setSelectedProduct(product);
     setProductOpen(true);
   };
-
-  const openEditUnit = (unit) => {
-    setSelectedUnit(unit);
-    setUnitOpen(true)
-  }
 
   const handleCreateCategory = async (data) => {
     await createCategory.mutateAsync(data)
@@ -126,22 +95,12 @@ export const ProductsPage = () => {
     deleteProduct.mutate(product.id)
   }
 
-  const handleSubmitUnit = async (data) => {
-    if (selectedUnit) {
-      await updateUnit.mutateAsync({
-        id: selectedUnit.id,
-        data
-      });
-    } else {
-      await createUnit.mutateAsync(data);
-    }
-  }
   
   return (
     <div className='space-y-6'>
       <PageHeader
         title='Productos'
-        description='Gestion de productos, categorias y unidades'
+        description='Gestion de productos y categorias'
         actions={
           <div className='flex items-bottom gap-2'>
             <Button
@@ -184,7 +143,7 @@ export const ProductsPage = () => {
         />
       </motion.div>
 
-      <div className='grid grid-cols-1 lg:grid-cols-[0.8fr_1.5fr] gap-6'>
+      <div className='grid grid-cols-1 gap-6 lg:max-w-xl'>
 
         {/* CATEGORIES */}
         <GridCategory
@@ -192,29 +151,13 @@ export const ProductsPage = () => {
           categoriesTree={categoriesTree}
         />
 
-        {/* UNITS */}
-        <GridUnit
-          onCreate={openCreateUnit}
-          page={unitsPage}
-          setPage={setUnitsPage}
-          limit={limit}
-          units={unitsResponse}
-          loading={unitsLoading}
-          onEdit={openEditUnit}
-          searchValue={unitsSearch}
-          onSearchChange={(value) => {
-            setUnitsSearch(value)
-            setUnitsPage(1)
-          }}
-          searchPlaceholder='Buscar unidad...'
-        />
       </div>
 
       <ProductForm
         open={productOpen}
         onOpenChange={setProductOpen}
         product={selectedProduct}
-        units={unitsAll}
+        units={unitOptions}
         categoriesTree={categoriesTree}
         onSubmit={handleSubmitProduct}
         loading={
@@ -231,18 +174,6 @@ export const ProductsPage = () => {
         categoriesTree={categoriesTree}
         onSubmit={handleCreateCategory}
         loading={createCategory.isPending}
-      />
-      <UnitForm
-        open={unitOpen}
-        onOpenChange={setUnitOpen}
-        unit={selectedUnit}
-        units={units}
-        onSubmit={handleSubmitUnit}
-        loading={
-          selectedUnit
-            ? updateUnit.isPending
-            : createUnit.isPending
-        }
       />
 
     </div>

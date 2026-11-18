@@ -5,7 +5,7 @@ import { Mail } from 'lucide-react'
 import { FieldError, FormAlert, SubmitButton, TextField } from '@/features/auth/components/AuthUI'
 import { useAssignableRoles, useCreateUser, useUpdateUser } from '../hooks/useUsers'
 import { suggestUsername, userFormSchema } from '../usersUtils'
-import { SidePanel } from './SidePanel'
+import { SidePanel } from '@/components/common/SidePanel'
 
 const EMPTY = { fullName: '', email: '', username: '', roleCode: '' }
 

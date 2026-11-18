@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Loader2, LogOut, Monitor, Smartphone } from 'lucide-react'
 import { useRevokeSessions, useUserSessions } from '../hooks/useUsers'
 import { describeDevice, formatDateTime, timeAgo } from '../usersUtils'
-import { SidePanel } from './SidePanel'
+import { SidePanel } from '@/components/common/SidePanel'
 import { ConnectionStatus } from './StatusBadges'
 
 /** Dispositivos con sesión abierta de un usuario (HU-109), con [Cerrar sesiones]. */

@@ -33,6 +33,12 @@ const StockPage = lazy(() =>
 const ProductsPage = lazy(() =>
   import('@/features/products/ProductsPage').then((m) => ({ default: m.ProductsPage }))
 )
+const ProductCategoriesPage = lazy(() =>
+  import('@/features/product-categories/ProductCategoriesPage').then((m) => ({ default: m.ProductCategoriesPage }))
+)
+const UnitsPage = lazy(() =>
+  import('@/features/units/UnitsPage').then((m) => ({ default: m.UnitsPage }))
+)
 const WarehousesPage = lazy(() =>
   import('@/features/warehouses/WarehousesPage').then((m) => ({ default: m.WarehousesPage }))
 )
@@ -107,6 +113,22 @@ export const router = createBrowserRouter([
             element: (
               <Page>
                 <ProductsPage />
+              </Page>
+            ),
+          },
+          {
+            path: '/product-categories',
+            element: (
+              <Page>
+                <ProductCategoriesPage />
+              </Page>
+            ),
+          },
+          {
+            path: '/units',
+            element: (
+              <Page>
+                <UnitsPage />
               </Page>
             ),
           },
