@@ -42,6 +42,9 @@ const UnitsPage = lazy(() =>
 const WarehousesPage = lazy(() =>
   import('@/features/warehouses/WarehousesPage').then((m) => ({ default: m.WarehousesPage }))
 )
+const AssetCategoriesPage = lazy(() =>
+  import('@/features/asset-categories/AssetCategoriesPage').then((m) => ({ default: m.AssetCategoriesPage }))
+)
 const AssetsPage = lazy(() =>
   import('@/features/assets/AssetsPage').then((m) => ({ default: m.AssetsPage }))
 )
@@ -141,6 +144,14 @@ export const router = createBrowserRouter([
             ),
           },
           {
+            path: '/asset-categories',
+            element: (
+              <Page>
+                <AssetCategoriesPage />
+              </Page>
+            ),
+          },
+          {
             path: '/assets',
             element: (
               <Page>
@@ -168,3 +179,10 @@ export const router = createBrowserRouter([
   // ─── Fallback ─────────────────────────────────────────────────────────────
   { path: '*', element: <Navigate to='/' /> },
 ])
+
+// RouterProvider conserva la primera instancia del router: con HMR, una ruta nueva no se registraba
+// (el menú mostraba el enlace, pero la ruta caía en el comodín y volvía al dashboard). Si cambia
+// este archivo, se recarga la página completa.
+if (import.meta.hot) {
+  import.meta.hot.accept(() => window.location.reload())
+}

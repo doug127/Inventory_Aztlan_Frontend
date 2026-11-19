@@ -17,6 +17,7 @@ import {
   Ruler,
   ShieldCheck,
   Truck,
+  Network,
   Users,
   Warehouse,
 } from 'lucide-react'
@@ -35,6 +36,7 @@ const NAV_ITEMS = [
       { to: '/warehouses', label: 'Almacenes', icon: Warehouse, minHierarchy: HIERARCHY.USER },
       { to: '/units', label: 'Unidades', icon: Ruler, minHierarchy: HIERARCHY.USER },
       { to: '/product-categories', label: 'Categorías de productos', icon: FolderTree, minHierarchy: HIERARCHY.USER },
+      { to: '/asset-categories', label: 'Categorías de activos', icon: Network, minHierarchy: HIERARCHY.USER },
       { to: '/assets', label: 'Activos', icon: Truck, minHierarchy: HIERARCHY.USER },
     ],
   },
