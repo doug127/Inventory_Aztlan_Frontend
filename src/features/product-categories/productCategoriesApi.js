@@ -32,6 +32,8 @@ const useCategoryMutation = (mutationFn, { success, silentErrors = false } = {})
     mutationFn,
     onSuccess: (category, variables) => {
       qc.invalidateQueries({ queryKey: KEY })
+      // Los productos muestran el código y el nombre de su categoría.
+      qc.invalidateQueries({ queryKey: ['products'] })
       if (success) toast.success(success(category, variables))
     },
     onError: (error) => {
