@@ -48,6 +48,9 @@ const AssetCategoriesPage = lazy(() =>
 const AssetsPage = lazy(() =>
   import('@/features/assets/AssetsPage').then((m) => ({ default: m.AssetsPage }))
 )
+const AssetDetailPage = lazy(() =>
+  import('@/features/assets/AssetDetailPage').then((m) => ({ default: m.AssetDetailPage }))
+)
 const SecurityLogPage = lazy(() =>
   import('@/features/security-log/SecurityLogPage').then((m) => ({ default: m.SecurityLogPage }))
 )
@@ -156,6 +159,15 @@ export const router = createBrowserRouter([
             element: (
               <Page>
                 <AssetsPage />
+              </Page>
+            ),
+          },
+          // HU-304: ficha del activo con su consumo neto e historial
+          {
+            path: '/assets/:id',
+            element: (
+              <Page>
+                <AssetDetailPage />
               </Page>
             ),
           },

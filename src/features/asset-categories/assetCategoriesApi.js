@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { api } from '@/lib/api'
 
@@ -12,6 +12,12 @@ export const assetCategoriesService = {
    * assetsInSubtree, children }
    */
   tree: (params) => api.get('/asset-categories/tree', { params }).then(unwrap),
+  /**
+   * HU-303. Activos de la rama (incluye subcategorías) y desglose por subcategoría directa; sin
+   * categoryId, por raíz. { category: { id, code, name, displayIcon, isLeaf, path } | null,
+   * assets: { active, inactive, total }, breakdown: [{ id, code, name, isActive, displayIcon, isLeaf, assets }] }
+   */
+  assetCounts: (categoryId) => api.get('/asset-categories/asset-counts', { params: categoryId ? { categoryId } : {} }).then(unwrap),
   create: (body) => api.post('/asset-categories', body).then(unwrap),
   update: (id, body) => api.patch(`/asset-categories/${id}`, body).then(unwrap),
   deactivate: (id) => api.post(`/asset-categories/${id}/deactivate`).then(unwrap),
@@ -27,7 +33,15 @@ export const useAssetCategoryTree = (params = {}) =>
     queryFn: () => assetCategoriesService.tree(params),
   })
 
-const useAssetCategoryMutation = (mutationFn, { success, silentErrors = false } = {}) => {
+/** Cuántos activos hay en la categoría (con sus subcategorías), o en la finca si no se indica. */
+export const useAssetCounts = (categoryId) =>
+  useQuery({
+    queryKey: [...KEY, 'asset-counts', categoryId ?? null],
+    queryFn: () => assetCategoriesService.assetCounts(categoryId),
+    placeholderData: keepPreviousData,
+  })
+
+const useAssetCategoryMutation =(mutationFn, { success, silentErrors = false } = {}) => {
   const qc = useQueryClient()
   return useMutation({
     mutationFn,
