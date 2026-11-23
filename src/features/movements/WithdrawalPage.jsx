@@ -13,6 +13,23 @@ import { categoryPathLabel, useAssets } from '@/features/assets/assetsApi'
 import { useAssetCategoryTree } from '@/features/asset-categories/assetCategoriesApi'
 import { useAvailability } from '@/features/stock/stockApi'
 import { REASON_LABELS, useCreateWithdrawal } from './movementsApi'
+import {
+  Banner,
+  Card,
+  Field,
+  ProductPicker,
+  Steps,
+  daysAgo,
+  fmt,
+  fmtMilli,
+  inputClass,
+  isoDay,
+  newKey,
+  normalizeQuantity,
+  toMilli,
+  typedQuantity,
+  useDebounced,
+} from './movementForm'
 
 // Orden de retiro (HU-401, user_flow.md §5): 1. Datos · 2. Líneas · 3. Revisar → Confirmar.
 // Las validaciones de aquí son una ayuda; el backend las repite todas con el stock bloqueado.
@@ -28,34 +45,6 @@ const ASSET_REQUIRED = ['CONSUMO', 'PRESTAMO']
 const NOTE_REQUIRED = ['DESECHO', 'OTRO']
 const BACKDATE_DAYS = 3
 
-const pad = (n) => String(n).padStart(2, '0')
-const isoDay = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-const daysAgo = (n) => {
-  const d = new Date()
-  d.setDate(d.getDate() - n)
-  return isoDay(d)
-}
-
-/** Cantidad en milésimas enteras (BigInt): sumas exactas, como NUMERIC(14,3) del backend. */
-/** "12,5" → "12.5"; ".5" → "0.5"; "12." → "12". Lo que se envía al backend. */
-const normalizeQuantity = (value) =>
-  String(value ?? '')
-    .trim()
-    .replace(',', '.')
-    .replace(/^\./, '0.')
-    .replace(/\.$/, '')
-
-const toMilli = (value) => {
-  const text = normalizeQuantity(value)
-  if (!/^\d{1,11}(\.\d{1,3})?$/.test(text)) return null
-  const [int, dec = ''] = text.split('.')
-  return BigInt(int) * 1000n + BigInt(dec.padEnd(3, '0'))
-}
-const numberFormat = new Intl.NumberFormat('es', { maximumFractionDigits: 3 })
-const fmtMilli = (milli) => numberFormat.format(Number(milli) / 1000)
-const fmt = (text) => numberFormat.format(Number(text))
-
-const newKey = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`.replace(/\D/g, ''))
 let lineSeq = 0
 const emptyLine = (product = null) => ({ key: ++lineSeq, product, quantity: '', asset: null, note: '', showNote: false })
 const EMPTY_HEADER = { warehouseId: '', reason: 'CONSUMO', date: isoDay(new Date()), receivedBy: '', workOrder: '', note: '' }
@@ -72,84 +61,6 @@ const typedWorkOrder = (previous, next) => {
 
 /** Referencia que asignará el backend: {almacén}-{año de la fecha}-{correlativo de 6 dígitos}. */
 const referencePreview = (warehouseCode, date) => `${warehouseCode ?? 'ALMA'}-${(date || isoDay(new Date())).slice(0, 4)}-······`
-
-/**
- * Cantidad mientras se escribe: solo dígitos y un separador decimal (punto o coma), hasta 11 enteros y
- * 3 decimales. Cualquier otra tecla (letras, signos, el menos) se ignora.
- */
-const QUANTITY_TYPING = /^\d{0,11}([.,]\d{0,3})?$/
-const typedQuantity = (previous, next) => (QUANTITY_TYPING.test(next) ? next : previous)
-
-const useDebounced = (value, delay = 250) => {
-  const [debounced, setDebounced] = useState(value)
-  useEffect(() => {
-    const timer = setTimeout(() => setDebounced(value), delay)
-    return () => clearTimeout(timer)
-  }, [value, delay])
-  return debounced
-}
-
-const inputClass =
-  'h-11 w-full rounded-md border border-line bg-white px-3 text-[15px] text-ink-900 outline-none transition placeholder:text-ink-500 focus:border-forest-700 focus:ring-4 focus:ring-forest-700/10 aria-[invalid=true]:border-red-500'
-const labelClass = 'mb-1.5 block text-[13px] font-medium text-ink-900'
-
-const Field = ({ label, required, hint, error, children, htmlFor }) => (
-  <div>
-    <label htmlFor={htmlFor} className={labelClass}>
-      {label}
-      {required && <span className='text-red-600'> *</span>}
-    </label>
-    {children}
-    {error ? <p className='mt-1 text-xs text-red-600'>{error}</p> : hint ? <p className='mt-1 text-xs text-ink-500'>{hint}</p> : null}
-  </div>
-)
-
-const Card = ({ className, children }) => (
-  <section className={cn('rounded-xl border border-line/80 bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] sm:p-6', className)}>{children}</section>
-)
-
-function Steps({ step }) {
-  const items = ['Datos de la orden', 'Líneas', 'Revisar']
-  return (
-    <ol className='flex items-center gap-2 text-sm' aria-label='Pasos'>
-      {items.map((label, i) => {
-        const n = i + 1
-        const state = step === n ? 'current' : step > n ? 'done' : 'todo'
-        return (
-          <li key={label} className='flex items-center gap-2' aria-current={state === 'current' ? 'step' : undefined}>
-            <span
-              className={cn(
-                'grid size-6 shrink-0 place-items-center rounded-full text-xs font-semibold',
-                state === 'done' && 'bg-forest-700 text-white',
-                state === 'current' && 'bg-ink-900 text-white',
-                state === 'todo' && 'bg-sand-50 text-ink-500 ring-1 ring-line'
-              )}
-            >
-              {state === 'done' ? <Check className='size-3.5' /> : n}
-            </span>
-            <span className={cn('hidden sm:inline', state === 'current' ? 'font-medium text-ink-900' : 'text-ink-500')}>{label}</span>
-            {n < items.length && <span className='mx-1 h-px w-6 bg-line sm:w-10' aria-hidden />}
-          </li>
-        )
-      })}
-    </ol>
-  )
-}
-
-function Banner({ tone = 'error', children }) {
-  const styles = {
-    error: 'bg-red-50 text-red-800 ring-red-200',
-    warning: 'bg-amber-50 text-amber-900 ring-amber-200',
-    info: 'bg-sand-50 text-ink-900 ring-line',
-  }
-  const Icon = tone === 'info' ? Info : AlertTriangle
-  return (
-    <div role={tone === 'error' ? 'alert' : 'status'} className={cn('flex gap-2.5 rounded-lg px-3.5 py-3 text-sm ring-1', styles[tone])}>
-      <Icon className='mt-0.5 size-4 shrink-0' aria-hidden />
-      <div className='min-w-0'>{children}</div>
-    </div>
-  )
-}
 
 // --- Paso 1 -------------------------------------------------------------------------
 
@@ -274,26 +185,6 @@ function HeaderStep({ header, setHeader, errors, warehouses, canBackdate }) {
 }
 
 // --- Paso 2 -------------------------------------------------------------------------
-
-function ProductPicker({ value, onChange, invalid }) {
-  const [search, setSearch] = useState('')
-  const debounced = useDebounced(search)
-  const { data, isFetching } = useProducts({ search: debounced || undefined, isActive: true, limit: 12, sort: 'code' })
-  const options = (data?.data ?? []).map((p) => ({ id: p.id, label: p.name, hint: `${p.code} · ${p.unit.code}`, product: p }))
-  return (
-    <SearchPicker
-      ariaLabel='Producto'
-      value={value ? { id: value.id, label: value.name, hint: value.code } : null}
-      onChange={(option) => onChange(option?.product ?? null)}
-      onSearch={setSearch}
-      options={options}
-      loading={isFetching}
-      invalid={invalid}
-      placeholder='Buscar producto por código o nombre'
-      emptyText='Ningún producto activo coincide'
-    />
-  )
-}
 
 function AssetPicker({ value, onChange, invalid, categoryId, required }) {
   const [search, setSearch] = useState('')
@@ -832,7 +723,7 @@ export function WithdrawalPage() {
             <h1 className='text-[1.75rem] font-semibold tracking-tight'>Nueva orden de retiro</h1>
             <p className='mt-0.5 text-sm text-ink-500'>Salida de productos del almacén hacia los activos que los consumen</p>
           </div>
-          {step !== 'done' && <Steps step={step} />}
+          {step !== 'done' && <Steps step={step} items={['Datos de la orden', 'Líneas', 'Revisar']} />}
         </header>
 
         {serverError && step !== 'done' && (

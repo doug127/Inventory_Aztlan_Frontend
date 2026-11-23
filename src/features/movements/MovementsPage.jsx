@@ -3,8 +3,8 @@ import { ArrowDownToLine, ArrowLeftRight, ArrowUpFromLine, ClipboardCheck, Histo
 import { useAuthStore } from '@/stores/authStore'
 import { HIERARCHY } from '@/lib/constants'
 
-// Movimientos. HU-401 habilita la orden de retiro; entradas, traslados y ajustes llegan en el
-// Sprint 6 y el historial con filtros en HU-408.
+// Movimientos. HU-401 habilita la orden de retiro y HU-402 la entrada; traslados y ajustes llegan en
+// el Sprint 6 y el historial con filtros en HU-408.
 
 const ACTIONS = [
   {
@@ -14,7 +14,7 @@ const ACTIONS = [
     icon: ArrowUpFromLine,
     ready: true,
   },
-  { label: 'Entrada', hint: 'Compras y devoluciones', icon: ArrowDownToLine },
+  { to: '/movements/new/entry', label: 'Entrada', hint: 'Compras a proveedores y otros ingresos', icon: ArrowDownToLine, ready: true },
   { label: 'Traslado', hint: 'De un almacén a otro', icon: ArrowLeftRight },
   { label: 'Ajuste', hint: 'Diferencias del conteo físico', icon: ClipboardCheck, minHierarchy: HIERARCHY.ADMIN },
 ]

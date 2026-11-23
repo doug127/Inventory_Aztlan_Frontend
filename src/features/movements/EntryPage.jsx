@@ -1,0 +1,623 @@
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { AnimatePresence, MotionConfig, motion } from 'framer-motion'
+import { ArrowLeft, CheckCircle2, FileText, Plus, Trash2 } from 'lucide-react'
+import { useAuthStore } from '@/stores/authStore'
+import { HIERARCHY } from '@/lib/constants'
+import { cn } from '@/lib/utils'
+import { EASE_OUT } from '@/features/auth/components/AuthUI'
+import { useWarehouses } from '@/features/warehouses/warehousesApi'
+import { useAvailability } from '@/features/stock/stockApi'
+import { REASON_LABELS, useCreateEntry } from './movementsApi'
+import {
+  Banner,
+  Card,
+  Field,
+  ProductPicker,
+  Steps,
+  WarehouseChoice,
+  daysAgo,
+  fmt,
+  fmtMilli,
+  inputClass,
+  isoDay,
+  newKey,
+  normalizeQuantity,
+  toMilli,
+  typedQuantity,
+} from './movementForm'
+
+// Entrada (HU-402, user_flow.md §6): 1. Datos · 2. Productos · 3. Revisar → Confirmar.
+// Motivos Compra y Otro; la Devolución de un préstamo llega con HU-405. Las validaciones de aquí
+// son una ayuda: el backend las repite todas.
+
+const REASONS = [
+  { id: 'COMPRA', hint: 'Mercancía recibida de un proveedor' },
+  { id: 'OTRO', hint: 'Cualquier otro ingreso, explicado en la observación' },
+]
+const BACKDATE_DAYS = 3
+
+/** Documento del proveedor (naming_conventions.md §8.2). */
+const REFERENCE_TYPES = [
+  { id: 'FAC', label: 'Factura' },
+  { id: 'OC', label: 'Orden de compra' },
+  { id: 'NE', label: 'Nota de entrega' },
+  { id: 'GD', label: 'Guía de despacho' },
+]
+const REFERENCE_TYPING = /^[A-Z0-9][A-Z0-9-]{0,40}$/
+const typedReference = (previous, next) => {
+  const value = next.toUpperCase().replace(/\s+/g, '')
+  return value === '' || REFERENCE_TYPING.test(value) ? value : previous
+}
+
+let lineSeq = 0
+const emptyLine = () => ({ key: ++lineSeq, product: null, quantity: '', note: '', showNote: false })
+const EMPTY_HEADER = {
+  warehouseId: '',
+  reason: 'COMPRA',
+  date: isoDay(new Date()),
+  referenceType: 'FAC',
+  referenceNumber: '',
+  receivedBy: '',
+  note: '',
+}
+
+const validateHeader = (header, canBackdate) => {
+  const errors = {}
+  if (!header.warehouseId) errors.warehouseId = 'Elige el almacén que recibe'
+  if (header.reason === 'OTRO' && !header.note.trim()) errors.note = 'Explica el motivo de la entrada'
+  const today = isoDay(new Date())
+  if (!header.date) errors.date = 'Indica la fecha'
+  else if (header.date > today) errors.date = 'La fecha no puede ser futura'
+  else if (header.date < daysAgo(BACKDATE_DAYS)) {
+    if (!canBackdate) errors.date = `Hasta ${BACKDATE_DAYS} días de atraso`
+    else if (!header.note.trim()) errors.note = `Con más de ${BACKDATE_DAYS} días de atraso, explica por qué se registra tarde`
+  }
+  return errors
+}
+
+/** Errores por línea, el total por producto y el aviso de producto repetido (se sumará). */
+const validateLines = (lines) => {
+  const byLine = {}
+  const totals = new Map()
+  const seen = new Map()
+  lines.forEach((line, i) => {
+    const errors = {}
+    if (!line.product) errors.product = 'Elige el producto'
+    const milli = toMilli(line.quantity)
+    if (milli === null) errors.quantity = line.quantity ? 'Hasta 3 decimales' : 'Indica la cantidad'
+    else if (milli <= 0n) errors.quantity = 'Debe ser mayor que 0'
+    if (line.product) {
+      if (milli) totals.set(line.product.id, (totals.get(line.product.id) ?? 0n) + milli)
+      if (seen.has(line.product.id)) errors.merge = `Este producto ya está en la línea ${seen.get(line.product.id) + 1}: se sumará a ella`
+      else seen.set(line.product.id, i)
+    }
+    if (Object.keys(errors).length) byLine[line.key] = errors
+  })
+  const blocking = Object.values(byLine).some((e) => e.product || e.quantity)
+  return { lines: byLine, blocking, totals }
+}
+
+/** Traduce un error del backend al paso donde se corrige. */
+const fromServerError = (error, lines) => {
+  const details = Array.isArray(error?.details) ? error.details : []
+  const header = {}
+  const byLine = {}
+  for (const d of details) {
+    const match = /^lines\.(\d+)\.(\w+)$/.exec(d.path ?? '')
+    if (match) {
+      const line = lines[Number(match[1])]
+      if (line) byLine[line.key] = { [match[2] === 'productId' ? 'product' : 'quantity']: d.message }
+    } else if (d.path) {
+      header[d.path === 'movementDate' ? 'date' : d.path === 'reference' ? 'referenceNumber' : d.path] = d.message
+    }
+  }
+  if (error?.code === 'MOVEMENT_DATE_INVALID' && !header.date) header.date = error.message
+  if (Object.keys(byLine).length || error?.code === 'EMPTY_MOVEMENT') return { step: 2, header, lines: byLine }
+  return { step: Object.keys(header).length ? 1 : 3, header, lines: byLine }
+}
+
+function HeaderStep({ header, setHeader, errors, warehouses, canBackdate }) {
+  const set = (field) => (e) => setHeader((h) => ({ ...h, [field]: e.target.value }))
+  const backdated = header.date < daysAgo(BACKDATE_DAYS)
+  return (
+    <Card className='space-y-6'>
+      <Field label='Almacén que recibe' required error={errors.warehouseId}>
+        <WarehouseChoice
+          warehouses={warehouses}
+          value={header.warehouseId}
+          onChange={(warehouseId) => setHeader((h) => ({ ...h, warehouseId }))}
+          label='Almacén que recibe'
+        />
+      </Field>
+
+      <Field label='Motivo' required>
+        <div className='grid gap-2 sm:grid-cols-3' role='radiogroup' aria-label='Motivo'>
+          {REASONS.map((r) => (
+            <button
+              key={r.id}
+              type='button'
+              role='radio'
+              aria-checked={header.reason === r.id}
+              onClick={() => setHeader((h) => ({ ...h, reason: r.id }))}
+              className={cn(
+                'h-10 rounded-lg border text-sm transition-colors',
+                header.reason === r.id ? 'border-ink-900 bg-ink-900 text-white' : 'border-line bg-white hover:border-ink-500/40'
+              )}
+            >
+              {REASON_LABELS[r.id]}
+            </button>
+          ))}
+          <span
+            className='grid h-10 place-items-center rounded-lg border border-dashed border-line text-sm text-ink-500'
+            title='Las devoluciones de préstamos se registrarán desde el préstamo pendiente'
+          >
+            Devolución · pronto
+          </span>
+        </div>
+        <p className='mt-1.5 text-xs text-ink-500'>{REASONS.find((r) => r.id === header.reason).hint}</p>
+      </Field>
+
+      <div className='grid gap-5 sm:grid-cols-2'>
+        <Field
+          label='Documento del proveedor'
+          htmlFor='reference-number'
+          error={errors.referenceNumber}
+          hint={header.reason === 'COMPRA' ? 'Recomendado: el número de la factura, orden de compra, nota de entrega o guía' : 'Opcional'}
+        >
+          <div className='flex gap-2'>
+            <select
+              value={header.referenceType}
+              onChange={set('referenceType')}
+              aria-label='Tipo de documento'
+              className='h-11 shrink-0 rounded-md border border-line bg-white px-2 text-sm outline-none focus:border-forest-700'
+            >
+              {REFERENCE_TYPES.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.id} · {t.label}
+                </option>
+              ))}
+            </select>
+            <input
+              id='reference-number'
+              value={header.referenceNumber}
+              onChange={(e) => setHeader((h) => ({ ...h, referenceNumber: typedReference(h.referenceNumber, e.target.value) }))}
+              placeholder='0012345'
+              maxLength={41}
+              autoComplete='off'
+              aria-invalid={Boolean(errors.referenceNumber)}
+              className={cn(inputClass, 'min-w-0 font-mono uppercase')}
+            />
+          </div>
+        </Field>
+        <Field
+          label='Fecha'
+          htmlFor='entry-date'
+          required
+          error={errors.date}
+          hint={canBackdate ? 'Con más de 3 días de atraso, explica en la observación por qué' : 'Hasta 3 días de atraso'}
+        >
+          <input
+            id='entry-date'
+            type='date'
+            value={header.date}
+            max={isoDay(new Date())}
+            min={canBackdate ? undefined : daysAgo(BACKDATE_DAYS)}
+            onChange={set('date')}
+            aria-invalid={Boolean(errors.date)}
+            className={inputClass}
+          />
+        </Field>
+        <Field label='Entregado por' htmlFor='delivered-by' hint='Chofer o representante del proveedor'>
+          <input id='delivered-by' value={header.receivedBy} onChange={set('receivedBy')} maxLength={150} className={inputClass} />
+        </Field>
+        <Field label='Observación' htmlFor='entry-note' required={header.reason === 'OTRO' || (canBackdate && backdated)} error={errors.note}>
+          <textarea
+            id='entry-note'
+            value={header.note}
+            onChange={set('note')}
+            maxLength={1000}
+            rows={2}
+            aria-invalid={Boolean(errors.note)}
+            className={cn(inputClass, 'h-auto min-h-11 py-2.5')}
+          />
+        </Field>
+      </div>
+    </Card>
+  )
+}
+
+function LinesStep({ lines, setLines, errors, current }) {
+  const update = (key, patch) => setLines((ls) => ls.map((l) => (l.key === key ? { ...l, ...patch } : l)))
+  const remove = (key) => setLines((ls) => (ls.length > 1 ? ls.filter((l) => l.key !== key) : [emptyLine()]))
+  return (
+    <div className='space-y-3'>
+      <ol className='space-y-3'>
+        {lines.map((line, index) => {
+          const e = errors[line.key] ?? {}
+          const unit = line.product?.unit.code
+          const now = line.product ? current.get(line.product.id) : undefined
+          const milli = toMilli(line.quantity)
+          return (
+            <motion.li
+              key={line.key}
+              layout
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, ease: EASE_OUT }}
+            >
+              <Card className={cn('p-4 sm:p-4', (e.product || e.quantity) && 'ring-1 ring-red-300')}>
+                <div className='mb-3 flex items-center justify-between'>
+                  <span className='text-xs font-semibold uppercase tracking-wide text-ink-500'>Producto {index + 1}</span>
+                  <button
+                    type='button'
+                    onClick={() => remove(line.key)}
+                    aria-label={`Quitar el producto ${index + 1}`}
+                    className='inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-xs text-ink-500 hover:bg-red-50 hover:text-red-700'
+                  >
+                    <Trash2 className='size-3.5' aria-hidden />
+                    <span className='hidden sm:inline'>Quitar</span>
+                  </button>
+                </div>
+                <div className='grid gap-3 sm:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]'>
+                  <div>
+                    <ProductPicker value={line.product} onChange={(product) => update(line.key, { product })} invalid={Boolean(e.product)} />
+                    {e.product && <p className='mt-1 text-xs text-red-600'>{e.product}</p>}
+                    {e.merge && <p className='mt-1 text-xs text-amber-700'>{e.merge}</p>}
+                  </div>
+                  <div>
+                    <div className='relative'>
+                      <input
+                        inputMode='decimal'
+                        value={line.quantity}
+                        onChange={(ev) => update(line.key, { quantity: typedQuantity(line.quantity, ev.target.value.trim()) })}
+                        placeholder='Cantidad recibida'
+                        aria-label={`Cantidad del producto ${index + 1}`}
+                        aria-invalid={Boolean(e.quantity)}
+                        className={cn(inputClass, 'pr-14 text-right tabular-nums')}
+                      />
+                      {unit && <span className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-ink-500'>{unit}</span>}
+                    </div>
+                    {e.quantity ? (
+                      <p className='mt-1 text-xs text-red-600'>{e.quantity}</p>
+                    ) : (
+                      now !== undefined && (
+                        <p className='mt-1 text-right text-xs text-ink-500'>
+                          En el almacén: {fmt(now)} {unit}
+                          {milli > 0n && ` → quedará en ${fmtMilli(toMilli(now) + milli)}`}
+                        </p>
+                      )
+                    )}
+                  </div>
+                </div>
+                {line.showNote ? (
+                  <input
+                    value={line.note}
+                    onChange={(ev) => update(line.key, { note: ev.target.value })}
+                    maxLength={500}
+                    placeholder='Observación (lote, vencimiento, presentación…)'
+                    aria-label={`Observación del producto ${index + 1}`}
+                    className={cn(inputClass, 'mt-3 h-10 text-sm')}
+                  />
+                ) : (
+                  <button type='button' onClick={() => update(line.key, { showNote: true })} className='mt-2 text-xs text-ink-500 hover:text-ink-900'>
+                    + Observación
+                  </button>
+                )}
+              </Card>
+            </motion.li>
+          )
+        })}
+      </ol>
+      <button
+        type='button'
+        onClick={() => setLines((ls) => [...ls, emptyLine()])}
+        className='inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-dashed border-line bg-white text-sm font-medium text-ink-900 hover:border-forest-700 hover:text-forest-800'
+      >
+        <Plus className='size-4' aria-hidden />
+        Agregar producto
+      </button>
+    </div>
+  )
+}
+
+function ReviewStep({ header, lines, warehouse, totals, reference }) {
+  const products = new Map(lines.filter((l) => l.product).map((l) => [l.product.id, l.product]))
+  // Aviso de sobre máximo (business_rules.md §7): existencia total de todos los almacenes + lo que entra.
+  const aboveMaximum = [...totals.entries()]
+    .map(([id, milli]) => ({ product: products.get(id), after: toMilli(products.get(id).stock?.total ?? '0') + milli }))
+    .filter(({ product, after }) => product.maxStock !== null && product.maxStock !== undefined && after > toMilli(product.maxStock))
+  return (
+    <div className='space-y-4'>
+      <Card>
+        <dl className='grid gap-x-6 gap-y-3 text-sm sm:grid-cols-3'>
+          <div>
+            <dt className='text-xs text-ink-500'>Almacén que recibe</dt>
+            <dd className='font-medium'>
+              {warehouse?.code} · {warehouse?.name}
+            </dd>
+          </div>
+          <div>
+            <dt className='text-xs text-ink-500'>Motivo</dt>
+            <dd className='font-medium'>{REASON_LABELS[header.reason]}</dd>
+          </div>
+          <div>
+            <dt className='text-xs text-ink-500'>Fecha</dt>
+            <dd className='font-medium'>{new Date(`${header.date}T12:00:00`).toLocaleDateString('es', { dateStyle: 'long' })}</dd>
+          </div>
+          <div>
+            <dt className='text-xs text-ink-500'>Documento del proveedor</dt>
+            <dd className='font-mono font-medium'>{reference ?? <span className='font-sans text-ink-500'>Sin documento</span>}</dd>
+          </div>
+          {header.receivedBy && (
+            <div>
+              <dt className='text-xs text-ink-500'>Entregado por</dt>
+              <dd className='font-medium'>{header.receivedBy}</dd>
+            </div>
+          )}
+          {header.note && (
+            <div className='sm:col-span-3'>
+              <dt className='text-xs text-ink-500'>Observación</dt>
+              <dd>{header.note}</dd>
+            </div>
+          )}
+        </dl>
+      </Card>
+      <Card className='p-0 sm:p-0'>
+        <h2 className='border-b border-line/60 px-4 py-3 text-sm font-semibold sm:px-6'>Productos que entran</h2>
+        <ul className='divide-y divide-line/60'>
+          {[...totals.entries()].map(([id, milli]) => {
+            const product = products.get(id)
+            return (
+              <li key={id} className='flex items-baseline justify-between gap-3 px-4 py-3 sm:px-6'>
+                <span className='min-w-0'>
+                  <span className='block truncate font-medium'>{product.name}</span>
+                  <span className='font-mono text-xs text-ink-500'>{product.code}</span>
+                </span>
+                <span className='shrink-0 text-lg font-semibold tabular-nums text-forest-800'>
+                  +{fmtMilli(milli)} <span className='text-sm font-normal text-ink-500'>{product.unit.code}</span>
+                </span>
+              </li>
+            )
+          })}
+        </ul>
+      </Card>
+      {aboveMaximum.length > 0 && (
+        <Banner tone='warning'>
+          {aboveMaximum.map(({ product, after }) => (
+            <p key={product.id}>
+              <strong>{product.name}</strong> quedará sobre su máximo: {fmtMilli(after)} de {fmt(product.maxStock)} {product.unit.code} en todos los
+              almacenes. Puedes confirmar igual.
+            </p>
+          ))}
+        </Banner>
+      )}
+    </div>
+  )
+}
+
+function DoneStep({ result, onNew }) {
+  const { movement, meta } = result
+  const above = meta?.warnings?.aboveMaximum ?? []
+  return (
+    <Card className='mx-auto max-w-xl text-center'>
+      <motion.span
+        initial={{ scale: 0.6, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+        className='mx-auto grid size-14 place-items-center rounded-full bg-forest-100 text-forest-800'
+      >
+        <CheckCircle2 className='size-7' aria-hidden />
+      </motion.span>
+      <p className='mt-4 text-sm text-ink-500'>{meta?.duplicated ? 'Esta entrada ya estaba registrada' : 'Entrada registrada'}</p>
+      <p className='mt-1 font-mono text-3xl font-semibold tracking-wide'>{movement.documentNumber}</p>
+      {movement.reference && <p className='mt-1 font-mono text-sm text-ink-500'>{movement.reference}</p>}
+      <p className='mt-2 text-sm text-ink-500'>
+        {movement.lines.length} {movement.lines.length === 1 ? 'producto' : 'productos'} · {movement.toWarehouse?.name}
+      </p>
+      {above.length > 0 && (
+        <div className='mt-4 text-left'>
+          <Banner tone='warning'>
+            {above.map((a) => (
+              <p key={a.productId}>
+                {a.productName} quedó sobre su máximo: {fmt(a.total)} de {fmt(a.maxStock)} {a.unitCode}.
+              </p>
+            ))}
+          </Banner>
+        </div>
+      )}
+      <div className='mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center'>
+        <Link
+          to={`/movements/${movement.id}`}
+          className='inline-flex h-10 items-center justify-center gap-2 rounded-md bg-forest-700 px-4 text-sm font-semibold text-white hover:bg-forest-800'
+        >
+          <FileText className='size-4' aria-hidden />
+          Ver detalle
+        </Link>
+        <button
+          type='button'
+          onClick={onNew}
+          className='inline-flex h-10 items-center justify-center gap-2 rounded-md border border-line bg-white px-4 text-sm font-medium hover:border-ink-500/40'
+        >
+          <Plus className='size-4' aria-hidden />
+          Nueva entrada
+        </button>
+      </div>
+    </Card>
+  )
+}
+
+export function EntryPage() {
+  const navigate = useNavigate()
+  const canBackdate = useAuthStore((s) => s.hasHierarchy(HIERARCHY.ADMIN))
+  const [step, setStep] = useState(1)
+  const [header, setHeader] = useState(EMPTY_HEADER)
+  const [lines, setLines] = useState(() => [emptyLine()])
+  const [headerErrors, setHeaderErrors] = useState({})
+  const [lineErrors, setLineErrors] = useState({})
+  const [serverError, setServerError] = useState(null)
+  const [result, setResult] = useState(null)
+  // Una clave por borrador: el doble clic o un reintento con mala señal no duplican la entrada (P6).
+  const [idempotencyKey, setIdempotencyKey] = useState(newKey)
+
+  const { data: warehousesData } = useWarehouses({ isActive: true, limit: 100, sort: 'code' })
+  const warehouses = warehousesData?.data ?? []
+  const warehouse = warehouses.find((w) => w.id === header.warehouseId)
+  const productIds = lines.filter((l) => l.product).map((l) => l.product.id)
+  const { data: availabilityData } = useAvailability(header.warehouseId, productIds)
+  const current = useMemo(() => new Map((availabilityData?.items ?? []).map((i) => [i.productId, i.available])), [availabilityData])
+  const create = useCreateEntry()
+
+  const reference = header.referenceNumber.replace(/-+$/, '') ? `${header.referenceType}-${header.referenceNumber.replace(/-+$/, '')}` : null
+  const live = useMemo(() => validateLines(lines), [lines])
+  // Una vez señalados, los errores se recalculan al editar: desaparecen en cuanto se corrigen.
+  useEffect(() => {
+    setLineErrors((prev) => {
+      const keys = Object.keys(prev)
+      if (!keys.length) return prev
+      return Object.fromEntries(keys.filter((k) => live.lines[k]).map((k) => [k, live.lines[k]]))
+    })
+  }, [live])
+  useEffect(() => {
+    setHeaderErrors((prev) => {
+      if (!Object.keys(prev).length) return prev
+      const now = validateHeader(header, canBackdate)
+      return Object.fromEntries(
+        Object.keys(prev)
+          .filter((k) => now[k])
+          .map((k) => [k, now[k]])
+      )
+    })
+  }, [header, canBackdate])
+  const shownLineErrors = useMemo(() => {
+    const merged = { ...lineErrors }
+    for (const [key, e] of Object.entries(live.lines)) if (e.merge) merged[key] = { ...merged[key], merge: e.merge }
+    return merged
+  }, [lineErrors, live])
+
+  const goToLines = () => {
+    const errors = validateHeader(header, canBackdate)
+    setHeaderErrors(errors)
+    if (!Object.keys(errors).length) setStep(2)
+  }
+  const goToReview = () => {
+    setLineErrors(live.lines)
+    if (!live.blocking) setStep(3)
+  }
+  const reset = () => {
+    setStep(1)
+    setHeader({ ...EMPTY_HEADER, warehouseId: header.warehouseId, date: isoDay(new Date()) })
+    setLines([emptyLine()])
+    setHeaderErrors({})
+    setLineErrors({})
+    setServerError(null)
+    setResult(null)
+    setIdempotencyKey(newKey())
+  }
+
+  const confirm = () => {
+    setServerError(null)
+    const body = {
+      warehouseId: header.warehouseId,
+      reason: header.reason,
+      movementDate: header.date === isoDay(new Date()) ? undefined : new Date(`${header.date}T12:00:00`).toISOString(),
+      reference,
+      receivedBy: header.receivedBy.trim() || null,
+      note: header.note.trim() || null,
+      lines: lines.map((l) => ({ productId: l.product.id, quantity: normalizeQuantity(l.quantity), note: l.note.trim() || null })),
+    }
+    create.mutate(
+      { body, idempotencyKey },
+      {
+        onSuccess: (envelope) => {
+          setResult({ movement: envelope.data, meta: envelope.meta })
+          setStep('done')
+        },
+        onError: (error) => {
+          const mapped = fromServerError(error, lines)
+          setHeaderErrors(mapped.header)
+          setLineErrors(mapped.lines)
+          setServerError(error)
+          setStep(mapped.step)
+        },
+      }
+    )
+  }
+
+  const footerButton =
+    'inline-flex h-11 items-center justify-center gap-2 rounded-md px-5 text-sm font-semibold transition-colors disabled:opacity-60'
+
+  return (
+    <MotionConfig reducedMotion='user'>
+      <div className='mx-auto max-w-4xl font-plex text-ink-900'>
+        <Link to='/movements' className='inline-flex items-center gap-1.5 text-sm text-ink-500 hover:text-ink-900'>
+          <ArrowLeft className='size-4' aria-hidden />
+          Movimientos
+        </Link>
+        <header className='mt-3 flex flex-wrap items-end justify-between gap-4'>
+          <div>
+            <h1 className='text-[1.75rem] font-semibold tracking-tight'>Nueva entrada</h1>
+            <p className='mt-0.5 text-sm text-ink-500'>Mercancía que llega al almacén y suma a sus existencias</p>
+          </div>
+          {step !== 'done' && <Steps step={step} items={['Datos de la entrada', 'Productos', 'Revisar']} />}
+        </header>
+
+        {serverError && step !== 'done' && (
+          <div className='mt-5'>
+            <Banner>{serverError.message ?? 'No se pudo registrar la entrada'}</Banner>
+          </div>
+        )}
+
+        <AnimatePresence mode='wait'>
+          <motion.div
+            key={step}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.2, ease: EASE_OUT }}
+            className='mt-5'
+          >
+            {step === 1 && (
+              <HeaderStep header={header} setHeader={setHeader} errors={headerErrors} warehouses={warehouses} canBackdate={canBackdate} />
+            )}
+            {step === 2 && <LinesStep lines={lines} setLines={setLines} errors={shownLineErrors} current={current} />}
+            {step === 3 && <ReviewStep header={header} lines={lines} warehouse={warehouse} totals={live.totals} reference={reference} />}
+            {step === 'done' && result && <DoneStep result={result} onNew={reset} />}
+          </motion.div>
+        </AnimatePresence>
+
+        {step !== 'done' && (
+          <div className='sticky bottom-0 -mx-6 mt-6 flex flex-col-reverse gap-2 border-t border-line/70 bg-white/90 px-6 py-3 backdrop-blur sm:flex-row sm:justify-between'>
+            <button
+              type='button'
+              onClick={() => (step === 1 ? navigate('/movements') : setStep(step - 1))}
+              className={cn(footerButton, 'border border-line bg-white text-ink-900 hover:border-ink-500/40')}
+            >
+              {step === 1 ? 'Cancelar' : step === 3 ? 'Volver a editar' : 'Atrás'}
+            </button>
+            {step === 1 && (
+              <button type='button' onClick={goToLines} className={cn(footerButton, 'bg-ink-900 text-white hover:bg-ink-900/90')}>
+                Continuar con los productos
+              </button>
+            )}
+            {step === 2 && (
+              <button type='button' onClick={goToReview} className={cn(footerButton, 'bg-ink-900 text-white hover:bg-ink-900/90')}>
+                Revisar la entrada
+              </button>
+            )}
+            {step === 3 && (
+              <button
+                type='button'
+                onClick={confirm}
+                disabled={create.isPending}
+                className={cn(footerButton, 'bg-forest-700 text-white hover:bg-forest-800')}
+              >
+                {create.isPending ? 'Registrando…' : 'Confirmar entrada'}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </MotionConfig>
+  )
+}

@@ -15,6 +15,8 @@ export const movementsService = {
    * Devuelve el sobre completo: { data: MovementDto, meta: { duplicated, warnings: { belowMinimum, consolidated } } }.
    * idempotencyKey: el mismo en cada reintento del mismo borrador (doble clic, red inestable).
    */
+  /** Entrada (HU-402). Mismo sobre que la orden de retiro; meta.warnings: { aboveMaximum, consolidated }. */
+  createEntry: ({ body, idempotencyKey }) => api.post('/movements/entries', body, { headers: { 'Idempotency-Key': idempotencyKey } }),
   createWithdrawal: ({ body, idempotencyKey }) => api.post('/movements/withdrawals', body, { headers: { 'Idempotency-Key': idempotencyKey } }),
 }
 
@@ -27,6 +29,22 @@ export const useMovement = (id) =>
     enabled: Boolean(id),
     retry: (count, error) => error?.status !== 404 && count < 2,
   })
+
+/** Tras registrar un movimiento cambian existencias, productos y fichas de activos. */
+const useMovementMutation = (mutationFn) => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: KEY })
+      qc.invalidateQueries({ queryKey: ['stock'] })
+      qc.invalidateQueries({ queryKey: ['products'] })
+      qc.invalidateQueries({ queryKey: ['assets'] })
+    },
+  })
+}
+
+export const useCreateEntry = () => useMovementMutation(movementsService.createEntry)
 
 export const useCreateWithdrawal = () => {
   const qc = useQueryClient()
