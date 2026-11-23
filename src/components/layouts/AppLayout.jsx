@@ -9,7 +9,7 @@ export const AppLayout = () => {
       <Sidebar />
       <div className='flex flex-col flex-1 overflow-hidden'>
         <Topbar />
-        <main className='flex-1 overflow-y-auto p-6 bg-muted/20'>
+        <main className='scroll-stable flex-1 overflow-y-auto p-6 bg-muted/20'>
           <Outlet />
         </main>
         <Toaster richColors position='top-right' />

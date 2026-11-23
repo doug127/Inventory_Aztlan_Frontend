@@ -45,6 +45,12 @@ const WarehousesPage = lazy(() =>
 const AssetCategoriesPage = lazy(() =>
   import('@/features/asset-categories/AssetCategoriesPage').then((m) => ({ default: m.AssetCategoriesPage }))
 )
+const WithdrawalPage = lazy(() =>
+  import('@/features/movements/WithdrawalPage').then((m) => ({ default: m.WithdrawalPage }))
+)
+const MovementDetailPage = lazy(() =>
+  import('@/features/movements/MovementDetailPage').then((m) => ({ default: m.MovementDetailPage }))
+)
 const AssetsPage = lazy(() =>
   import('@/features/assets/AssetsPage').then((m) => ({ default: m.AssetsPage }))
 )
@@ -103,6 +109,19 @@ export const router = createBrowserRouter([
             element: (
               <Page>
                 <MovementsPage />
+              </Page>
+            ),
+          },
+          // HU-401: orden de retiro (ALMACENISTA o superior; el backend también lo exige)
+          {
+            element: <PermissionRoute minHierarchy={HIERARCHY.ALMACENISTA} />,
+            children: [{ path: '/movements/new/withdrawal', element: <Page><WithdrawalPage /></Page> }],
+          },
+          {
+            path: '/movements/:id',
+            element: (
+              <Page>
+                <MovementDetailPage />
               </Page>
             ),
           },

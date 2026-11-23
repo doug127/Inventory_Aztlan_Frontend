@@ -47,7 +47,7 @@ export function SidePanel({ open, onClose, title, subtitle, children, footer }) 
                 Cerrar
               </button>
             </header>
-            <div className='flex-1 overflow-y-auto px-7 py-5'>{children}</div>
+            <div className='scroll-stable flex-1 overflow-y-auto px-7 py-5'>{children}</div>
             {footer && <footer className='grid grid-cols-[2fr_3fr] gap-3 border-t border-line/60 px-7 py-5'>{footer}</footer>}
           </motion.aside>
         </div>

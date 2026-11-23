@@ -181,3 +181,81 @@ body {
     --color-ink-500: #6b6e66;
     --color-line: #d6d6d0;
 }
+
+/* ---------------------------------------------------------------------------
+   Barra de desplazamiento "caña de azúcar" (identidad de Agrícola Aztlan).
+   El pulgar es un tallo verde con sombreado de cilindro y nudos cada 30 px; la
+   pista es el color arena de la página. Chrome, Edge y Safari usan ::-webkit-*;
+   Firefox solo admite colores planos (scrollbar-color). Los estándares van en
+   @supports porque en Chrome 121+ anulan el estilo ::-webkit-*.
+   --------------------------------------------------------------------------- */
+:root {
+  --cane-node: rgba(22, 48, 32, 0.55);
+  --cane-node-light: rgba(233, 244, 200, 0.55);
+  --cane-dark: #1f4a2c;
+  --cane-mid: #3f8a4f;
+  --cane-light: #a9c46c;
+  --cane-track: #f5f4f0;
+}
+
+/* Reserva el espacio de la barra aunque no haga falta: el contenido no se corre cuando aparece. */
+.scroll-stable {
+  scrollbar-gutter: stable;
+}
+
+::-webkit-scrollbar {
+  width: 11px;
+  height: 11px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--cane-track);
+}
+
+::-webkit-scrollbar-thumb {
+  /* Nudos (bandas oscuras con un brillo debajo) sobre el tallo sombreado. */
+  background-image:
+    repeating-linear-gradient(
+      180deg,
+      transparent 0 26px,
+      var(--cane-node) 26px 28px,
+      var(--cane-node-light) 28px 29px,
+      transparent 29px 30px
+    ),
+    linear-gradient(90deg, var(--cane-dark) 0%, var(--cane-mid) 38%, var(--cane-light) 58%, var(--cane-mid) 78%, var(--cane-dark) 100%);
+  border: 2px solid var(--cane-track);
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:horizontal {
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 26px,
+      var(--cane-node) 26px 28px,
+      var(--cane-node-light) 28px 29px,
+      transparent 29px 30px
+    ),
+    linear-gradient(180deg, var(--cane-dark) 0%, var(--cane-mid) 38%, var(--cane-light) 58%, var(--cane-mid) 78%, var(--cane-dark) 100%);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  --cane-mid: #4a9a5a;
+  --cane-light: #bcd47e;
+}
+
+::-webkit-scrollbar-thumb:active {
+  --cane-mid: #2c6e3e;
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--cane-track);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-color: var(--cane-mid) var(--cane-track);
+    scrollbar-width: thin;
+  }
+}
