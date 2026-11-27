@@ -1,14 +1,26 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion'
-import { ArrowLeft, CheckCircle2, FileText, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, FileText, Loader2, Paperclip, Plus, Trash2 } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { HIERARCHY } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { EASE_OUT } from '@/features/auth/components/AuthUI'
 import { useWarehouses } from '@/features/warehouses/warehousesApi'
 import { useAvailability } from '@/features/stock/stockApi'
-import { REASON_LABELS, useCreateEntry } from './movementsApi'
+import { RECEIPT_DOCUMENT_LABELS, REASON_LABELS, movementsService, useCreateEntry } from './movementsApi'
+import {
+  AttachFileButton,
+  DocumentsEditor,
+  DocumentsList,
+  OpenFileButton,
+  documentLabel,
+  documentsBody,
+  emptyDocument,
+  formatAmount,
+  formatBytes,
+  validateDocuments,
+} from './receiptDocuments'
 import {
   Banner,
   Card,
@@ -27,9 +39,10 @@ import {
   typedQuantity,
 } from './movementForm'
 
-// Entrada (HU-402, user_flow.md §6): 1. Datos · 2. Productos · 3. Revisar → Confirmar.
-// Motivos Compra y Otro; la Devolución de un préstamo llega con HU-405. Las validaciones de aquí
-// son una ayuda: el backend las repite todas.
+// Entrada (HU-402, user_flow.md §6): 1. Datos y documentos · 2. Productos · 3. Revisar → Confirmar.
+// Motivos Compra y Otro; la Devolución de un préstamo llega con HU-405. Al recibir una compra se
+// registran sus documentos (factura, vale, recibo…): los datos viajan con la entrada y, ya registrada,
+// se sube el escaneo de cada uno. Las validaciones de aquí son una ayuda: el backend las repite todas.
 
 const REASONS = [
   { id: 'COMPRA', hint: 'Mercancía recibida de un proveedor' },
@@ -37,33 +50,24 @@ const REASONS = [
 ]
 const BACKDATE_DAYS = 3
 
-/** Documento del proveedor (naming_conventions.md §8.2). */
-const REFERENCE_TYPES = [
-  { id: 'FAC', label: 'Factura' },
-  { id: 'OC', label: 'Orden de compra' },
-  { id: 'NE', label: 'Nota de entrega' },
-  { id: 'GD', label: 'Guía de despacho' },
-]
-const REFERENCE_TYPING = /^[A-Z0-9][A-Z0-9-]{0,40}$/
-const typedReference = (previous, next) => {
-  const value = next.toUpperCase().replace(/\s+/g, '')
-  return value === '' || REFERENCE_TYPING.test(value) ? value : previous
-}
-
 let lineSeq = 0
 const emptyLine = () => ({ key: ++lineSeq, product: null, quantity: '', note: '', showNote: false })
-const EMPTY_HEADER = {
+// Una compra empieza con una factura vacía; quitarla deja la entrada sin documentos.
+const emptyHeader = () => ({
   warehouseId: '',
   reason: 'COMPRA',
   date: isoDay(new Date()),
-  referenceType: 'FAC',
-  referenceNumber: '',
+  documents: [emptyDocument()],
   receivedBy: '',
   note: '',
-}
+})
+
+/** Un documento sin número ni datos ni archivo no cuenta: es la fila que se dejó en blanco. */
+const isBlankDocument = (d) => !d.documentNumber && !d.supplierName.trim() && !d.supplierTaxId && !d.issueDate && !d.totalAmount && !d.file
+const filledDocuments = (documents) => documents.filter((d) => !isBlankDocument(d))
 
 const validateHeader = (header, canBackdate) => {
-  const errors = {}
+  const errors = { ...validateDocuments(filledDocuments(header.documents)) }
   if (!header.warehouseId) errors.warehouseId = 'Elige el almacén que recibe'
   if (header.reason === 'OTRO' && !header.note.trim()) errors.note = 'Explica el motivo de la entrada'
   const today = isoDay(new Date())
@@ -99,17 +103,21 @@ const validateLines = (lines) => {
 }
 
 /** Traduce un error del backend al paso donde se corrige. */
-const fromServerError = (error, lines) => {
+const fromServerError = (error, lines, documents) => {
   const details = Array.isArray(error?.details) ? error.details : []
   const header = {}
   const byLine = {}
   for (const d of details) {
     const match = /^lines\.(\d+)\.(\w+)$/.exec(d.path ?? '')
+    const doc = /^documents\.(\d+)\.(\w+)$/.exec(d.path ?? '')
     if (match) {
       const line = lines[Number(match[1])]
       if (line) byLine[line.key] = { [match[2] === 'productId' ? 'product' : 'quantity']: d.message }
+    } else if (doc) {
+      const sent = documents[Number(doc[1])]
+      if (sent) header[`${sent.key}.${doc[2]}`] = d.message
     } else if (d.path) {
-      header[d.path === 'movementDate' ? 'date' : d.path === 'reference' ? 'referenceNumber' : d.path] = d.message
+      header[d.path === 'movementDate' ? 'date' : d.path] = d.message
     }
   }
   if (error?.code === 'MOVEMENT_DATE_INVALID' && !header.date) header.date = error.message
@@ -121,109 +129,86 @@ function HeaderStep({ header, setHeader, errors, warehouses, canBackdate }) {
   const set = (field) => (e) => setHeader((h) => ({ ...h, [field]: e.target.value }))
   const backdated = header.date < daysAgo(BACKDATE_DAYS)
   return (
-    <Card className='space-y-6'>
-      <Field label='Almacén que recibe' required error={errors.warehouseId}>
-        <WarehouseChoice
-          warehouses={warehouses}
-          value={header.warehouseId}
-          onChange={(warehouseId) => setHeader((h) => ({ ...h, warehouseId }))}
-          label='Almacén que recibe'
-        />
-      </Field>
+    <div className='space-y-4'>
+      <Card className='space-y-6'>
+        <Field label='Almacén que recibe' required error={errors.warehouseId}>
+          <WarehouseChoice
+            warehouses={warehouses}
+            value={header.warehouseId}
+            onChange={(warehouseId) => setHeader((h) => ({ ...h, warehouseId }))}
+            label='Almacén que recibe'
+          />
+        </Field>
 
-      <Field label='Motivo' required>
-        <div className='grid gap-2 sm:grid-cols-3' role='radiogroup' aria-label='Motivo'>
-          {REASONS.map((r) => (
-            <button
-              key={r.id}
-              type='button'
-              role='radio'
-              aria-checked={header.reason === r.id}
-              onClick={() => setHeader((h) => ({ ...h, reason: r.id }))}
-              className={cn(
-                'h-10 rounded-lg border text-sm transition-colors',
-                header.reason === r.id ? 'border-ink-900 bg-ink-900 text-white' : 'border-line bg-white hover:border-ink-500/40'
-              )}
+        <Field label='Motivo' required>
+          <div className='grid gap-2 sm:grid-cols-3' role='radiogroup' aria-label='Motivo'>
+            {REASONS.map((r) => (
+              <button
+                key={r.id}
+                type='button'
+                role='radio'
+                aria-checked={header.reason === r.id}
+                onClick={() => setHeader((h) => ({ ...h, reason: r.id }))}
+                className={cn(
+                  'h-10 rounded-lg border text-sm transition-colors',
+                  header.reason === r.id ? 'border-ink-900 bg-ink-900 text-white' : 'border-line bg-white hover:border-ink-500/40'
+                )}
+              >
+                {REASON_LABELS[r.id]}
+              </button>
+            ))}
+            <span
+              className='grid h-10 place-items-center rounded-lg border border-dashed border-line text-sm text-ink-500'
+              title='Las devoluciones de préstamos se registrarán desde el préstamo pendiente'
             >
-              {REASON_LABELS[r.id]}
-            </button>
-          ))}
-          <span
-            className='grid h-10 place-items-center rounded-lg border border-dashed border-line text-sm text-ink-500'
-            title='Las devoluciones de préstamos se registrarán desde el préstamo pendiente'
-          >
-            Devolución · pronto
-          </span>
-        </div>
-        <p className='mt-1.5 text-xs text-ink-500'>{REASONS.find((r) => r.id === header.reason).hint}</p>
-      </Field>
-
-      <div className='grid gap-5 sm:grid-cols-2'>
-        <Field
-          label='Documento del proveedor'
-          htmlFor='reference-number'
-          error={errors.referenceNumber}
-          hint={header.reason === 'COMPRA' ? 'Recomendado: el número de la factura, orden de compra, nota de entrega o guía' : 'Opcional'}
-        >
-          <div className='flex gap-2'>
-            <select
-              value={header.referenceType}
-              onChange={set('referenceType')}
-              aria-label='Tipo de documento'
-              className='h-11 shrink-0 rounded-md border border-line bg-white px-2 text-sm outline-none focus:border-forest-700'
-            >
-              {REFERENCE_TYPES.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.id} · {t.label}
-                </option>
-              ))}
-            </select>
-            <input
-              id='reference-number'
-              value={header.referenceNumber}
-              onChange={(e) => setHeader((h) => ({ ...h, referenceNumber: typedReference(h.referenceNumber, e.target.value) }))}
-              placeholder='0012345'
-              maxLength={41}
-              autoComplete='off'
-              aria-invalid={Boolean(errors.referenceNumber)}
-              className={cn(inputClass, 'min-w-0 font-mono uppercase')}
-            />
+              Devolución · pronto
+            </span>
           </div>
+          <p className='mt-1.5 text-xs text-ink-500'>{REASONS.find((r) => r.id === header.reason).hint}</p>
         </Field>
-        <Field
-          label='Fecha'
-          htmlFor='entry-date'
-          required
-          error={errors.date}
-          hint={canBackdate ? 'Con más de 3 días de atraso, explica en la observación por qué' : 'Hasta 3 días de atraso'}
-        >
-          <input
-            id='entry-date'
-            type='date'
-            value={header.date}
-            max={isoDay(new Date())}
-            min={canBackdate ? undefined : daysAgo(BACKDATE_DAYS)}
-            onChange={set('date')}
-            aria-invalid={Boolean(errors.date)}
-            className={inputClass}
-          />
-        </Field>
-        <Field label='Entregado por' htmlFor='delivered-by' hint='Chofer o representante del proveedor'>
-          <input id='delivered-by' value={header.receivedBy} onChange={set('receivedBy')} maxLength={150} className={inputClass} />
-        </Field>
-        <Field label='Observación' htmlFor='entry-note' required={header.reason === 'OTRO' || (canBackdate && backdated)} error={errors.note}>
-          <textarea
-            id='entry-note'
-            value={header.note}
-            onChange={set('note')}
-            maxLength={1000}
-            rows={2}
-            aria-invalid={Boolean(errors.note)}
-            className={cn(inputClass, 'h-auto min-h-11 py-2.5')}
-          />
-        </Field>
-      </div>
-    </Card>
+
+        <div className='grid gap-5 sm:grid-cols-2'>
+          <Field
+            label='Fecha'
+            htmlFor='entry-date'
+            required
+            error={errors.date}
+            hint={canBackdate ? 'Con más de 3 días de atraso, explica en la observación por qué' : 'Hasta 3 días de atraso'}
+          >
+            <input
+              id='entry-date'
+              type='date'
+              value={header.date}
+              max={isoDay(new Date())}
+              min={canBackdate ? undefined : daysAgo(BACKDATE_DAYS)}
+              onChange={set('date')}
+              aria-invalid={Boolean(errors.date)}
+              className={inputClass}
+            />
+          </Field>
+          <Field label='Entregado por' htmlFor='delivered-by' hint='Chofer o representante del proveedor'>
+            <input id='delivered-by' value={header.receivedBy} onChange={set('receivedBy')} maxLength={150} className={inputClass} />
+          </Field>
+          <Field label='Observación' htmlFor='entry-note' required={header.reason === 'OTRO' || (canBackdate && backdated)} error={errors.note}>
+            <textarea
+              id='entry-note'
+              value={header.note}
+              onChange={set('note')}
+              maxLength={1000}
+              rows={2}
+              aria-invalid={Boolean(errors.note)}
+              className={cn(inputClass, 'h-auto min-h-11 py-2.5')}
+            />
+          </Field>
+        </div>
+      </Card>
+      <DocumentsEditor
+        documents={header.documents}
+        setDocuments={(update) => setHeader((h) => ({ ...h, documents: typeof update === 'function' ? update(h.documents) : update }))}
+        errors={errors}
+        reason={header.reason}
+      />
+    </div>
   )
 }
 
@@ -321,7 +306,7 @@ function LinesStep({ lines, setLines, errors, current }) {
   )
 }
 
-function ReviewStep({ header, lines, warehouse, totals, reference }) {
+function ReviewStep({ header, lines, warehouse, totals, documents }) {
   const products = new Map(lines.filter((l) => l.product).map((l) => [l.product.id, l.product]))
   // Aviso de sobre máximo (business_rules.md §7): existencia total de todos los almacenes + lo que entra.
   const aboveMaximum = [...totals.entries()]
@@ -346,8 +331,10 @@ function ReviewStep({ header, lines, warehouse, totals, reference }) {
             <dd className='font-medium'>{new Date(`${header.date}T12:00:00`).toLocaleDateString('es', { dateStyle: 'long' })}</dd>
           </div>
           <div>
-            <dt className='text-xs text-ink-500'>Documento del proveedor</dt>
-            <dd className='font-mono font-medium'>{reference ?? <span className='font-sans text-ink-500'>Sin documento</span>}</dd>
+            <dt className='text-xs text-ink-500'>Referencia</dt>
+            <dd className='font-mono font-medium'>
+              {documents.length ? documentLabel(documents[0]) : <span className='font-sans text-ink-500'>Sin documento</span>}
+            </dd>
           </div>
           {header.receivedBy && (
             <div>
@@ -363,6 +350,37 @@ function ReviewStep({ header, lines, warehouse, totals, reference }) {
           )}
         </dl>
       </Card>
+      {documents.length > 0 && (
+        <Card className='p-0 sm:p-0'>
+          <h2 className='border-b border-line/60 px-4 py-3 text-sm font-semibold sm:px-6'>Documentos de recepción</h2>
+          <ul className='divide-y divide-line/60'>
+            {documents.map((doc) => (
+              <li key={doc.key} className='flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 px-4 py-3 sm:px-6'>
+                <span className='min-w-0'>
+                  <span className='block text-sm'>
+                    <span className='font-medium'>{RECEIPT_DOCUMENT_LABELS[doc.documentType]}</span>{' '}
+                    <span className='font-mono'>{documentLabel(doc)}</span>
+                  </span>
+                  <span className='block truncate text-xs text-ink-500'>
+                    {[
+                      doc.supplierName.trim(),
+                      doc.supplierTaxId,
+                      doc.issueDate && new Date(`${doc.issueDate}T12:00:00`).toLocaleDateString('es', { dateStyle: 'medium' }),
+                      doc.totalAmount && formatAmount(doc.totalAmount.replace(',', '.'), doc.currency),
+                    ]
+                      .filter(Boolean)
+                      .join(' · ') || 'Sin más datos'}
+                  </span>
+                </span>
+                <span className='inline-flex shrink-0 items-center gap-1.5 text-xs text-ink-500'>
+                  <Paperclip className='size-3.5' aria-hidden />
+                  {doc.file ? `${doc.file.name} · ${formatBytes(doc.file.size)}` : 'Sin archivo'}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
       <Card className='p-0 sm:p-0'>
         <h2 className='border-b border-line/60 px-4 py-3 text-sm font-semibold sm:px-6'>Productos que entran</h2>
         <ul className='divide-y divide-line/60'>
@@ -396,8 +414,50 @@ function ReviewStep({ header, lines, warehouse, totals, reference }) {
   )
 }
 
-function DoneStep({ result, onNew }) {
-  const { movement, meta } = result
+/** Estado del archivo de cada documento tras registrar la entrada: subiendo, listo o con error (reintentar). */
+function DocumentUploads({ movement, uploads, onUploaded }) {
+  const failed = Object.values(uploads).filter((u) => u.status === 'error').length
+  return (
+    <div className='mt-5 overflow-hidden rounded-lg border border-line/80 text-left'>
+      <h2 className='border-b border-line/60 bg-sand-50/60 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-ink-500'>
+        Documentos de recepción
+      </h2>
+      <DocumentsList
+        movementId={movement.id}
+        documents={movement.documents}
+        renderStatus={(doc) => {
+          const upload = uploads[doc.id]
+          if (doc.file) return <OpenFileButton movementId={movement.id} document={doc} />
+          if (upload?.status === 'uploading') {
+            return (
+              <span className='inline-flex items-center gap-1.5 text-xs text-ink-500'>
+                <Loader2 className='size-3.5 animate-spin' aria-hidden />
+                Subiendo archivo…
+              </span>
+            )
+          }
+          if (upload?.status === 'error') {
+            return (
+              <span className='inline-flex flex-col items-end gap-1'>
+                <span className='text-xs text-red-600'>{upload.error}</span>
+                <AttachFileButton movementId={movement.id} document={doc} file={upload.file} label='Reintentar' onUploaded={onUploaded} />
+              </span>
+            )
+          }
+          return <AttachFileButton movementId={movement.id} document={doc} onUploaded={onUploaded} />
+        }}
+      />
+      {failed > 0 && (
+        <p className='border-t border-line/60 px-4 py-2.5 text-xs text-ink-500'>
+          La entrada ya quedó registrada. Puedes reintentar la subida aquí o adjuntar el archivo luego desde el detalle.
+        </p>
+      )}
+    </div>
+  )
+}
+
+function DoneStep({ result, onNew, onUploaded }) {
+  const { movement, meta, uploads } = result
   const above = meta?.warnings?.aboveMaximum ?? []
   return (
     <Card className='mx-auto max-w-xl text-center'>
@@ -415,6 +475,7 @@ function DoneStep({ result, onNew }) {
       <p className='mt-2 text-sm text-ink-500'>
         {movement.lines.length} {movement.lines.length === 1 ? 'producto' : 'productos'} · {movement.toWarehouse?.name}
       </p>
+      {movement.documents.length > 0 && <DocumentUploads movement={movement} uploads={uploads} onUploaded={onUploaded} />}
       {above.length > 0 && (
         <div className='mt-4 text-left'>
           <Banner tone='warning'>
@@ -451,7 +512,7 @@ export function EntryPage() {
   const navigate = useNavigate()
   const canBackdate = useAuthStore((s) => s.hasHierarchy(HIERARCHY.ADMIN))
   const [step, setStep] = useState(1)
-  const [header, setHeader] = useState(EMPTY_HEADER)
+  const [header, setHeader] = useState(emptyHeader)
   const [lines, setLines] = useState(() => [emptyLine()])
   const [headerErrors, setHeaderErrors] = useState({})
   const [lineErrors, setLineErrors] = useState({})
@@ -468,7 +529,8 @@ export function EntryPage() {
   const current = useMemo(() => new Map((availabilityData?.items ?? []).map((i) => [i.productId, i.available])), [availabilityData])
   const create = useCreateEntry()
 
-  const reference = header.referenceNumber.replace(/-+$/, '') ? `${header.referenceType}-${header.referenceNumber.replace(/-+$/, '')}` : null
+  // Los documentos que se enviarán: los que quedaron en blanco no cuentan.
+  const documents = useMemo(() => filledDocuments(header.documents), [header.documents])
   const live = useMemo(() => validateLines(lines), [lines])
   // Una vez señalados, los errores se recalculan al editar: desaparecen en cuanto se corrigen.
   useEffect(() => {
@@ -506,7 +568,7 @@ export function EntryPage() {
   }
   const reset = () => {
     setStep(1)
-    setHeader({ ...EMPTY_HEADER, warehouseId: header.warehouseId, date: isoDay(new Date()) })
+    setHeader({ ...emptyHeader(), warehouseId: header.warehouseId })
     setLines([emptyLine()])
     setHeaderErrors({})
     setLineErrors({})
@@ -515,13 +577,44 @@ export function EntryPage() {
     setIdempotencyKey(newKey())
   }
 
+  /** Marca el estado de subida de un documento y, si quedó adjunto, lo reemplaza en el resultado. */
+  const setUpload = (docId, upload, uploadedDoc) =>
+    setResult((r) =>
+      r && {
+        ...r,
+        uploads: { ...r.uploads, [docId]: upload },
+        movement: uploadedDoc ? { ...r.movement, documents: r.movement.documents.map((d) => (d.id === docId ? uploadedDoc : d)) } : r.movement,
+      }
+    )
+  const onUploaded = (doc) => setUpload(doc.id, { status: 'done' }, doc)
+
+  /**
+   * Ya registrada la entrada, sube el archivo de cada documento, uno tras otro. El backend devuelve
+   * los documentos en el orden en que se enviaron. Un reintento con la misma Idempotency-Key devuelve
+   * la entrada original: los documentos que ya tienen archivo se saltan.
+   */
+  const uploadFiles = async (movement, sent) => {
+    for (const [i, doc] of movement.documents.entries()) {
+      const file = sent[i]?.file
+      if (!file || doc.file) continue
+      setUpload(doc.id, { status: 'uploading', file })
+      try {
+        const uploaded = await movementsService.uploadDocumentFile({ movementId: movement.id, documentId: doc.id, file })
+        setUpload(doc.id, { status: 'done' }, uploaded)
+      } catch (error) {
+        setUpload(doc.id, { status: 'error', file, error: error.message ?? 'No se pudo subir el archivo' })
+      }
+    }
+  }
+
   const confirm = () => {
     setServerError(null)
     const body = {
       warehouseId: header.warehouseId,
       reason: header.reason,
       movementDate: header.date === isoDay(new Date()) ? undefined : new Date(`${header.date}T12:00:00`).toISOString(),
-      reference,
+      // La referencia la arma el backend con el primer documento (FAC-0012345).
+      documents: documentsBody(documents),
       receivedBy: header.receivedBy.trim() || null,
       note: header.note.trim() || null,
       lines: lines.map((l) => ({ productId: l.product.id, quantity: normalizeQuantity(l.quantity), note: l.note.trim() || null })),
@@ -530,11 +623,12 @@ export function EntryPage() {
       { body, idempotencyKey },
       {
         onSuccess: (envelope) => {
-          setResult({ movement: envelope.data, meta: envelope.meta })
+          setResult({ movement: envelope.data, meta: envelope.meta, uploads: {} })
           setStep('done')
+          uploadFiles(envelope.data, documents)
         },
         onError: (error) => {
-          const mapped = fromServerError(error, lines)
+          const mapped = fromServerError(error, lines, documents)
           setHeaderErrors(mapped.header)
           setLineErrors(mapped.lines)
           setServerError(error)
@@ -581,8 +675,8 @@ export function EntryPage() {
               <HeaderStep header={header} setHeader={setHeader} errors={headerErrors} warehouses={warehouses} canBackdate={canBackdate} />
             )}
             {step === 2 && <LinesStep lines={lines} setLines={setLines} errors={shownLineErrors} current={current} />}
-            {step === 3 && <ReviewStep header={header} lines={lines} warehouse={warehouse} totals={live.totals} reference={reference} />}
-            {step === 'done' && result && <DoneStep result={result} onNew={reset} />}
+            {step === 3 && <ReviewStep header={header} lines={lines} warehouse={warehouse} totals={live.totals} documents={documents} />}
+            {step === 'done' && result && <DoneStep result={result} onNew={reset} onUploaded={onUploaded} />}
           </motion.div>
         </AnimatePresence>
 

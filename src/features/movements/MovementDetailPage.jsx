@@ -2,7 +2,10 @@ import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { formatDateTime } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { useAuthStore } from '@/stores/authStore'
+import { HIERARCHY } from '@/lib/constants'
 import { MOVEMENT_TYPE_LABELS, REASON_LABELS, useMovement } from './movementsApi'
+import { DocumentsList } from './receiptDocuments'
 
 // Detalle de un movimiento (HU-401: "Ver detalle" al registrar la orden). El historial con filtros
 // llega en HU-408 y la impresión con espacio para firmas en HU-410.
@@ -24,6 +27,9 @@ const Item = ({ label, children, mono }) => (
 export function MovementDetailPage() {
   const { id } = useParams()
   const { data: movement, isLoading, isError, error } = useMovement(Number(id))
+  const userId = useAuthStore((s) => s.user?.id)
+  const isAdmin = useAuthStore((s) => s.hasHierarchy(HIERARCHY.ADMIN))
+  const isAlmacenista = useAuthStore((s) => s.hasHierarchy(HIERARCHY.ALMACENISTA))
 
   const back = (
     <Link to='/movements' className='inline-flex items-center gap-1.5 text-sm text-ink-500 hover:text-ink-900'>
@@ -51,6 +57,9 @@ export function MovementDetailPage() {
   }
 
   const warehouse = movement.fromWarehouse ?? movement.toWarehouse
+  // El archivo de un documento lo adjunta quien registró la entrada o un administrador (una sola vez).
+  const canAttach = isAdmin || (isAlmacenista && movement.createdBy.id === userId)
+  const documents = movement.documents ?? []
   return (
     <div className='mx-auto max-w-4xl font-plex text-ink-900'>
       {back}
@@ -87,6 +96,13 @@ export function MovementDetailPage() {
           )}
         </dl>
       </Card>
+
+      {documents.length > 0 && (
+        <Card className='mt-4 overflow-hidden'>
+          <h2 className='border-b border-line/60 px-4 py-3 text-sm font-semibold sm:px-6'>Documentos de recepción</h2>
+          <DocumentsList movementId={movement.id} documents={documents} canAttach={canAttach} />
+        </Card>
+      )}
 
       <Card className='mt-4 overflow-hidden'>
         <table className='hidden w-full text-sm md:table'>
