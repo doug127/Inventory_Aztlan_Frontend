@@ -49,6 +49,7 @@ const WithdrawalPage = lazy(() =>
   import('@/features/movements/WithdrawalPage').then((m) => ({ default: m.WithdrawalPage }))
 )
 const EntryPage = lazy(() => import('@/features/movements/EntryPage').then((m) => ({ default: m.EntryPage })))
+const TransferPage = lazy(() => import('@/features/movements/TransferPage').then((m) => ({ default: m.TransferPage })))
 const MovementDetailPage = lazy(() =>
   import('@/features/movements/MovementDetailPage').then((m) => ({ default: m.MovementDetailPage }))
 )
@@ -119,6 +120,7 @@ export const router = createBrowserRouter([
             children: [
               { path: '/movements/new/withdrawal', element: <Page><WithdrawalPage /></Page> },
               { path: '/movements/new/entry', element: <Page><EntryPage /></Page> },
+              { path: '/movements/new/transfer', element: <Page><TransferPage /></Page> },
             ],
           },
           {

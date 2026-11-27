@@ -17,3 +17,6 @@ export const paginationParams = ({ page = 1, limit = 20, filters = {} } = {}) =>
     ...filters,
   }
 }
+
+/** Filas por página de todas las tablas de la app (catálogos, usuarios, bitácora, historiales). */
+export const TABLE_PAGE_SIZE = 10

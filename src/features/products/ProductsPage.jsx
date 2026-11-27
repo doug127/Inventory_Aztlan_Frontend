@@ -10,13 +10,14 @@ import { EASE_OUT } from '@/features/auth/components/AuthUI'
 import { flattenTree, useCategoryTree } from '@/features/product-categories/productCategoriesApi'
 import { formatQuantity, useActivateProduct, useDeactivateProduct, useProducts } from './productsApi'
 import { ProductFormPanel } from './ProductFormPanel'
+import { TABLE_PAGE_SIZE } from '@/lib/pagination'
 
 const STATUS = [
   { id: 'active', label: 'Activos', isActive: true },
   { id: 'inactive', label: 'Inactivos', isActive: false },
   { id: 'all', label: 'Todos', isActive: undefined },
 ]
-const PAGE_SIZE = 20
+const PAGE_SIZE = TABLE_PAGE_SIZE
 
 const useDebounced = (value, delay = 300) => {
   const [debounced, setDebounced] = useState(value)

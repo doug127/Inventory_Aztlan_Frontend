@@ -25,10 +25,13 @@ import {
   Banner,
   Card,
   Field,
+  NextButton,
   ProductPicker,
   Steps,
   WarehouseChoice,
   daysAgo,
+  firstIssue,
+  firstLineIssue,
   fmt,
   fmtMilli,
   inputClass,
@@ -37,6 +40,8 @@ import {
   normalizeQuantity,
   toMilli,
   typedQuantity,
+  visibleHeaderErrors,
+  visibleLineErrors,
 } from './movementForm'
 
 // Entrada (HU-402, user_flow.md §6): 1. Datos y documentos · 2. Productos · 3. Revisar → Confirmar.
@@ -551,20 +556,26 @@ export function EntryPage() {
       )
     })
   }, [header, canBackdate])
-  const shownLineErrors = useMemo(() => {
-    const merged = { ...lineErrors }
-    for (const [key, e] of Object.entries(live.lines)) if (e.merge) merged[key] = { ...merged[key], merge: e.merge }
-    return merged
-  }, [lineErrors, live])
+  const liveHeader = useMemo(() => validateHeader(header, canBackdate), [header, canBackdate])
+  // Errores en vivo: los de las líneas ya llenas, los de los documentos y la fecha; lo que falta llenar no.
+  const shownLineErrors = useMemo(() => visibleLineErrors(lines, lineErrors, live.lines), [lines, lineErrors, live])
+  const shownHeaderErrors = useMemo(() => visibleHeaderErrors(headerErrors, liveHeader, ['warehouseId', 'note']), [headerErrors, liveHeader])
+
+  // Los botones se habilitan solo si el paso está completo; el motivo se muestra al lado.
+  // Los errores de un documento llegan como "{key}.campo": en el botón se dice cuál ("Documento 2: Indica el número").
+  const headerBlocked = useMemo(() => {
+    const [key, message] = Object.entries(liveHeader)[0] ?? []
+    const doc = key && /^(.+)\.\w+$/.exec(key)
+    if (!doc) return firstIssue(liveHeader)
+    return `Documento ${header.documents.findIndex((d) => String(d.key) === doc[1]) + 1}: ${message}`
+  }, [liveHeader, header.documents])
+  const linesBlocked = firstLineIssue(lines, live.lines, ['product', 'quantity'])
 
   const goToLines = () => {
-    const errors = validateHeader(header, canBackdate)
-    setHeaderErrors(errors)
-    if (!Object.keys(errors).length) setStep(2)
+    if (!headerBlocked) setStep(2)
   }
   const goToReview = () => {
-    setLineErrors(live.lines)
-    if (!live.blocking) setStep(3)
+    if (!linesBlocked) setStep(3)
   }
   const reset = () => {
     setStep(1)
@@ -672,7 +683,7 @@ export function EntryPage() {
             className='mt-5'
           >
             {step === 1 && (
-              <HeaderStep header={header} setHeader={setHeader} errors={headerErrors} warehouses={warehouses} canBackdate={canBackdate} />
+              <HeaderStep header={header} setHeader={setHeader} errors={shownHeaderErrors} warehouses={warehouses} canBackdate={canBackdate} />
             )}
             {step === 2 && <LinesStep lines={lines} setLines={setLines} errors={shownLineErrors} current={current} />}
             {step === 3 && <ReviewStep header={header} lines={lines} warehouse={warehouse} totals={live.totals} documents={documents} />}
@@ -690,24 +701,19 @@ export function EntryPage() {
               {step === 1 ? 'Cancelar' : step === 3 ? 'Volver a editar' : 'Atrás'}
             </button>
             {step === 1 && (
-              <button type='button' onClick={goToLines} className={cn(footerButton, 'bg-ink-900 text-white hover:bg-ink-900/90')}>
+              <NextButton onClick={goToLines} blockedReason={headerBlocked}>
                 Continuar con los productos
-              </button>
+              </NextButton>
             )}
             {step === 2 && (
-              <button type='button' onClick={goToReview} className={cn(footerButton, 'bg-ink-900 text-white hover:bg-ink-900/90')}>
+              <NextButton onClick={goToReview} blockedReason={linesBlocked}>
                 Revisar la entrada
-              </button>
+              </NextButton>
             )}
             {step === 3 && (
-              <button
-                type='button'
-                onClick={confirm}
-                disabled={create.isPending}
-                className={cn(footerButton, 'bg-forest-700 text-white hover:bg-forest-800')}
-              >
-                {create.isPending ? 'Registrando…' : 'Confirmar entrada'}
-              </button>
+              <NextButton onClick={confirm} blockedReason={headerBlocked ?? linesBlocked} pending={create.isPending} pendingLabel='Registrando…' tone='confirm'>
+                Confirmar entrada
+              </NextButton>
             )}
           </div>
         )}

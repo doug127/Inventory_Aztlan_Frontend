@@ -101,7 +101,8 @@ export const documentsBody = (documents) =>
 function FilePicker({ file, onChange, invalid, id }) {
   const input = useRef(null)
   return (
-    <div className='flex min-w-0 items-center gap-2'>
+    // relative: el input sr-only (absolute) queda dentro del bloque y no alarga la página (doble scroll).
+    <div className='relative flex min-w-0 items-center gap-2'>
       <input ref={input} id={id} type='file' accept={ACCEPT} className='sr-only' onChange={(e) => onChange(e.target.files?.[0] ?? null)} />
       {file ? (
         <>
@@ -365,7 +366,7 @@ export function AttachFileButton({ movementId, document, file: initialFile, onUp
     )
   }
   return (
-    <span className='inline-flex flex-col items-end gap-1'>
+    <span className='relative inline-flex flex-col items-end gap-1'>
       <input ref={input} type='file' accept={ACCEPT} className='sr-only' onChange={(e) => e.target.files?.[0] && send(e.target.files[0])} />
       <button
         type='button'

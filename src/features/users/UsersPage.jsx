@@ -20,8 +20,9 @@ import { AccountStatus, Avatar, ConnectionStatus } from './components/StatusBadg
 import { UserActionsMenu } from './components/UserActionsMenu'
 import { UserFormPanel } from './components/UserFormPanel'
 import { UserSessionsPanel } from './components/UserSessionsPanel'
+import { TABLE_PAGE_SIZE } from '@/lib/pagination'
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = TABLE_PAGE_SIZE
 
 // Filtro de estado → parámetros de GET /api/users
 const STATUS_FILTERS = [

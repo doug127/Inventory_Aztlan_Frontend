@@ -73,11 +73,22 @@ export function MovementDetailPage() {
       <Card className='mt-5 p-4 sm:p-6'>
         <dl className='grid gap-x-6 gap-y-3 text-sm sm:grid-cols-3'>
           <Item label='Fecha'>{formatDateTime(movement.movementDate)}</Item>
-          <Item label={movement.fromWarehouse ? 'Almacén de origen' : 'Almacén de destino'}>
-            {warehouse.code} · {warehouse.name}
-          </Item>
+          {movement.fromWarehouse && movement.toWarehouse ? (
+            // Traslado (HU-403): los dos almacenes.
+            <Item label='Origen → destino'>
+              {movement.fromWarehouse.code} → {movement.toWarehouse.code} · {movement.toWarehouse.name}
+            </Item>
+          ) : (
+            <Item label={movement.fromWarehouse ? 'Almacén de origen' : 'Almacén de destino'}>
+              {warehouse.code} · {warehouse.name}
+            </Item>
+          )}
           <Item label='Registró'>{movement.createdBy.fullName}</Item>
-          {movement.receivedBy && <Item label='Recibido por'>{movement.receivedBy}</Item>}
+          {movement.receivedBy && (
+            <Item label={movement.movementType === 'TRANSFER' ? 'Trasladado por' : movement.movementType === 'IN' ? 'Entregado por' : 'Recibido por'}>
+              {movement.receivedBy}
+            </Item>
+          )}
           {movement.workOrder && (
             <Item label='Orden de trabajo' mono>
               {movement.workOrder}

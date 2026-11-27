@@ -11,6 +11,7 @@ import { EASE_OUT } from '@/features/auth/components/AuthUI'
 import { categoryPathLabel, useAssetConsumption, useAssetHistory } from './assetsApi'
 import { AssetFormPanel } from './AssetFormPanel'
 import { AssetIcon } from './AssetsPage'
+import { TABLE_PAGE_SIZE } from '@/lib/pagination'
 
 // Ficha del activo (HU-304, user_flow.md §11): consumo neto por producto en el período, préstamos
 // pendientes e historial de movimientos. Todos los roles consultan; ADMIN o superior edita.
@@ -183,7 +184,7 @@ function HistorySection({ assetId, period, productId, productName, onClearProduc
   const [kindId, setKindId] = useState('all')
   const [page, setPage] = useState(1)
   const params = useMemo(
-    () => ({ ...period, productId: productId ?? undefined, kind: KIND_FILTERS.find((k) => k.id === kindId).kind, page, limit: 20 }),
+    () => ({ ...period, productId: productId ?? undefined, kind: KIND_FILTERS.find((k) => k.id === kindId).kind, page, limit: TABLE_PAGE_SIZE }),
     [period, productId, kindId, page]
   )
   const { data, isLoading, isError, error, isPlaceholderData } = useAssetHistory(assetId, params)

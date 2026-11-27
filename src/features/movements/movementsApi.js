@@ -17,6 +17,8 @@ export const movementsService = {
    */
   /** Entrada (HU-402). Mismo sobre que la orden de retiro; meta.warnings: { aboveMaximum, consolidated }. */
   createEntry: ({ body, idempotencyKey }) => api.post('/movements/entries', body, { headers: { 'Idempotency-Key': idempotencyKey } }),
+  /** Traslado (HU-403). Mismo sobre; meta.warnings: { consolidated }. */
+  createTransfer: ({ body, idempotencyKey }) => api.post('/movements/transfers', body, { headers: { 'Idempotency-Key': idempotencyKey } }),
   createWithdrawal: ({ body, idempotencyKey }) => api.post('/movements/withdrawals', body, { headers: { 'Idempotency-Key': idempotencyKey } }),
   /**
    * Adjunta el archivo escaneado (PDF o foto) de un documento de recepción. El cuerpo es el archivo
@@ -57,6 +59,7 @@ const useMovementMutation = (mutationFn) => {
 }
 
 export const useCreateEntry = () => useMovementMutation(movementsService.createEntry)
+export const useCreateTransfer = () => useMovementMutation(movementsService.createTransfer)
 
 export const useCreateWithdrawal = () => {
   const qc = useQueryClient()

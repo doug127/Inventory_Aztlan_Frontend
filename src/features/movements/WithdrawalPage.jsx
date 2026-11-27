@@ -17,10 +17,13 @@ import {
   Banner,
   Card,
   Field,
+  NextButton,
   ProductPicker,
   Steps,
   daysAgo,
   fmt,
+  firstIssue,
+  firstLineIssue,
   fmtMilli,
   inputClass,
   isoDay,
@@ -29,6 +32,8 @@ import {
   toMilli,
   typedQuantity,
   useDebounced,
+  visibleHeaderErrors,
+  visibleLineErrors,
 } from './movementForm'
 
 // Orden de retiro (HU-401, user_flow.md §5): 1. Datos · 2. Líneas · 3. Revisar → Confirmar.
@@ -218,7 +223,7 @@ const flattenTree = (nodes, depth = 0) =>
     .filter((n) => n.isActive)
     .flatMap((n) => [{ id: n.id, label: `${'  '.repeat(depth)}${n.name}`, count: n.assetsInSubtree }, ...flattenTree(n.children, depth + 1)])
 
-function LinesStep({ header, lines, setLines, errors, availability, assetFilter, setAssetFilter }) {
+function LinesStep({ header, warehouseCode, lines, setLines, errors, availability, assetFilter, setAssetFilter }) {
   const { data: tree = [] } = useAssetCategoryTree({ isActive: true })
   const assetRequired = ASSET_REQUIRED.includes(header.reason)
   const update = (key, patch) => setLines((ls) => ls.map((l) => (l.key === key ? { ...l, ...patch } : l)))
@@ -295,7 +300,13 @@ function LinesStep({ header, lines, setLines, errors, availability, assetFilter,
                 </div>
                 <div className='grid gap-3 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)_minmax(0,1.3fr)]'>
                   <div>
-                    <ProductPicker value={line.product} onChange={(product) => update(line.key, { product })} invalid={Boolean(e.product)} />
+                    <ProductPicker
+                      value={line.product}
+                      onChange={(product) => update(line.key, { product })}
+                      invalid={Boolean(e.product)}
+                      withStockIn={header.warehouseId}
+                      emptyText={`Ningún producto con existencia en ${warehouseCode ?? 'el almacén'} coincide`}
+                    />
                     {e.product && <p className='mt-1 text-xs text-red-600'>{e.product}</p>}
                   </div>
                   <div>
@@ -620,7 +631,7 @@ export function WithdrawalPage() {
   const warehouses = warehousesData?.data ?? []
   const warehouse = warehouses.find((w) => w.id === header.warehouseId)
   const productIds = lines.filter((l) => l.product).map((l) => l.product.id)
-  const { data: availabilityData } = useAvailability(header.warehouseId, productIds)
+  const { data: availabilityData, isError: availabilityError } = useAvailability(header.warehouseId, productIds)
   const availability = useMemo(() => new Map((availabilityData?.items ?? []).map((i) => [i.productId, i.available])), [availabilityData])
   const create = useCreateWithdrawal()
 
@@ -644,23 +655,22 @@ export function WithdrawalPage() {
       )
     })
   }, [header, canBackdate])
-  // Los avisos de combinación repetida y de existencia se muestran en vivo; el resto, al avanzar.
-  const shownLineErrors = useMemo(() => {
-    const merged = { ...lineErrors }
-    for (const [key, e] of Object.entries(live.lines)) {
-      merged[key] = { ...merged[key], ...(e.merge && { merge: e.merge }), ...(e.stock && { stock: e.stock }) }
-    }
-    return merged
-  }, [lineErrors, live])
+  const liveHeader = useMemo(() => validateHeader(header, canBackdate), [header, canBackdate])
+  // Errores en vivo: los de las líneas ya llenas y los de la cabecera, salvo lo que falta llenar.
+  const shownLineErrors = useMemo(() => visibleLineErrors(lines, lineErrors, live.lines), [lines, lineErrors, live])
+  const shownHeaderErrors = useMemo(() => visibleHeaderErrors(headerErrors, liveHeader, ['warehouseId', 'receivedBy', 'note']), [headerErrors, liveHeader])
+
+  // Los botones se habilitan solo si el paso está completo; el motivo se muestra al lado.
+  const headerBlocked = firstIssue(liveHeader)
+  // La existencia del almacén se espera antes de avanzar (si la consulta falla, el backend valida igual).
+  const stockPending = Boolean(header.warehouseId) && !availabilityError && productIds.some((id) => !availability.has(id))
+  const linesBlocked = stockPending ? 'Consultando la existencia del almacén…' : firstLineIssue(lines, live.lines, ['product', 'quantity', 'asset', 'stock'])
 
   const goToLines = () => {
-    const errors = validateHeader(header, canBackdate)
-    setHeaderErrors(errors)
-    if (!Object.keys(errors).length) setStep(2)
+    if (!headerBlocked) setStep(2)
   }
   const goToReview = () => {
-    setLineErrors(live.lines)
-    if (!live.blocking) setStep(3)
+    if (!linesBlocked) setStep(3)
   }
   const reset = () => {
     setStep(1)
@@ -742,11 +752,12 @@ export function WithdrawalPage() {
             className='mt-5'
           >
             {step === 1 && (
-              <HeaderStep header={header} setHeader={setHeader} errors={headerErrors} warehouses={warehouses} canBackdate={canBackdate} />
+              <HeaderStep header={header} setHeader={setHeader} errors={shownHeaderErrors} warehouses={warehouses} canBackdate={canBackdate} />
             )}
             {step === 2 && (
               <LinesStep
                 header={header}
+                warehouseCode={warehouse?.code}
                 lines={lines}
                 setLines={setLines}
                 errors={{ lines: shownLineErrors }}
@@ -770,24 +781,19 @@ export function WithdrawalPage() {
               {step === 1 ? 'Cancelar' : step === 3 ? 'Volver a editar' : 'Atrás'}
             </button>
             {step === 1 && (
-              <button type='button' onClick={goToLines} className={cn(footerButton, 'bg-ink-900 text-white hover:bg-ink-900/90')}>
+              <NextButton onClick={goToLines} blockedReason={headerBlocked}>
                 Continuar con las líneas
-              </button>
+              </NextButton>
             )}
             {step === 2 && (
-              <button type='button' onClick={goToReview} className={cn(footerButton, 'bg-ink-900 text-white hover:bg-ink-900/90')}>
+              <NextButton onClick={goToReview} blockedReason={linesBlocked}>
                 Revisar la orden
-              </button>
+              </NextButton>
             )}
             {step === 3 && (
-              <button
-                type='button'
-                onClick={confirm}
-                disabled={create.isPending}
-                className={cn(footerButton, 'bg-forest-700 text-white hover:bg-forest-800')}
-              >
-                {create.isPending ? 'Registrando…' : 'Confirmar orden'}
-              </button>
+              <NextButton onClick={confirm} blockedReason={headerBlocked ?? linesBlocked} pending={create.isPending} pendingLabel='Registrando…' tone='confirm'>
+                Confirmar orden
+              </NextButton>
             )}
           </div>
         )}

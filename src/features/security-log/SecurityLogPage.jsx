@@ -7,8 +7,9 @@ import { describeDevice, formatDateTime, timeAgo } from '@/lib/format'
 import { EASE_OUT } from '@/features/auth/components/AuthUI'
 import { EVENT_TYPES, PRESETS, TONES } from './eventCatalog'
 import { useSecurityEventCount, useSecurityEvents } from './securityLogApi'
+import { TABLE_PAGE_SIZE } from '@/lib/pagination'
 
-const PAGE_SIZE = 50
+const PAGE_SIZE = TABLE_PAGE_SIZE
 
 /** AAAA-MM-DD de hoy en la hora local (el backend interpreta el día completo). */
 const today = () => {

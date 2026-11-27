@@ -112,11 +112,32 @@ export function Banner({ tone = 'error', children }) {
   )
 }
 
-export function ProductPicker({ value, onChange, invalid }) {
+/** withStockIn: id de un almacén; solo lista los productos con existencia en él (origen de un traslado). */
+export function ProductPicker({ value, onChange, invalid, withStockIn, emptyText = 'Ningún producto activo coincide' }) {
   const [search, setSearch] = useState('')
   const debounced = useDebounced(search)
-  const { data, isFetching } = useProducts({ search: debounced || undefined, isActive: true, limit: 12, sort: 'code' })
+  const { data, isFetching } = useProducts({ search: debounced || undefined, isActive: true, limit: 12, sort: 'code', withStockIn: withStockIn || undefined })
   const options = (data?.data ?? []).map((p) => ({ id: p.id, label: p.name, hint: `${p.code} · ${p.unit.code}`, product: p }))
+  // Con almacén, cada opción muestra a la derecha lo disponible en él.
+  const renderOption = withStockIn
+    ? (option) => {
+        const available = option.product.stock.inWarehouse?.quantity
+        return (
+          <span className='flex items-center justify-between gap-3'>
+            <span className='min-w-0'>
+              <span className='block truncate font-medium'>{option.label}</span>
+              <span className='block truncate text-xs text-ink-500'>{option.hint}</span>
+            </span>
+            {available !== undefined && (
+              <span className='shrink-0 text-right tabular-nums'>
+                <span className='block text-sm font-semibold text-ink-900'>{fmt(available)}</span>
+                <span className='block text-[11px] text-ink-500'>{option.product.unit.code} disp.</span>
+              </span>
+            )}
+          </span>
+        )
+      }
+    : undefined
   return (
     <SearchPicker
       ariaLabel='Producto'
@@ -127,8 +148,76 @@ export function ProductPicker({ value, onChange, invalid }) {
       loading={isFetching}
       invalid={invalid}
       placeholder='Buscar producto por código o nombre'
-      emptyText='Ningún producto activo coincide'
+      emptyText={emptyText}
+      renderOption={renderOption}
     />
+  )
+}
+
+/**
+ * Primer problema de las líneas, en el orden en que se ven: "Línea 2: Indica la cantidad".
+ * fields: los errores que bloquean, en orden de prioridad (los avisos como `merge` no bloquean).
+ */
+export const firstLineIssue = (lines, byLine, fields) => {
+  for (const [i, line] of lines.entries()) {
+    const e = byLine[line.key]
+    const field = e && fields.find((f) => e[f])
+    if (field) return `Línea ${i + 1}: ${e[field]}`
+  }
+  return null
+}
+
+/**
+ * Errores de línea que se ven: los del servidor (shown), los avisos de existencia y de producto
+ * repetido, y los de una línea con producto y cantidad ya puestos (por ejemplo, cantidad 0). Lo que
+ * falta llenar no se marca en rojo: lo explica el botón deshabilitado.
+ */
+export const visibleLineErrors = (lines, shown, live) => {
+  const merged = { ...shown }
+  for (const line of lines) {
+    const e = live[line.key]
+    if (!e) continue
+    const filled = Boolean(line.product && line.quantity)
+    merged[line.key] = filled ? { ...merged[line.key], ...e } : { ...merged[line.key], ...(e.merge && { merge: e.merge }), ...(e.stock && { stock: e.stock }) }
+  }
+  return merged
+}
+
+/** Errores de cabecera que se ven en vivo: todos menos los de "falta llenar" (hidden), que solo explica el botón. */
+export const visibleHeaderErrors = (shown, live, hidden) => ({
+  ...shown,
+  ...Object.fromEntries(Object.entries(live).filter(([k]) => !hidden.includes(k))),
+})
+
+/** Primer error de un objeto de errores de campo, o null. */
+export const firstIssue = (errors) => Object.values(errors)[0] ?? null
+
+/**
+ * Botón para avanzar o confirmar. Con blockedReason queda deshabilitado y muestra el motivo al lado:
+ * un botón gris sin explicación no dice qué falta.
+ */
+export function NextButton({ onClick, blockedReason, pending = false, pendingLabel, tone = 'next', children }) {
+  const blocked = Boolean(blockedReason)
+  return (
+    <div className='flex flex-col items-stretch gap-1.5 sm:flex-row sm:items-center sm:gap-3'>
+      {blocked && !pending && (
+        <p role='status' aria-live='polite' className='flex items-start gap-1.5 text-xs text-ink-500 sm:max-w-sm sm:text-right'>
+          <Info className='mt-px size-3.5 shrink-0' aria-hidden />
+          <span>{blockedReason}</span>
+        </p>
+      )}
+      <button
+        type='button'
+        onClick={onClick}
+        disabled={blocked || pending}
+        className={cn(
+          'inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-md px-5 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+          tone === 'confirm' ? 'bg-forest-700 enabled:hover:bg-forest-800' : 'bg-ink-900 enabled:hover:bg-ink-900/90'
+        )}
+      >
+        {pending ? pendingLabel : children}
+      </button>
+    </div>
   )
 }
 

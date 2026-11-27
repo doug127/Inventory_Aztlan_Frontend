@@ -13,13 +13,16 @@ import { EASE_OUT } from '@/features/auth/components/AuthUI'
 import { useAssetCategoryTree, useAssetCounts } from '@/features/asset-categories/assetCategoriesApi'
 import { categoryPathLabel, useActivateAsset, useAssetGroups, useAssets, useDeactivateAsset } from './assetsApi'
 import { AssetFormPanel } from './AssetFormPanel'
+import { TABLE_PAGE_SIZE } from '@/lib/pagination'
 
 const STATUS = [
   { id: 'active', label: 'Activos', isActive: true },
   { id: 'inactive', label: 'Inactivos', isActive: false },
   { id: 'all', label: 'Todos', isActive: undefined },
 ]
-const PAGE_SIZE = 20
+const PAGE_SIZE = TABLE_PAGE_SIZE
+// Con más activos que esto, una vista con varios lotes se agrupa por lote (independiente del tamaño de página).
+const GROUP_THRESHOLD = 20
 
 const useDebounced = (value, delay = 300) => {
   const [debounced, setDebounced] = useState(value)
@@ -211,7 +214,7 @@ const leavesWithAssets = (nodes) =>
 const groupingOf = (scope) => {
   const canGroup = leavesWithAssets(scope) > 1
   const total = scope.reduce((sum, n) => sum + n.assetsInSubtree, 0)
-  return { canGroup, autoGroup: canGroup && total > PAGE_SIZE }
+  return { canGroup, autoGroup: canGroup && total > GROUP_THRESHOLD }
 }
 
 const StatusTags = ({ asset }) => (
@@ -223,7 +226,8 @@ const StatusTags = ({ asset }) => (
   </>
 )
 
-const GROUP_PAGE_SIZE = 60
+// Tarjetas de un lote abierto: 3 por fila en escritorio, 10 filas.
+const GROUP_PAGE_SIZE = 30
 
 /** Los activos de un grupo abierto (los tablones de un lote), en orden natural de código. */
 function GroupAssets({ group, filters, canManage, menu }) {
@@ -284,7 +288,7 @@ function AssetGroups({ filters, canManage, menu }) {
     setOpen(new Set())
   }, [filters.categoryId, filters.isActive, filters.search])
 
-  const { data, isLoading, isError, error, isPlaceholderData } = useAssetGroups({ ...filters, page, limit: 50 })
+  const { data, isLoading, isError, error, isPlaceholderData } = useAssetGroups({ ...filters, page, limit: PAGE_SIZE })
   const groups = data?.data ?? []
   // Con un solo grupo (una búsqueda que cae en un lote) se abre directamente.
   const isOpen = (id) => open.has(id) || groups.length === 1
