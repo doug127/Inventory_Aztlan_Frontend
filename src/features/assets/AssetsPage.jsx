@@ -618,7 +618,7 @@ export function AssetsPage() {
                       <p className='truncate text-xs text-ink-500'>
                         <span className='font-mono font-semibold text-ink-900'>{a.code}</span> · {a.category.name}
                         {!a.isActive && ' · Inactivo'}
-                        {a.pendingLoans > 0 && <span className='text-amber-700'> · Préstamo pendiente</span>}
+                        {a.pendingLoans > 0 && <span className='text-aviso'> · Préstamo pendiente</span>}
                       </p>
                     </div>
                     {canManage && <AssetMenu asset={a} {...menu} />}

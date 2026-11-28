@@ -15,6 +15,7 @@ import {
   LayoutDashboard,
   Package,
   Ruler,
+  ScrollText,
   ShieldCheck,
   Truck,
   Network,
@@ -27,6 +28,7 @@ const NAV_ITEMS = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, minHierarchy: null },
   { to: '/movements', label: 'Movimientos', icon: ArrowLeftRight, minHierarchy: HIERARCHY.USER },
   { to: '/stock', label: 'Stock', icon: BarChart2, minHierarchy: HIERARCHY.USER },
+  { to: '/kardex', label: 'Kardex', icon: ScrollText, minHierarchy: HIERARCHY.USER },
   { to: '/products', label: 'Productos', icon: Package, minHierarchy: HIERARCHY.USER },
   {
     id: 'catalog',

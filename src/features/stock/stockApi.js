@@ -15,10 +15,18 @@ export const stockService = {
    * categoryId, alert (BAJO_MINIMO | SOBRE_MAXIMO | CON_ALERTA), groupBy (product | warehouse) }.
    */
   list: (params) => api.get('/stock', { params: clean(params) }),
+  /**
+   * Kardex de un producto (HU-409). Sobre completo: { data: KardexRow[], meta: { pagination, summary } }.
+   * KardexRow: { movement, warehouse, asset, in, out, balance }. summary: { product, warehouse, opening, in, out, closing }.
+   */
+  kardex: (params) => api.get('/stock/kardex', { params: clean(params) }),
   /** { warehouse: { id, code, name }, items: [{ productId, code, unitCode, available }] } (cantidades en texto) */
   availability: (warehouseId, productIds) =>
     api.get('/stock/availability', { params: { warehouseId, productIds: productIds.join(',') } }).then(unwrap),
 }
+
+export const useKardex = (params, { enabled = true } = {}) =>
+  useQuery({ queryKey: ['stock', 'kardex', params], queryFn: () => stockService.kardex(params), placeholderData: keepPreviousData, enabled })
 
 export const useStock = (params) =>
   useQuery({ queryKey: ['stock', 'list', params], queryFn: () => stockService.list(params), placeholderData: keepPreviousData })
@@ -34,3 +42,32 @@ export const useAvailability = (warehouseId, productIds) => {
     staleTime: 10_000,
   })
 }
+
+// --- Hojas imprimibles: todas las filas, no solo una página ------------------------------------
+
+/** Máximo de páginas de 100 filas que trae una hoja imprimible (10 000 filas). */
+const PRINT_MAX_PAGES = 100
+
+/**
+ * Recorre las páginas de un listado (de 100 en 100) y devuelve { rows, meta, truncated }: todas las
+ * filas, el meta de la primera página (resumen y filtros) y si se cortó por el máximo.
+ */
+const fetchAllPages = async (fetchPage, params) => {
+  const first = await fetchPage({ ...params, page: 1, limit: 100 })
+  const rows = [...(first.data ?? [])]
+  const totalPages = first.meta?.pagination?.totalPages ?? 1
+  const last = Math.min(totalPages, PRINT_MAX_PAGES)
+  for (let page = 2; page <= last; page += 1) {
+    const next = await fetchPage({ ...params, page, limit: 100 })
+    rows.push(...(next.data ?? []))
+  }
+  return { rows, meta: first.meta, truncated: totalPages > PRINT_MAX_PAGES }
+}
+
+/** Existencias completas con los filtros de la pantalla (hoja /stock/print). */
+export const useAllStock = (params) =>
+  useQuery({ queryKey: ['stock', 'print', params], queryFn: () => fetchAllPages(stockService.list, params) })
+
+/** Kardex completo de un producto con los filtros de la pantalla (hoja /kardex/print). */
+export const useAllKardex = (params, { enabled = true } = {}) =>
+  useQuery({ queryKey: ['stock', 'kardex', 'print', params], queryFn: () => fetchAllPages(stockService.kardex, params), enabled })

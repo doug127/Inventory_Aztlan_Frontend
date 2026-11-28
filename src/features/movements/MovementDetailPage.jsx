@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, RotateCcw, Undo2 } from 'lucide-react'
+import { ArrowLeft, Printer, RotateCcw, Undo2 } from 'lucide-react'
 import { formatDateTime } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/authStore'
@@ -75,24 +75,33 @@ export function MovementDetailPage() {
         </p>
         <div className='flex flex-wrap items-center justify-between gap-3'>
           <h1 className='font-mono text-[1.75rem] font-semibold tracking-wide'>{movement.documentNumber}</h1>
-          {isLoan && isAlmacenista && pendingPairs > 0 && (
+          <div className='flex flex-wrap gap-2'>
+            {isLoan && isAlmacenista && pendingPairs > 0 && (
+              <Link
+                to={`/movements/new/return?loan=${movement.id}`}
+                className='inline-flex h-10 items-center gap-2 rounded-md bg-forest-700 px-4 text-sm font-semibold text-white hover:bg-forest-800'
+              >
+                <Undo2 className='size-4' aria-hidden />
+                Registrar devolución
+              </Link>
+            )}
             <Link
-              to={`/movements/new/return?loan=${movement.id}`}
-              className='inline-flex h-10 items-center gap-2 rounded-md bg-forest-700 px-4 text-sm font-semibold text-white hover:bg-forest-800'
-            >
-              <Undo2 className='size-4' aria-hidden />
-              Registrar devolución
-            </Link>
-          )}
-          {canCorrect && (
-            <Link
-              to={`/movements/${movement.id}/correct`}
+              to={`/movements/${movement.id}/print`}
               className='inline-flex h-10 items-center gap-2 rounded-md border border-line bg-white px-4 text-sm font-semibold hover:border-ink-500/40'
             >
-              <RotateCcw className='size-4' aria-hidden />
-              Corregir
+              <Printer className='size-4' aria-hidden />
+              Imprimir
             </Link>
-          )}
+            {canCorrect && (
+              <Link
+                to={`/movements/${movement.id}/correct`}
+                className='inline-flex h-10 items-center gap-2 rounded-md border border-line bg-white px-4 text-sm font-semibold hover:border-ink-500/40'
+              >
+                <RotateCcw className='size-4' aria-hidden />
+                Corregir
+              </Link>
+            )}
+          </div>
         </div>
         {movement.correctionOf && (
           <p className='mt-1 text-sm text-ink-500'>
@@ -196,7 +205,7 @@ export function MovementDetailPage() {
                 </td>
                 <td className='whitespace-nowrap px-3 py-2.5 text-right font-semibold tabular-nums'>
                   {qty(line.quantity)} {line.product.unitCode}
-                  {Number(line.corrected) > 0 && <span className='block text-xs font-normal text-amber-700'>corregido {qty(line.corrected)}</span>}
+                  {Number(line.corrected) > 0 && <span className='block text-xs font-normal text-aviso'>corregido {qty(line.corrected)}</span>}
                 </td>
                 <td className='px-5 py-2.5'>
                   {line.asset ? (
@@ -221,7 +230,7 @@ export function MovementDetailPage() {
               </div>
               <span className='shrink-0 text-right text-sm font-semibold tabular-nums'>
                 {qty(line.quantity)} {line.product.unitCode}
-                {Number(line.corrected) > 0 && <span className='block text-xs font-normal text-amber-700'>corregido {qty(line.corrected)}</span>}
+                {Number(line.corrected) > 0 && <span className='block text-xs font-normal text-aviso'>corregido {qty(line.corrected)}</span>}
               </span>
             </li>
           ))}

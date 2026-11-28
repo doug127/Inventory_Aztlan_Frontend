@@ -1,12 +1,13 @@
 import { Link } from 'react-router-dom'
-import { ArrowDownToLine, ArrowLeftRight, ArrowUpFromLine, ClipboardCheck, History, Undo2 } from 'lucide-react'
+import { ArrowDownToLine, ArrowLeftRight, ArrowUpFromLine, ClipboardCheck, Undo2 } from 'lucide-react'
 import { PendingLoans } from './PendingLoans'
+import { MovementHistory } from './MovementHistory'
 import { useAuthStore } from '@/stores/authStore'
 import { HIERARCHY } from '@/lib/constants'
 
 // Movimientos. HU-401 habilita la orden de retiro, HU-402 la entrada, HU-403 el traslado y HU-404 el
 // ajuste (solo ADMIN). HU-405 agrega la devolución y la lista de préstamos pendientes; el historial con
-// filtros llega en HU-408.
+// filtros, HU-408.
 
 const ACTIONS = [
   {
@@ -61,17 +62,11 @@ export function MovementsPage() {
         </section>
       )}
 
-      <PendingLoans className='mt-8' />
+      <div className='mt-8'>
+        <MovementHistory />
+      </div>
 
-      <section className='mt-6 flex flex-col items-center rounded-xl border border-line/80 bg-white px-6 py-12 text-center'>
-        <span className='grid size-11 place-items-center rounded-full bg-sand-50 text-ink-500'>
-          <History className='size-5' aria-hidden />
-        </span>
-        <p className='mt-3 text-sm font-medium'>El historial de movimientos estará disponible pronto</p>
-        <p className='mt-1 max-w-md text-sm text-ink-500'>
-          Mientras tanto, los consumos de cada activo se ven en su ficha, dentro de Catálogo › Activos.
-        </p>
-      </section>
+      <PendingLoans className='mt-6' />
     </div>
   )
 }

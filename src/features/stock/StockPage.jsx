@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { AlertTriangle, ArrowUpFromLine, Boxes, PackageCheck, Search, TrendingUp } from 'lucide-react'
+import { AlertTriangle, ArrowUpFromLine, Boxes, PackageCheck, Printer, ScrollText, Search, TrendingUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/authStore'
 import { HIERARCHY } from '@/lib/constants'
@@ -115,6 +115,12 @@ export function StockPage() {
   const byWarehouse = groupBy === 'warehouse'
   const showWarehouse = byWarehouse || Boolean(warehouseId)
 
+  /** [Kardex] abre el kardex del producto, en el almacén de la fila (o del filtro) si lo hay. */
+  const kardexLink = (row) => {
+    const w = row.warehouse?.id ?? warehouseId
+    return `/kardex?product=${row.product.id}${w ? `&warehouse=${w}` : ''}`
+  }
+
   /** [Retirar] abre la orden de retiro con el producto (y el almacén, si la fila tiene uno) precargados. */
   const withdrawLink = (row) => {
     const w = row.warehouse?.id ?? (row.warehouses?.length === 1 ? row.warehouses[0].id : undefined)
@@ -125,8 +131,20 @@ export function StockPage() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2, ease: EASE_OUT }} className='mx-auto max-w-6xl font-plex text-ink-900'>
-      <h1 className='text-[1.75rem] font-semibold tracking-tight'>Existencias</h1>
-      <p className='mt-0.5 text-sm text-ink-500'>Lo disponible por almacén y categoría. El estado compara el total de todos los almacenes con el mínimo y el máximo.</p>
+      <div className='flex flex-wrap items-start justify-between gap-3'>
+        <div>
+          <h1 className='text-[1.75rem] font-semibold tracking-tight'>Existencias</h1>
+          <p className='mt-0.5 text-sm text-ink-500'>Lo disponible por almacén y categoría. El estado compara el total de todos los almacenes con el mínimo y el máximo.</p>
+        </div>
+        {/* Imprime todas las filas con los filtros actuales (sin la página). */}
+        <Link
+          to={`/stock/print?${new URLSearchParams([...params].filter(([k]) => k !== 'page')).toString()}`}
+          className='inline-flex h-10 shrink-0 items-center gap-2 rounded-md border border-line bg-white px-4 text-sm font-semibold hover:border-ink-500/40'
+        >
+          <Printer className='size-4' aria-hidden />
+          Imprimir
+        </Link>
+      </div>
 
       <div className='mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4' aria-label='Resumen por estado'>
         <SummaryTile icon={Boxes} label='Productos' value={summary?.total} active={!alert} onClick={() => update({ alert: '' })} tone='bg-sand-50 text-ink-900' />
@@ -205,7 +223,7 @@ export function StockPage() {
               <th className='px-3 py-2.5 text-right font-medium'>Existencia</th>
               <th className='px-3 py-2.5 text-right font-medium'>Mín. / Máx.</th>
               <th className='px-3 py-2.5 font-medium'>Estado</th>
-              {canWithdraw && <th className='px-5 py-2.5' />}
+              <th className='px-5 py-2.5' />
             </tr>
           </thead>
           <tbody>
@@ -243,9 +261,16 @@ export function StockPage() {
                 <td className='px-3 py-2.5'>
                   <StatusBadge status={row.status} />
                 </td>
-                {canWithdraw && (
-                  <td className='px-5 py-2.5 text-right'>
-                    {Number(row.quantity) > 0 && (
+                <td className='whitespace-nowrap px-5 py-2.5 text-right'>
+                  <span className='inline-flex gap-1.5'>
+                    <Link
+                      to={kardexLink(row)}
+                      className='inline-flex h-8 items-center gap-1.5 rounded-md border border-line px-2.5 text-xs font-medium hover:border-forest-700 hover:text-forest-800'
+                    >
+                      <ScrollText className='size-3.5' aria-hidden />
+                      Kardex
+                    </Link>
+                    {canWithdraw && Number(row.quantity) > 0 && (
                       <Link
                         to={withdrawLink(row)}
                         className='inline-flex h-8 items-center gap-1.5 rounded-md border border-line px-2.5 text-xs font-medium hover:border-forest-700 hover:text-forest-800'
@@ -254,8 +279,8 @@ export function StockPage() {
                         Retirar
                       </Link>
                     )}
-                  </td>
-                )}
+                  </span>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -283,11 +308,16 @@ export function StockPage() {
                   mín. {qty(row.minStock)}
                   {row.maxStock !== null && <> · máx. {qty(row.maxStock)}</>}
                 </p>
-                {canWithdraw && Number(row.quantity) > 0 && (
-                  <Link to={withdrawLink(row)} className='mt-1 inline-block text-xs font-medium text-forest-700 hover:underline'>
-                    Retirar
+                <span className='mt-1 flex justify-end gap-3 text-xs font-medium'>
+                  <Link to={kardexLink(row)} className='text-forest-700 hover:underline'>
+                    Kardex
                   </Link>
-                )}
+                  {canWithdraw && Number(row.quantity) > 0 && (
+                    <Link to={withdrawLink(row)} className='text-forest-700 hover:underline'>
+                      Retirar
+                    </Link>
+                  )}
+                </span>
               </div>
             </li>
           ))}

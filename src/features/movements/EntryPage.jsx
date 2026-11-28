@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion'
-import { ArrowLeft, CheckCircle2, FileText, Loader2, Paperclip, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, FileText, Loader2, Paperclip, Plus, Trash2, Printer } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { HIERARCHY } from '@/lib/constants'
 import { cn } from '@/lib/utils'
@@ -257,7 +257,7 @@ function LinesStep({ footer, lines, setLines, errors, current }) {
                   <div>
                     <ProductPicker value={line.product} onChange={(product) => update(line.key, { product })} invalid={Boolean(e.product)} />
                     {e.product && <p className='mt-1 text-xs text-red-600'>{e.product}</p>}
-                    {e.merge && <p className='mt-1 text-xs text-amber-700'>{e.merge}</p>}
+                    {e.merge && <p className='mt-1 text-xs text-aviso'>{e.merge}</p>}
                   </div>
                   <div>
                     <div className='relative'>
@@ -502,6 +502,13 @@ function DoneStep({ result, onNew, onUploaded }) {
         </div>
       )}
       <div className='mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center'>
+        <Link
+          to={`/movements/${movement.id}/print?auto=1`}
+          className='inline-flex h-10 items-center justify-center gap-2 rounded-md border border-line bg-white px-4 text-sm font-semibold hover:border-ink-500/40'
+        >
+          <Printer className='size-4' aria-hidden />
+          Imprimir
+        </Link>
         <Link
           to={`/movements/${movement.id}`}
           className='inline-flex h-10 items-center justify-center gap-2 rounded-md bg-forest-700 px-4 text-sm font-semibold text-white hover:bg-forest-800'

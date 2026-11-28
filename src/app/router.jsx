@@ -27,6 +27,7 @@ const DashboardPage = lazy(() =>
 const MovementsPage = lazy(() =>
   import('@/features/movements/MovementsPage').then((m) => ({ default: m.MovementsPage }))
 )
+const KardexPage = lazy(() => import('@/features/stock/KardexPage').then((m) => ({ default: m.KardexPage })))
 const StockPage = lazy(() =>
   import('@/features/stock/StockPage').then((m) => ({ default: m.StockPage }))
 )
@@ -49,6 +50,9 @@ const WithdrawalPage = lazy(() =>
   import('@/features/movements/WithdrawalPage').then((m) => ({ default: m.WithdrawalPage }))
 )
 const EntryPage = lazy(() => import('@/features/movements/EntryPage').then((m) => ({ default: m.EntryPage })))
+const StockPrintPage = lazy(() => import('@/features/stock/StockPrintPage').then((m) => ({ default: m.StockPrintPage })))
+const KardexPrintPage = lazy(() => import('@/features/stock/KardexPrintPage').then((m) => ({ default: m.KardexPrintPage })))
+const MovementPrintPage = lazy(() => import('@/features/movements/MovementPrintPage').then((m) => ({ default: m.MovementPrintPage })))
 const CorrectionPage = lazy(() => import('@/features/movements/CorrectionPage').then((m) => ({ default: m.CorrectionPage })))
 const ReturnPage = lazy(() => import('@/features/movements/ReturnPage').then((m) => ({ default: m.ReturnPage })))
 const AdjustmentPage = lazy(() => import('@/features/movements/AdjustmentPage').then((m) => ({ default: m.AdjustmentPage })))
@@ -98,6 +102,11 @@ export const router = createBrowserRouter([
   {
     element: <ProtectedRoute />,
     children: [
+      // HU-410: hoja imprimible de un movimiento, sin menú ni barra superior (todos los roles).
+      { path: '/movements/:id/print', element: <Page><MovementPrintPage /></Page> },
+      // Hojas imprimibles de Existencias y del Kardex, con los filtros de la pantalla (todos los roles).
+      { path: '/stock/print', element: <Page><StockPrintPage /></Page> },
+      { path: '/kardex/print', element: <Page><KardexPrintPage /></Page> },
       {
         element: <AppLayout />,
         children: [
@@ -153,6 +162,8 @@ export const router = createBrowserRouter([
               </Page>
             ),
           },
+          // HU-409: kardex de un producto (todos los roles)
+          { path: '/kardex', element: <Page><KardexPage /></Page> },
           {
             path: '/products',
             element: (

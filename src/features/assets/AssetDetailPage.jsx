@@ -239,7 +239,9 @@ function HistorySection({ assetId, period, productId, productName, onClearProduc
               <tr key={line.id} className='border-t border-line/50 first:border-t-0 align-top hover:bg-sand-50/50'>
                 <td className='whitespace-nowrap px-5 py-2.5 text-ink-500'>{formatDateTime(line.movement.movementDate)}</td>
                 <td className='px-3 py-2.5'>
-                  <span className='font-mono text-xs font-semibold tracking-wide'>{line.movement.documentNumber}</span>
+                  <Link to={`/movements/${line.movement.id}`} className='font-mono text-xs font-semibold tracking-wide hover:underline'>
+                    {line.movement.documentNumber}
+                  </Link>
                   {line.movement.reference && <span className='block font-mono text-xs text-ink-500'>{line.movement.reference}</span>}
                 </td>
                 <td className='px-3 py-2.5'>
@@ -271,7 +273,10 @@ function HistorySection({ assetId, period, productId, productName, onClearProduc
                 <div className='min-w-0'>
                   <p className='truncate text-sm font-medium'>{line.product.name}</p>
                   <p className='truncate text-xs text-ink-500'>
-                    <span className='font-mono font-semibold text-ink-900'>{line.movement.documentNumber}</span> ·{' '}
+                    <Link to={`/movements/${line.movement.id}`} className='font-mono font-semibold text-ink-900 hover:underline'>
+                      {line.movement.documentNumber}
+                    </Link>{' '}
+                    ·{' '}
                     {formatDateTime(line.movement.movementDate)}
                   </p>
                 </div>

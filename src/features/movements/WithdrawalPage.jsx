@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion'
-import { AlertTriangle, ArrowLeft, Check, CheckCircle2, Copy, FileText, Info, Plus, Trash2 } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Check, CheckCircle2, Copy, FileText, Info, Plus, Trash2, Printer } from 'lucide-react'
 import { SearchPicker } from '@/components/common/SearchPicker'
 import { useAuthStore } from '@/stores/authStore'
 import { HIERARCHY } from '@/lib/constants'
@@ -343,7 +343,7 @@ function LinesStep({ footer, header, warehouseCode, lines, setLines, errors, ava
                       required={assetRequired}
                     />
                     {e.asset && <p className='mt-1 text-xs text-red-600'>{e.asset}</p>}
-                    {e.merge && <p className='mt-1 text-xs text-amber-700'>{e.merge}</p>}
+                    {e.merge && <p className='mt-1 text-xs text-aviso'>{e.merge}</p>}
                   </div>
                 </div>
                 {line.showNote ? (
@@ -598,6 +598,13 @@ function DoneStep({ result, onNew }) {
         </div>
       )}
       <div className='mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center'>
+        <Link
+          to={`/movements/${movement.id}/print?auto=1`}
+          className='inline-flex h-10 items-center justify-center gap-2 rounded-md border border-line bg-white px-4 text-sm font-semibold hover:border-ink-500/40'
+        >
+          <Printer className='size-4' aria-hidden />
+          Imprimir orden
+        </Link>
         <Link
           to={`/movements/${movement.id}`}
           className='inline-flex h-10 items-center justify-center gap-2 rounded-md bg-forest-700 px-4 text-sm font-semibold text-white hover:bg-forest-800'

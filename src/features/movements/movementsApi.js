@@ -12,6 +12,12 @@ export const movementsService = {
    */
   get: (id) => api.get(`/movements/${id}`).then(unwrap),
   /**
+   * Historial (HU-408). params: { page, limit, search, movementType, reason, warehouseId, from, to,
+   * userId, productId, assetId }. Cada fila: { id, documentNumber, movementType, reason, reference,
+   * movementDate, createdBy, fromWarehouse, toWarehouse, lineCount, isCorrection, correctionCount }.
+   */
+  list: (params) => api.get('/movements', { params: Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== '')) }),
+  /**
    * Préstamos pendientes (HU-405), uno por activo y producto. Devuelve el sobre completo:
    * { data: [{ asset, product, lent, returned, pending, lastLoan: { id, documentNumber, movementDate, receivedBy, warehouse } }], meta }.
    * params: { page, limit, search, assetId, movementId }.
@@ -68,6 +74,10 @@ const useMovementMutation = (mutationFn) => {
     },
   })
 }
+
+/** Historial (HU-408): sobre completo { data: MovementSummary[], meta: { pagination, filters } }. */
+export const useMovements = (params) =>
+  useQuery({ queryKey: [...KEY, 'list', params], queryFn: () => movementsService.list(params), placeholderData: keepPreviousData })
 
 export const usePendingLoans = (params, { enabled = true } = {}) =>
   useQuery({

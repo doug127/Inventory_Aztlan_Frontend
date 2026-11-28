@@ -198,7 +198,7 @@ function LinesStep({ footer, header, warehouse, lines, setLines, errors, stock, 
                       emptyText={surplus ? 'Ningún producto activo coincide' : `Ningún producto con existencia en ${warehouse?.code ?? 'el almacén'} coincide`}
                     />
                     {e.product && <p className='mt-1 text-xs text-red-600'>{e.product}</p>}
-                    {e.merge && <p className='mt-1 text-xs text-amber-700'>{e.merge}</p>}
+                    {e.merge && <p className='mt-1 text-xs text-aviso'>{e.merge}</p>}
                   </div>
                   <div>
                     <div className='relative'>

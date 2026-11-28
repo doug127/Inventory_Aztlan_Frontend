@@ -12,6 +12,7 @@ export const assetsService = {
    * AssetDto: { id, code, name, category: { id, code, name, isActive, path, displayIcon }, isActive, hasMovements, pendingLoans }
    */
   list: (params) => api.get('/assets', { params: clean(params) }),
+  get: (id) => api.get(`/assets/${id}`).then(unwrap),
   /**
    * Agrupados por categoría hoja (un lote con sus tablones), con los mismos filtros de la lista.
    * { data: [{ category: { id, code, name, isActive, path, displayIcon }, assets, active, firstCode, lastCode }], meta }
@@ -34,6 +35,9 @@ export const assetsService = {
 }
 
 const KEY = ['assets']
+
+/** Un activo por id (filtro del historial de movimientos). */
+export const useAsset = (id) => useQuery({ queryKey: ['assets', 'detail', id], queryFn: () => assetsService.get(id), enabled: Boolean(id) })
 
 export const useAssets = (params, { enabled = true } = {}) =>
   useQuery({

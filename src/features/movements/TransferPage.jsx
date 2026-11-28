@@ -166,7 +166,7 @@ function LinesStep({ footer, lines, setLines, errors, from, to, fromStock, toSto
                       emptyText={`Ningún producto con existencia en ${from?.code ?? 'el origen'} coincide`}
                     />
                     {e.product && <p className='mt-1 text-xs text-red-600'>{e.product}</p>}
-                    {e.merge && <p className='mt-1 text-xs text-amber-700'>{e.merge}</p>}
+                    {e.merge && <p className='mt-1 text-xs text-aviso'>{e.merge}</p>}
                   </div>
                   <div>
                     <div className='relative'>

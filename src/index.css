@@ -220,6 +220,7 @@ body {
 /* Modo claro: Niebla de fondo, tarjetas Blanco, texto Grafito, acción Bosque. */
 :root {
     --c-white: #FFFFFF;
+    --c-aviso: #8A6836;
     --c-ink-900: #17261F;
     --c-ink-500: #58695E;
     --c-line: #D5DED2;
@@ -258,6 +259,7 @@ body {
 /* Modo oscuro: fondo Grafito, tarjetas Pizarra, texto Niebla, acción Caña (texto Grafito encima). */
 .dark {
     --c-white: #263A30;
+    --c-aviso: #D4BA8B;
     --c-ink-900: #F4F7F2;
     --c-ink-500: #A8B8AC;
     --c-line: #3A5045;
@@ -305,6 +307,8 @@ body {
 /* Colores que cambian con el modo: las utilidades (bg-white, text-ink-900, border-line…) leen la variable. */
 @theme inline {
     --color-white: var(--c-white);
+    /* Texto de aviso (salidas, correcciones, repetidos) sobre la tarjeta: Cosecha oscuro en claro, Cosecha claro en oscuro. */
+    --color-aviso: var(--c-aviso);
     --color-ink-900: var(--c-ink-900);
     --color-ink-500: var(--c-ink-500);
     --color-line: var(--c-line);
