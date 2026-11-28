@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom'
-import { ArrowDownToLine, ArrowLeftRight, ArrowUpFromLine, ClipboardCheck, History } from 'lucide-react'
+import { ArrowDownToLine, ArrowLeftRight, ArrowUpFromLine, ClipboardCheck, History, Undo2 } from 'lucide-react'
+import { PendingLoans } from './PendingLoans'
 import { useAuthStore } from '@/stores/authStore'
 import { HIERARCHY } from '@/lib/constants'
 
-// Movimientos. HU-401 habilita la orden de retiro, HU-402 la entrada y HU-403 el traslado; los ajustes
-// llegan en el Sprint 6 y el historial con filtros en HU-408.
+// Movimientos. HU-401 habilita la orden de retiro, HU-402 la entrada, HU-403 el traslado y HU-404 el
+// ajuste (solo ADMIN). HU-405 agrega la devolución y la lista de préstamos pendientes; el historial con
+// filtros llega en HU-408.
 
 const ACTIONS = [
   {
@@ -15,8 +17,9 @@ const ACTIONS = [
     ready: true,
   },
   { to: '/movements/new/entry', label: 'Entrada', hint: 'Compras a proveedores y otros ingresos', icon: ArrowDownToLine, ready: true },
+  { to: '/movements/new/return', label: 'Devolución', hint: 'Lo que regresa de un préstamo', icon: Undo2, ready: true },
   { to: '/movements/new/transfer', label: 'Traslado', hint: 'De un almacén a otro', icon: ArrowLeftRight, ready: true },
-  { label: 'Ajuste', hint: 'Diferencias del conteo físico', icon: ClipboardCheck, minHierarchy: HIERARCHY.ADMIN },
+  { to: '/movements/new/adjustment', label: 'Ajuste', hint: 'Diferencias del conteo físico', icon: ClipboardCheck, minHierarchy: HIERARCHY.ADMIN, ready: true },
 ]
 
 export function MovementsPage() {
@@ -30,7 +33,7 @@ export function MovementsPage() {
       {canRegister && (
         <section className='mt-6' aria-label='Registrar un movimiento'>
           <h2 className='text-sm font-semibold'>Registrar</h2>
-          <div className='mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4'>
+          <div className='mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-5'>
             {ACTIONS.filter((a) => !a.minHierarchy || hasHierarchy(a.minHierarchy)).map(({ to, label, hint, icon: Icon, ready }) =>
               ready ? (
                 <Link
@@ -58,7 +61,9 @@ export function MovementsPage() {
         </section>
       )}
 
-      <section className='mt-8 flex flex-col items-center rounded-xl border border-line/80 bg-white px-6 py-12 text-center'>
+      <PendingLoans className='mt-8' />
+
+      <section className='mt-6 flex flex-col items-center rounded-xl border border-line/80 bg-white px-6 py-12 text-center'>
         <span className='grid size-11 place-items-center rounded-full bg-sand-50 text-ink-500'>
           <History className='size-5' aria-hidden />
         </span>

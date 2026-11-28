@@ -31,7 +31,7 @@ export function UserSessionsPanel({ user, canManage, onClose }) {
               type='button'
               disabled={revoke.isPending}
               onClick={() => revoke.mutate(user.id)}
-              className='flex h-11 items-center justify-center gap-2 rounded-md bg-red-600 text-[15px] font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-70'
+              className='flex h-11 items-center justify-center gap-2 rounded-md bg-red-600 text-[15px] font-semibold text-blanco transition-colors hover:bg-red-700 disabled:opacity-70'
             >
               {revoke.isPending ? <Loader2 className='size-4 animate-spin' /> : <LogOut className='size-4' />}
               Cerrar todas las sesiones

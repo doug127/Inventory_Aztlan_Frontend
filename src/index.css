@@ -9,66 +9,72 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ---------------------------------------------------------------------------
+   Paleta Agrícola Aztlan (src/components/theme/colors.js la repite para JS).
+     Bosque  #285C45  marca · acción principal      Niebla       #F4F7F2  fondo claro · texto oscuro
+     Hoja    #477A59  apoyo · estados positivos     Blanco       #FFFFFF  tarjetas en modo claro
+     Caña    #8EBA43  acento · acción en oscuro     Grafito      #17261F  fondo oscuro · texto claro
+     Menta   #DDEAD9  selección · fondos suaves     Pizarra      #263A30  tarjetas en modo oscuro
+     Cosecha #BE9659  atención · acento cálido      Salvia       #A8B8AC  texto secundario oscuro
+     Arena   #EEE6D7  avisos · superficies cálidas  Gris vegetal #58695E  texto secundario claro
+   --------------------------------------------------------------------------- */
 :root {
-    --color-primary: #2E7D32;
-    --color-primary-hover: #276b2b;    
-
-    --color-secondary: #66BB6A;
-    --color-secondary-hover: #5ca45e;
-
-    --color-support: #8D6E63;
-    --color-support-hover: #7c5f56;
-
-    --color-cta: #2563EB;
-    --color-cta-hover: #1f54d1;
-
-    --color-bg: #F9FAFB;
+    /* Variables antiguas (aún las usan algunas pantallas): apuntan a la paleta. */
+    --color-primary: #285C45;
+    --color-primary-hover: #214D3A;
+    --color-secondary: #477A59;
+    --color-secondary-hover: #3B6A4C;
+    --color-support: #BE9659;
+    --color-support-hover: #A67F45;
+    --color-cta: #285C45;
+    --color-cta-hover: #214D3A;
+    --color-bg: #F4F7F2;
     --color-surface: #FFFFFF;
-    --color-border: #E5E7EB;
-
-    --color-text-primary: #111827;
-    --color-text-secondary: #6B7280;
-
+    --color-border: #D5DED2;
+    --color-text-primary: #17261F;
+    --color-text-secondary: #58695E;
     --color-error: #DC2626;
     --color-error-hover: #c41f1f;
+    --color-warning: #BE9659;
+    --color-warning-hover: #A67F45;
+    --color-success: #477A59;
+    --color-success-hover: #3B6A4C;
 
-    --color-warning: #F59E0B;
-    --color-warning-hover: #d88a00;
-
-    --color-success: #16A34A;
-    --color-success-hover: #13803f;
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.93 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
+    /* Tokens de shadcn/ui. */
+    --background: #F4F7F2;
+    --foreground: #17261F;
+    --card: #FFFFFF;
+    --card-foreground: #17261F;
+    --popover: #FFFFFF;
+    --popover-foreground: #17261F;
+    --primary: #285C45;
+    --primary-foreground: #FFFFFF;
+    --secondary: #DDEAD9;
+    --secondary-foreground: #285C45;
+    --muted: #E8EEE5;
+    --muted-foreground: #58695E;
+    --accent: #DDEAD9;
+    --accent-foreground: #17261F;
     --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
+    --border: #D5DED2;
+    --input: #D5DED2;
+    --ring: #477A59;
+    --chart-1: #285C45;
+    --chart-2: #8EBA43;
+    --chart-3: #BE9659;
+    --chart-4: #477A59;
+    --chart-5: #A8B8AC;
     --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+
+    /* Menú lateral en Bosque para separarlo del fondo Niebla; la opción activa en Caña. */
+    --sidebar: #285C45;
+    --sidebar-foreground: #DDEAD9;
+    --sidebar-primary: #8EBA43;
+    --sidebar-primary-foreground: #17261F;
+    --sidebar-accent: #33694F;
+    --sidebar-accent-foreground: #FFFFFF;
+    --sidebar-border: #3A6B54;
+    --sidebar-ring: #8EBA43;
 }
 
 body {
@@ -118,38 +124,34 @@ body {
     --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* Modo oscuro (aún sin selector en la interfaz): Grafito de fondo, Pizarra en tarjetas, Caña como acción. */
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
+    --background: #17261F;
+    --foreground: #F4F7F2;
+    --card: #263A30;
+    --card-foreground: #F4F7F2;
+    --popover: #263A30;
+    --popover-foreground: #F4F7F2;
+    --primary: #8EBA43;
+    --primary-foreground: #17261F;
+    --secondary: #263A30;
+    --secondary-foreground: #F4F7F2;
+    --muted: #263A30;
+    --muted-foreground: #A8B8AC;
+    --accent: #263A30;
+    --accent-foreground: #F4F7F2;
     --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+    --border: rgb(168 184 172 / 18%);
+    --input: rgb(168 184 172 / 24%);
+    --ring: #8EBA43;
+    --sidebar: #0F1A15;
+    --sidebar-foreground: #A8B8AC;
+    --sidebar-primary: #8EBA43;
+    --sidebar-primary-foreground: #17261F;
+    --sidebar-accent: #263A30;
+    --sidebar-accent-foreground: #F4F7F2;
+    --sidebar-border: rgb(168 184 172 / 14%);
+    --sidebar-ring: #8EBA43;
 }
 
 @layer base {
@@ -163,23 +165,179 @@ body {
     @apply font-sans;
     }
 }
-/* Paleta y tipografía del diseño "Flujo de Usuario" (pantallas de acceso).
-   Clases: bg-forest-900, text-forest-700, bg-sand-50, font-plex, etc. */
+/* Colores de la paleta como clases de Tailwind (bg-bosque, text-gris-vegetal, bg-arena…) y la escala
+   que ya usan las pantallas (forest, ink, sand, line), ahora derivada de la paleta. */
 @theme {
     --font-plex: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
 
-    --color-forest-950: #163020;
-    --color-forest-900: #1b3a24;
-    --color-forest-800: #1f4a2c;
-    --color-forest-700: #235c33;
-    --color-forest-600: #2c6e3e;
-    --color-forest-100: #e3f4e6;
-    --color-forest-50: #f0f8f1;
-    --color-lime-badge: #a9c46c;
-    --color-sand-50: #f5f4f0;
-    --color-ink-900: #1c1d1a;
-    --color-ink-500: #6b6e66;
-    --color-line: #d6d6d0;
+    --color-bosque: #285C45;
+    --color-hoja: #477A59;
+    --color-cana: #8EBA43;
+    --color-menta: #DDEAD9;
+    --color-cosecha: #BE9659;
+    --color-arena: #EEE6D7;
+    --color-niebla: #F4F7F2;
+    --color-grafito: #17261F;
+    --color-pizarra: #263A30;
+    --color-salvia: #A8B8AC;
+    --color-gris-vegetal: #58695E;
+    /* Blanco real (no cambia en modo oscuro): texto sobre rojo o azul. bg-white/text-white sí cambian. */
+    --color-blanco: #FFFFFF;
+
+    --color-lime-badge: #8EBA43;
+
+    /* Escalas de Tailwind que usan las pantallas, llevadas a la paleta:
+       amber y yellow → Cosecha/Arena (iguales en los dos modos: "Arena para avisos").
+       gray, green, white y la escala forest/ink/sand/line cambian con el modo: ver @theme inline más abajo.
+       red (errores) y blue, purple, cyan (etiquetas que distinguen tipos) no cambian. */
+
+
+    --color-amber-50: #F8F4EC;
+    --color-amber-100: #EEE6D7;
+    --color-amber-200: #E2D2B3;
+    --color-amber-300: #D4BA8B;
+    --color-amber-400: #C9A771;
+    --color-amber-500: #BE9659;
+    --color-amber-600: #A67F45;
+    --color-amber-700: #8A6836;
+    --color-amber-800: #6E522B;
+    --color-amber-900: #553F21;
+    --color-amber-950: #3A2B16;
+
+    --color-yellow-50: #F8F4EC;
+    --color-yellow-100: #EEE6D7;
+    --color-yellow-200: #E2D2B3;
+    --color-yellow-300: #D4BA8B;
+    --color-yellow-400: #C9A771;
+    --color-yellow-500: #BE9659;
+    --color-yellow-600: #A67F45;
+    --color-yellow-700: #8A6836;
+    --color-yellow-800: #6E522B;
+    --color-yellow-900: #553F21;
+    --color-yellow-950: #3A2B16;
+}
+
+/* Modo claro: Niebla de fondo, tarjetas Blanco, texto Grafito, acción Bosque. */
+:root {
+    --c-white: #FFFFFF;
+    --c-ink-900: #17261F;
+    --c-ink-500: #58695E;
+    --c-line: #D5DED2;
+    --c-sand-50: #F4F7F2;
+    --c-forest-50: #EEF5EC;
+    --c-forest-100: #DDEAD9;
+    --c-forest-600: #477A59;
+    --c-forest-700: #285C45;
+    --c-forest-800: #214D3A;
+    --c-forest-900: #1C3F30;
+    --c-forest-950: #17261F;
+    --c-gray-50: #F4F7F2;
+    --c-gray-100: #E8EEE5;
+    --c-gray-200: #D5DED2;
+    --c-gray-300: #BCC8B8;
+    --c-gray-400: #A8B8AC;
+    --c-gray-500: #7D8D82;
+    --c-gray-600: #58695E;
+    --c-gray-700: #3E5046;
+    --c-gray-800: #263A30;
+    --c-gray-900: #17261F;
+    --c-gray-950: #0F1A15;
+    --c-green-50: #EEF5EC;
+    --c-green-100: #DDEAD9;
+    --c-green-200: #C3DABD;
+    --c-green-300: #A3C79A;
+    --c-green-400: #6E9E7C;
+    --c-green-500: #477A59;
+    --c-green-600: #3B6A4C;
+    --c-green-700: #285C45;
+    --c-green-800: #214D3A;
+    --c-green-900: #1C3F30;
+    --c-green-950: #17261F;
+}
+
+/* Modo oscuro: fondo Grafito, tarjetas Pizarra, texto Niebla, acción Caña (texto Grafito encima). */
+.dark {
+    --c-white: #263A30;
+    --c-ink-900: #F4F7F2;
+    --c-ink-500: #A8B8AC;
+    --c-line: #3A5045;
+    --c-sand-50: #1E3128;
+    --c-forest-50: #1F3327;
+    --c-forest-100: #2C4733;
+    --c-forest-600: #A3CB5E;
+    --c-forest-700: #8EBA43;
+    --c-forest-800: #A3CB5E;
+    --c-forest-900: #C3DC94;
+    --c-forest-950: #DDEAD9;
+    --c-gray-50: #1E3128;
+    --c-gray-100: #263A30;
+    --c-gray-200: #34493E;
+    --c-gray-300: #4A5F53;
+    --c-gray-400: #7D8D82;
+    --c-gray-500: #A8B8AC;
+    --c-gray-600: #BCC8B8;
+    --c-gray-700: #D5DED2;
+    --c-gray-800: #E8EEE5;
+    --c-gray-900: #F4F7F2;
+    --c-gray-950: #FFFFFF;
+    --c-green-50: #1F3327;
+    --c-green-100: #2C4733;
+    --c-green-200: #3B5A3C;
+    --c-green-300: #5C7F4A;
+    --c-green-400: #7FA552;
+    --c-green-500: #8EBA43;
+    --c-green-600: #A3CB5E;
+    --c-green-700: #B8D77F;
+    --c-green-800: #CDE4A3;
+    --c-green-900: #E1EFC7;
+    --c-green-950: #F0F7E3;
+}
+
+.dark {
+    color-scheme: dark;
+    --cane-track: #17261F;
+    --cane-dark: #477A59;
+    --cane-mid: #8EBA43;
+    --cane-light: #DDEAD9;
+    --cane-node: rgba(23, 38, 31, 0.6);
+}
+
+/* Colores que cambian con el modo: las utilidades (bg-white, text-ink-900, border-line…) leen la variable. */
+@theme inline {
+    --color-white: var(--c-white);
+    --color-ink-900: var(--c-ink-900);
+    --color-ink-500: var(--c-ink-500);
+    --color-line: var(--c-line);
+    --color-sand-50: var(--c-sand-50);
+    --color-forest-50: var(--c-forest-50);
+    --color-forest-100: var(--c-forest-100);
+    --color-forest-600: var(--c-forest-600);
+    --color-forest-700: var(--c-forest-700);
+    --color-forest-800: var(--c-forest-800);
+    --color-forest-900: var(--c-forest-900);
+    --color-forest-950: var(--c-forest-950);
+    --color-gray-50: var(--c-gray-50);
+    --color-gray-100: var(--c-gray-100);
+    --color-gray-200: var(--c-gray-200);
+    --color-gray-300: var(--c-gray-300);
+    --color-gray-400: var(--c-gray-400);
+    --color-gray-500: var(--c-gray-500);
+    --color-gray-600: var(--c-gray-600);
+    --color-gray-700: var(--c-gray-700);
+    --color-gray-800: var(--c-gray-800);
+    --color-gray-900: var(--c-gray-900);
+    --color-gray-950: var(--c-gray-950);
+    --color-green-50: var(--c-green-50);
+    --color-green-100: var(--c-green-100);
+    --color-green-200: var(--c-green-200);
+    --color-green-300: var(--c-green-300);
+    --color-green-400: var(--c-green-400);
+    --color-green-500: var(--c-green-500);
+    --color-green-600: var(--c-green-600);
+    --color-green-700: var(--c-green-700);
+    --color-green-800: var(--c-green-800);
+    --color-green-900: var(--c-green-900);
+    --color-green-950: var(--c-green-950);
 }
 
 /* ---------------------------------------------------------------------------
@@ -190,12 +348,12 @@ body {
    @supports porque en Chrome 121+ anulan el estilo ::-webkit-*.
    --------------------------------------------------------------------------- */
 :root {
-  --cane-node: rgba(22, 48, 32, 0.55);
-  --cane-node-light: rgba(233, 244, 200, 0.55);
-  --cane-dark: #1f4a2c;
-  --cane-mid: #3f8a4f;
-  --cane-light: #a9c46c;
-  --cane-track: #f5f4f0;
+  --cane-node: rgba(23, 38, 31, 0.55);
+  --cane-node-light: rgba(221, 234, 217, 0.6);
+  --cane-dark: #285C45;
+  --cane-mid: #477A59;
+  --cane-light: #8EBA43;
+  --cane-track: #F4F7F2;
 }
 
 /* Reserva el espacio de la barra aunque no haga falta: el contenido no se corre cuando aparece. */
@@ -241,12 +399,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  --cane-mid: #4a9a5a;
-  --cane-light: #bcd47e;
+  --cane-mid: #568A68;
+  --cane-light: #A3CB5E;
 }
 
 ::-webkit-scrollbar-thumb:active {
-  --cane-mid: #2c6e3e;
+  --cane-mid: #3B6A4C;
 }
 
 ::-webkit-scrollbar-corner {
@@ -258,4 +416,12 @@ body {
     scrollbar-color: var(--cane-mid) var(--cane-track);
     scrollbar-width: thin;
   }
+}
+
+/* Dentro del menú lateral (fondo Bosque) la pista de la barra es transparente y el tallo más claro. */
+.sidebar-scroll {
+  --cane-track: transparent;
+  --cane-dark: #477A59;
+  --cane-mid: #8EBA43;
+  --cane-light: #DDEAD9;
 }

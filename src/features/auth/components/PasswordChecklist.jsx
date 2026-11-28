@@ -12,7 +12,7 @@ export function PasswordChecklist({ value = '' }) {
         return (
           <li key={rule.id} className={cn('flex items-center gap-2 text-[13px] transition-colors', ok ? 'text-forest-700' : 'text-ink-500')}>
             <motion.span
-              animate={{ scale: ok ? 1 : 0.85, backgroundColor: ok ? '#235c33' : '#ffffff' }}
+              animate={{ scale: ok ? 1 : 0.85, backgroundColor: ok ? '#285C45' : '#FFFFFF' }}
               transition={{ type: 'spring', stiffness: 500, damping: 28 }}
               className={cn('grid size-4 shrink-0 place-items-center rounded-full border', ok ? 'border-forest-700' : 'border-line')}
             >

@@ -139,7 +139,7 @@ function FilePicker({ file, onChange, invalid, id }) {
 }
 
 /** Paso 1 de la entrada: los documentos que respaldan la recepción. */
-export function DocumentsEditor({ documents, setDocuments, errors, reason }) {
+export function DocumentsEditor({ documents, setDocuments, errors, reason, footer }) {
   const update = (key, patch) => setDocuments((ds) => ds.map((d) => (d.key === key ? { ...d, ...patch } : d)))
   const remove = (key) => setDocuments((ds) => ds.filter((d) => d.key !== key))
   const add = () => setDocuments((ds) => [...ds, emptyDocument(ds.at(-1))])
@@ -314,6 +314,7 @@ export function DocumentsEditor({ documents, setDocuments, errors, reason }) {
           {documents.length ? 'Agregar otro documento' : 'Agregar factura, vale o recibo'}
         </button>
       )}
+      {footer}
     </Card>
   )
 }

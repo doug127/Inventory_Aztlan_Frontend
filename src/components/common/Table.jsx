@@ -44,7 +44,7 @@ export const Table = ({
             })}
             {actions && (
                 <th
-                className={`rounded-tr-md ${classAction} bg-blue-500 py-3 text-xs font-medium uppercase tracking-wider text-white`}
+                className={`rounded-tr-md ${classAction} bg-blue-500 py-3 text-xs font-medium uppercase tracking-wider text-blanco`}
                 >
                     Acciones
                 </th>

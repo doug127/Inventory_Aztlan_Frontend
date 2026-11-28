@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 
 // Endpoints de /api/movements. HU-401: orden de retiro y detalle de un movimiento.
@@ -12,11 +12,19 @@ export const movementsService = {
    */
   get: (id) => api.get(`/movements/${id}`).then(unwrap),
   /**
+   * Préstamos pendientes (HU-405), uno por activo y producto. Devuelve el sobre completo:
+   * { data: [{ asset, product, lent, returned, pending, lastLoan: { id, documentNumber, movementDate, receivedBy, warehouse } }], meta }.
+   * params: { page, limit, search, assetId, movementId }.
+   */
+  pendingLoans: (params) => api.get('/movements/loans/pending', { params }),
+  /**
    * Devuelve el sobre completo: { data: MovementDto, meta: { duplicated, warnings: { belowMinimum, consolidated } } }.
    * idempotencyKey: el mismo en cada reintento del mismo borrador (doble clic, red inestable).
    */
   /** Entrada (HU-402). Mismo sobre que la orden de retiro; meta.warnings: { aboveMaximum, consolidated }. */
   createEntry: ({ body, idempotencyKey }) => api.post('/movements/entries', body, { headers: { 'Idempotency-Key': idempotencyKey } }),
+  /** Ajuste por conteo físico (HU-404, ADMIN). meta.warnings: { belowMinimum, aboveMaximum, consolidated }. */
+  createAdjustment: ({ body, idempotencyKey }) => api.post('/movements/adjustments', body, { headers: { 'Idempotency-Key': idempotencyKey } }),
   /** Traslado (HU-403). Mismo sobre; meta.warnings: { consolidated }. */
   createTransfer: ({ body, idempotencyKey }) => api.post('/movements/transfers', body, { headers: { 'Idempotency-Key': idempotencyKey } }),
   createWithdrawal: ({ body, idempotencyKey }) => api.post('/movements/withdrawals', body, { headers: { 'Idempotency-Key': idempotencyKey } }),
@@ -58,8 +66,17 @@ const useMovementMutation = (mutationFn) => {
   })
 }
 
+export const usePendingLoans = (params, { enabled = true } = {}) =>
+  useQuery({
+    queryKey: [...KEY, 'loans', 'pending', params],
+    queryFn: () => movementsService.pendingLoans(params),
+    placeholderData: keepPreviousData,
+    enabled,
+  })
+
 export const useCreateEntry = () => useMovementMutation(movementsService.createEntry)
 export const useCreateTransfer = () => useMovementMutation(movementsService.createTransfer)
+export const useCreateAdjustment = () => useMovementMutation(movementsService.createAdjustment)
 
 export const useCreateWithdrawal = () => {
   const qc = useQueryClient()

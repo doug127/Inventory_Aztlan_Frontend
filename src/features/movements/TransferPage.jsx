@@ -13,6 +13,7 @@ import {
   Banner,
   Card,
   Field,
+  FormFooter,
   NextButton,
   ProductPicker,
   Steps,
@@ -44,7 +45,7 @@ const EMPTY_HEADER = { fromId: '', toId: '', date: isoDay(new Date()), receivedB
 
 // --- Paso 1 -------------------------------------------------------------------------
 
-function HeaderStep({ header, setHeader, errors, warehouses, canBackdate }) {
+function HeaderStep({ footer, header, setHeader, errors, warehouses, canBackdate }) {
   const set = (field) => (e) => setHeader((h) => ({ ...h, [field]: e.target.value }))
   const backdated = header.date < daysAgo(BACKDATE_DAYS)
   const destinations = warehouses.filter((w) => w.id !== header.fromId)
@@ -102,6 +103,7 @@ function HeaderStep({ header, setHeader, errors, warehouses, canBackdate }) {
           />
         </Field>
       </div>
+      {footer}
     </Card>
   )
 }
@@ -119,7 +121,7 @@ function StockChange({ code, current, delta, unit }) {
   )
 }
 
-function LinesStep({ lines, setLines, errors, from, to, fromStock, toStock, totals }) {
+function LinesStep({ footer, lines, setLines, errors, from, to, fromStock, toStock, totals }) {
   const update = (key, patch) => setLines((ls) => ls.map((l) => (l.key === key ? { ...l, ...patch } : l)))
   const remove = (key) => setLines((ls) => (ls.length > 1 ? ls.filter((l) => l.key !== key) : [emptyLine()]))
 
@@ -211,14 +213,17 @@ function LinesStep({ lines, setLines, errors, from, to, fromStock, toStock, tota
         })}
       </ol>
 
-      <button
-        type='button'
-        onClick={() => setLines((ls) => [...ls, emptyLine()])}
-        className='inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-dashed border-line bg-white text-sm font-medium text-ink-900 hover:border-forest-700 hover:text-forest-800'
-      >
-        <Plus className='size-4' aria-hidden />
-        Agregar producto
-      </button>
+      <Card className='p-4 sm:p-4'>
+        <button
+          type='button'
+          onClick={() => setLines((ls) => [...ls, emptyLine()])}
+          className='inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-dashed border-line bg-white text-sm font-medium text-ink-900 hover:border-forest-700 hover:text-forest-800'
+        >
+          <Plus className='size-4' aria-hidden />
+          Agregar producto
+        </button>
+        {footer}
+      </Card>
     </div>
   )
 }
@@ -300,7 +305,7 @@ const fromServerError = (error, lines) => {
 
 // --- Paso 3 y resultado -------------------------------------------------------------
 
-function ReviewStep({ header, lines, from, to, totals, fromStock, toStock }) {
+function ReviewStep({ footer, header, lines, from, to, totals, fromStock, toStock }) {
   const products = new Map(lines.filter((l) => l.product).map((l) => [l.product.id, l.product]))
   return (
     <div className='space-y-4'>
@@ -359,6 +364,7 @@ function ReviewStep({ header, lines, from, to, totals, fromStock, toStock }) {
             )
           })}
         </ul>
+        <div className='px-4 pb-4 sm:px-6'>{footer}</div>
       </Card>
     </div>
   )
@@ -505,6 +511,34 @@ export function TransferPage() {
 
   const footerButton = 'inline-flex h-11 items-center justify-center gap-2 rounded-md px-5 text-sm font-semibold transition-colors disabled:opacity-60'
 
+  // Botones del paso: cada paso los muestra al final de su última tarjeta.
+  const footer = (
+    <FormFooter>
+      <button
+        type='button'
+        onClick={() => (step === 1 ? navigate('/movements') : setStep(step - 1))}
+        className={cn(footerButton, 'border border-line bg-white text-ink-900 hover:border-ink-500/40')}
+      >
+        {step === 1 ? 'Cancelar' : step === 3 ? 'Volver a editar' : 'Atrás'}
+      </button>
+      {step === 1 && (
+        <NextButton onClick={goToLines} blockedReason={headerBlocked}>
+          Continuar con los productos
+        </NextButton>
+      )}
+      {step === 2 && (
+        <NextButton onClick={goToReview} blockedReason={linesBlocked}>
+          Revisar el traslado
+        </NextButton>
+      )}
+      {step === 3 && (
+        <NextButton onClick={confirm} blockedReason={headerBlocked ?? linesBlocked} pending={create.isPending} pendingLabel='Registrando…' tone='confirm'>
+          Confirmar traslado
+        </NextButton>
+      )}
+    </FormFooter>
+  )
+
   return (
     <MotionConfig reducedMotion='user'>
       <div className='mx-auto max-w-4xl font-plex text-ink-900'>
@@ -535,41 +569,15 @@ export function TransferPage() {
             transition={{ duration: 0.2, ease: EASE_OUT }}
             className='mt-5'
           >
-            {step === 1 && <HeaderStep header={header} setHeader={setHeader} errors={shownHeaderErrors}warehouses={warehouses} canBackdate={canBackdate} />}
+            {step === 1 && <HeaderStep footer={footer} header={header} setHeader={setHeader} errors={shownHeaderErrors} warehouses={warehouses} canBackdate={canBackdate} />}
             {step === 2 && (
-              <LinesStep lines={lines} setLines={setLines} errors={shownLineErrors} from={from} to={to} fromStock={fromStock} toStock={toStock} totals={live.totals} />
+              <LinesStep footer={footer} lines={lines} setLines={setLines} errors={shownLineErrors} from={from} to={to} fromStock={fromStock} toStock={toStock} totals={live.totals} />
             )}
-            {step === 3 && <ReviewStep header={header} lines={lines} from={from} to={to} totals={live.totals} fromStock={fromStock} toStock={toStock} />}
+            {step === 3 && <ReviewStep footer={footer} header={header} lines={lines} from={from} to={to} totals={live.totals} fromStock={fromStock} toStock={toStock} />}
             {step === 'done' && result && <DoneStep result={result} onNew={reset} />}
           </motion.div>
         </AnimatePresence>
 
-        {step !== 'done' && (
-          <div className='sticky bottom-0 -mx-6 mt-6 flex flex-col-reverse gap-2 border-t border-line/70 bg-white/90 px-6 py-3 backdrop-blur sm:flex-row sm:justify-between'>
-            <button
-              type='button'
-              onClick={() => (step === 1 ? navigate('/movements') : setStep(step - 1))}
-              className={cn(footerButton, 'border border-line bg-white text-ink-900 hover:border-ink-500/40')}
-            >
-              {step === 1 ? 'Cancelar' : step === 3 ? 'Volver a editar' : 'Atrás'}
-            </button>
-            {step === 1 && (
-              <NextButton onClick={goToLines} blockedReason={headerBlocked}>
-                Continuar con los productos
-              </NextButton>
-            )}
-            {step === 2 && (
-              <NextButton onClick={goToReview} blockedReason={linesBlocked}>
-                Revisar el traslado
-              </NextButton>
-            )}
-            {step === 3 && (
-              <NextButton onClick={confirm} blockedReason={headerBlocked ?? linesBlocked} pending={create.isPending} pendingLabel='Registrando…' tone='confirm'>
-                Confirmar traslado
-              </NextButton>
-            )}
-          </div>
-        )}
       </div>
     </MotionConfig>
   )

@@ -44,11 +44,13 @@ const NAV_ITEMS = [
   { to: '/admin/security-log', label: 'Bitácora', icon: ShieldCheck, minHierarchy: HIERARCHY.SUPERADMIN },
 ]
 
+// Menú en Bosque (tokens --sidebar-*): texto Menta, hover un tono más claro y la opción activa en Caña.
 const linkClass = ({ isActive }) =>
   cn(
     'flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors',
-    'text-muted-foreground hover:bg-muted',
-    isActive && 'bg-muted font-medium text-foreground'
+    isActive
+      ? 'bg-sidebar-primary font-medium text-sidebar-primary-foreground'
+      : 'text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
   )
 
 function NavItem({ item, collapsed, nested = false }) {
@@ -76,7 +78,7 @@ function NavGroup({ group, collapsed }) {
   // Con el menú contraído no hay espacio para el submenú: se muestran sus íconos directamente.
   if (collapsed) {
     return (
-      <div className='space-y-0.5 border-y border-border/60 py-1'>
+      <div className='space-y-0.5 border-y border-sidebar-border py-1'>
         {group.children.map((child) => (
           <NavItem key={child.to} item={child} collapsed />
         ))}
@@ -91,8 +93,8 @@ function NavGroup({ group, collapsed }) {
         onClick={() => setGroupOpen(group.id, !open)}
         aria-expanded={open}
         className={cn(
-          'flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted',
-          containsActive && !open && 'font-medium text-foreground'
+          'flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm text-sidebar-foreground/85 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+          containsActive && !open && 'font-medium text-sidebar-accent-foreground'
         )}
       >
         <Icon className='h-4 w-4 shrink-0' />
@@ -110,7 +112,7 @@ function NavGroup({ group, collapsed }) {
             transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
             className='overflow-hidden'
           >
-            <div className='ml-4 mt-0.5 space-y-0.5 border-l border-border pl-2'>
+            <div className='ml-4 mt-0.5 space-y-0.5 border-l border-sidebar-border pl-2'>
               {group.children.map((child) => (
                 <NavItem key={child.to} item={child} nested />
               ))}
@@ -136,24 +138,24 @@ export const Sidebar = () => {
   return (
     <aside
       className={cn(
-        'sticky top-0 flex h-screen flex-col border-r bg-background transition-all duration-200',
+        'sticky top-0 flex h-screen flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-200',
         sidebarOpen ? 'w-60' : 'w-14'
       )}
     >
       {/* Logo */}
-      <div className='flex h-14 shrink-0 items-center justify-between border-b px-3'>
-        {sidebarOpen && <span className='truncate text-sm font-semibold tracking-tight'>Inventario Aztlán</span>}
+      <div className='flex h-14 shrink-0 items-center justify-between border-b border-sidebar-border px-3'>
+        {sidebarOpen && <span className='truncate text-sm font-semibold tracking-tight text-sidebar-accent-foreground'>Inventario Aztlán</span>}
         <button
           onClick={toggleSidebar}
           aria-label={sidebarOpen ? 'Contraer menú' : 'Expandir menú'}
-          className='ml-auto rounded-md p-1.5 text-muted-foreground hover:bg-muted'
+          className='ml-auto rounded-md p-1.5 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
         >
           <ChevronLeft className={cn('h-4 w-4 transition-transform', !sidebarOpen && 'rotate-180')} />
         </button>
       </div>
 
       {/* Nav */}
-      <nav className='flex-1 space-y-0.5 overflow-y-auto px-2 py-3'>
+      <nav className='sidebar-scroll flex-1 space-y-0.5 overflow-y-auto px-2 py-3'>
         {visibleItems.map((item) =>
           item.children ? (
             <NavGroup key={item.id} group={item} collapsed={!sidebarOpen} />

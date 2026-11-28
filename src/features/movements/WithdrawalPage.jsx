@@ -17,6 +17,7 @@ import {
   Banner,
   Card,
   Field,
+  FormFooter,
   NextButton,
   ProductPicker,
   Steps,
@@ -69,7 +70,7 @@ const referencePreview = (warehouseCode, date) => `${warehouseCode ?? 'ALMA'}-${
 
 // --- Paso 1 -------------------------------------------------------------------------
 
-function HeaderStep({ header, setHeader, errors, warehouses, canBackdate }) {
+function HeaderStep({ footer, header, setHeader, errors, warehouses, canBackdate }) {
   const set = (field) => (e) => setHeader((h) => ({ ...h, [field]: e.target.value }))
   const minDate = canBackdate ? undefined : daysAgo(BACKDATE_DAYS)
   const backdated = header.date < daysAgo(BACKDATE_DAYS)
@@ -120,7 +121,7 @@ function HeaderStep({ header, setHeader, errors, warehouses, canBackdate }) {
 
       <div className='grid gap-5 sm:grid-cols-2'>
         <Field
-          label='Recibido por'
+          label='Retirado por'
           htmlFor='received-by'
           required={header.reason === 'PRESTAMO'}
           error={errors.receivedBy}
@@ -185,6 +186,7 @@ function HeaderStep({ header, setHeader, errors, warehouses, canBackdate }) {
           />
         </Field>
       </div>
+      {footer}
     </Card>
   )
 }
@@ -223,7 +225,7 @@ const flattenTree = (nodes, depth = 0) =>
     .filter((n) => n.isActive)
     .flatMap((n) => [{ id: n.id, label: `${'  '.repeat(depth)}${n.name}`, count: n.assetsInSubtree }, ...flattenTree(n.children, depth + 1)])
 
-function LinesStep({ header, warehouseCode, lines, setLines, errors, availability, assetFilter, setAssetFilter }) {
+function LinesStep({ footer, header, warehouseCode, lines, setLines, errors, availability, assetFilter, setAssetFilter }) {
   const { data: tree = [] } = useAssetCategoryTree({ isActive: true })
   const assetRequired = ASSET_REQUIRED.includes(header.reason)
   const update = (key, patch) => setLines((ls) => ls.map((l) => (l.key === key ? { ...l, ...patch } : l)))
@@ -366,14 +368,17 @@ function LinesStep({ header, warehouseCode, lines, setLines, errors, availabilit
 
       {errors.general && <Banner>{errors.general}</Banner>}
 
-      <button
-        type='button'
-        onClick={() => setLines((ls) => [...ls, emptyLine()])}
-        className='inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-dashed border-line bg-white text-sm font-medium text-ink-900 hover:border-forest-700 hover:text-forest-800'
-      >
-        <Plus className='size-4' aria-hidden />
-        Agregar línea
-      </button>
+      <Card className='p-4 sm:p-4'>
+        <button
+          type='button'
+          onClick={() => setLines((ls) => [...ls, emptyLine()])}
+          className='inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-dashed border-line bg-white text-sm font-medium text-ink-900 hover:border-forest-700 hover:text-forest-800'
+        >
+          <Plus className='size-4' aria-hidden />
+          Agregar línea
+        </button>
+        {footer}
+      </Card>
     </div>
   )
 }
@@ -460,7 +465,7 @@ const fromServerError = (error, lines) => {
 
 // --- Paso 3 y resultado -------------------------------------------------------------
 
-function ReviewStep({ header, lines, warehouse, totals }) {
+function ReviewStep({ footer, header, lines, warehouse, totals }) {
   const products = new Map(lines.filter((l) => l.product).map((l) => [l.product.id, l.product]))
   const belowMinimum = [...totals.entries()]
     .map(([id, milli]) => ({ product: products.get(id), after: toMilli(products.get(id).stock?.total ?? '0') - milli }))
@@ -485,7 +490,7 @@ function ReviewStep({ header, lines, warehouse, totals }) {
           </div>
           {header.receivedBy && (
             <div>
-              <dt className='text-xs text-ink-500'>Recibido por</dt>
+              <dt className='text-xs text-ink-500'>Retirado por</dt>
               <dd className='font-medium'>{header.receivedBy}</dd>
             </div>
           )}
@@ -509,6 +514,17 @@ function ReviewStep({ header, lines, warehouse, totals }) {
           )}
         </dl>
       </Card>
+
+      {belowMinimum.length > 0 && (
+        <Banner tone='warning'>
+          {belowMinimum.map(({ product, after }) => (
+            <p key={product.id}>
+              <strong>{product.name}</strong> quedará bajo su mínimo: {fmtMilli(after < 0n ? 0n : after)} de {fmt(product.minStock)}{' '}
+              {product.unit.code} en todos los almacenes. Puedes confirmar igual.
+            </p>
+          ))}
+        </Banner>
+      )}
 
       <Card className='p-0 sm:p-0'>
         <h2 className='border-b border-line/60 px-4 py-3 text-sm font-semibold sm:px-6'>Total por producto</h2>
@@ -543,18 +559,9 @@ function ReviewStep({ header, lines, warehouse, totals }) {
             )
           })}
         </ul>
+        <div className='px-4 pb-4 sm:px-6'>{footer}</div>
       </Card>
 
-      {belowMinimum.length > 0 && (
-        <Banner tone='warning'>
-          {belowMinimum.map(({ product, after }) => (
-            <p key={product.id}>
-              <strong>{product.name}</strong> quedará bajo su mínimo: {fmtMilli(after < 0n ? 0n : after)} de {fmt(product.minStock)}{' '}
-              {product.unit.code} en todos los almacenes. Puedes confirmar igual.
-            </p>
-          ))}
-        </Banner>
-      )}
     </div>
   )
 }
@@ -721,6 +728,34 @@ export function WithdrawalPage() {
   const footerButton =
     'inline-flex h-11 items-center justify-center gap-2 rounded-md px-5 text-sm font-semibold transition-colors disabled:opacity-60'
 
+  // Botones del paso: cada paso los muestra al final de su última tarjeta.
+  const footer = (
+    <FormFooter>
+      <button
+        type='button'
+        onClick={() => (step === 1 ? navigate('/movements') : setStep(step - 1))}
+        className={cn(footerButton, 'border border-line bg-white text-ink-900 hover:border-ink-500/40')}
+      >
+        {step === 1 ? 'Cancelar' : step === 3 ? 'Volver a editar' : 'Atrás'}
+      </button>
+      {step === 1 && (
+        <NextButton onClick={goToLines} blockedReason={headerBlocked}>
+          Continuar con las líneas
+        </NextButton>
+      )}
+      {step === 2 && (
+        <NextButton onClick={goToReview} blockedReason={linesBlocked}>
+          Revisar la orden
+        </NextButton>
+      )}
+      {step === 3 && (
+        <NextButton onClick={confirm} blockedReason={headerBlocked ?? linesBlocked} pending={create.isPending} pendingLabel='Registrando…' tone='confirm'>
+          Confirmar orden
+        </NextButton>
+      )}
+    </FormFooter>
+  )
+
   return (
     <MotionConfig reducedMotion='user'>
       <div className='mx-auto max-w-4xl font-plex text-ink-900'>
@@ -752,10 +787,10 @@ export function WithdrawalPage() {
             className='mt-5'
           >
             {step === 1 && (
-              <HeaderStep header={header} setHeader={setHeader} errors={shownHeaderErrors} warehouses={warehouses} canBackdate={canBackdate} />
+              <HeaderStep footer={footer} header={header} setHeader={setHeader} errors={shownHeaderErrors} warehouses={warehouses} canBackdate={canBackdate} />
             )}
             {step === 2 && (
-              <LinesStep
+              <LinesStep footer={footer}
                 header={header}
                 warehouseCode={warehouse?.code}
                 lines={lines}
@@ -766,37 +801,11 @@ export function WithdrawalPage() {
                 setAssetFilter={setAssetFilter}
               />
             )}
-            {step === 3 && <ReviewStep header={header} lines={lines} warehouse={warehouse} totals={live.totals} />}
+            {step === 3 && <ReviewStep footer={footer} header={header} lines={lines} warehouse={warehouse} totals={live.totals} />}
             {step === 'done' && result && <DoneStep result={result} onNew={reset} />}
           </motion.div>
         </AnimatePresence>
 
-        {step !== 'done' && (
-          <div className='sticky bottom-0 -mx-6 mt-6 flex flex-col-reverse gap-2 border-t border-line/70 bg-white/90 px-6 py-3 backdrop-blur sm:flex-row sm:justify-between'>
-            <button
-              type='button'
-              onClick={() => (step === 1 ? navigate('/movements') : setStep(step - 1))}
-              className={cn(footerButton, 'border border-line bg-white text-ink-900 hover:border-ink-500/40')}
-            >
-              {step === 1 ? 'Cancelar' : step === 3 ? 'Volver a editar' : 'Atrás'}
-            </button>
-            {step === 1 && (
-              <NextButton onClick={goToLines} blockedReason={headerBlocked}>
-                Continuar con las líneas
-              </NextButton>
-            )}
-            {step === 2 && (
-              <NextButton onClick={goToReview} blockedReason={linesBlocked}>
-                Revisar la orden
-              </NextButton>
-            )}
-            {step === 3 && (
-              <NextButton onClick={confirm} blockedReason={headerBlocked ?? linesBlocked} pending={create.isPending} pendingLabel='Registrando…' tone='confirm'>
-                Confirmar orden
-              </NextButton>
-            )}
-          </div>
-        )}
       </div>
     </MotionConfig>
   )

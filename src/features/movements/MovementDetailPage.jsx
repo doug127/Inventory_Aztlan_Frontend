@@ -1,10 +1,10 @@
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Undo2 } from 'lucide-react'
 import { formatDateTime } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/authStore'
 import { HIERARCHY } from '@/lib/constants'
-import { MOVEMENT_TYPE_LABELS, REASON_LABELS, useMovement } from './movementsApi'
+import { MOVEMENT_TYPE_LABELS, REASON_LABELS, useMovement, usePendingLoans } from './movementsApi'
 import { DocumentsList } from './receiptDocuments'
 
 // Detalle de un movimiento (HU-401: "Ver detalle" al registrar la orden). El historial con filtros
@@ -30,6 +30,10 @@ export function MovementDetailPage() {
   const userId = useAuthStore((s) => s.user?.id)
   const isAdmin = useAuthStore((s) => s.hasHierarchy(HIERARCHY.ADMIN))
   const isAlmacenista = useAuthStore((s) => s.hasHierarchy(HIERARCHY.ALMACENISTA))
+  // Préstamo con algo aún sin devolver (HU-405): habilita [Registrar devolución] (user_flow.md §9).
+  const isLoan = movement?.movementType === 'OUT' && movement?.reason === 'PRESTAMO'
+  const { data: pendingData } = usePendingLoans({ movementId: Number(id), page: 1, limit: 1 }, { enabled: Boolean(isLoan) })
+  const pendingPairs = isLoan ? (pendingData?.meta?.pagination?.totalItems ?? 0) : 0
 
   const back = (
     <Link to='/movements' className='inline-flex items-center gap-1.5 text-sm text-ink-500 hover:text-ink-900'>
@@ -67,7 +71,23 @@ export function MovementDetailPage() {
         <p className='text-sm text-ink-500'>
           {MOVEMENT_TYPE_LABELS[movement.movementType]} · {REASON_LABELS[movement.reason] ?? movement.reason}
         </p>
-        <h1 className='font-mono text-[1.75rem] font-semibold tracking-wide'>{movement.documentNumber}</h1>
+        <div className='flex flex-wrap items-center justify-between gap-3'>
+          <h1 className='font-mono text-[1.75rem] font-semibold tracking-wide'>{movement.documentNumber}</h1>
+          {isLoan && isAlmacenista && pendingPairs > 0 && (
+            <Link
+              to={`/movements/new/return?loan=${movement.id}`}
+              className='inline-flex h-10 items-center gap-2 rounded-md bg-forest-700 px-4 text-sm font-semibold text-white hover:bg-forest-800'
+            >
+              <Undo2 className='size-4' aria-hidden />
+              Registrar devolución
+            </Link>
+          )}
+        </div>
+        {isLoan && pendingData && (
+          <p className='mt-1 text-sm text-ink-500'>
+            {pendingPairs > 0 ? `${pendingPairs} ${pendingPairs === 1 ? 'línea' : 'líneas'} con préstamo pendiente de devolver` : 'Préstamo devuelto por completo'}
+          </p>
+        )}
       </header>
 
       <Card className='mt-5 p-4 sm:p-6'>
@@ -79,13 +99,21 @@ export function MovementDetailPage() {
               {movement.fromWarehouse.code} → {movement.toWarehouse.code} · {movement.toWarehouse.name}
             </Item>
           ) : (
-            <Item label={movement.fromWarehouse ? 'Almacén de origen' : 'Almacén de destino'}>
+            <Item
+              label={
+                movement.movementType === 'ADJUST'
+                  ? `Almacén · ${movement.toWarehouse ? 'sobrante' : 'faltante'}`
+                  : movement.fromWarehouse
+                    ? 'Almacén de origen'
+                    : 'Almacén de destino'
+              }
+            >
               {warehouse.code} · {warehouse.name}
             </Item>
           )}
           <Item label='Registró'>{movement.createdBy.fullName}</Item>
           {movement.receivedBy && (
-            <Item label={movement.movementType === 'TRANSFER' ? 'Trasladado por' : movement.movementType === 'IN' ? 'Entregado por' : 'Recibido por'}>
+            <Item label={movement.movementType === 'TRANSFER' ? 'Trasladado por' : movement.movementType === 'IN' ? 'Entregado por' : 'Retirado por'}>
               {movement.receivedBy}
             </Item>
           )}

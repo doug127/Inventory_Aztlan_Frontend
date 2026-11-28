@@ -46,7 +46,7 @@ export const NavigationButtons = ({ currentPage, totalPages, onPageChange, from,
                     onClick={() => onPageChange(item)}
                     className={`flex cursor-pointer items-center justify-center box-border border border-gray-200 font-medium text-sm w-9 h-9 focus:outline-none transition-colors duration-200 ${
                       item === currentPage
-                        ? 'bg-blue-500 text-white shadow-sm'
+                        ? 'bg-blue-500 text-blanco shadow-sm'
                         : 'bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                     }`}
                   >

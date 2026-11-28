@@ -1,5 +1,6 @@
 import { useAuthStore } from '@/stores/authStore'
-import { KeyRound, LogOut, User } from 'lucide-react'
+import { KeyRound, LogOut, Moon, Sun, User } from 'lucide-react'
+import { useUiStore } from '@/stores/uiStore'
 import { 
   DropdownMenu, DropdownMenuContent, 
   DropdownMenuItem, DropdownMenuLabel, 
@@ -12,6 +13,9 @@ import logoImage from '@/assets/image/logo.jpeg'
 export const Topbar = () => {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
+  const theme = useUiStore((s) => s.theme)
+  const toggleTheme = useUiStore((s) => s.toggleTheme)
+  const dark = theme === 'dark'
   
   const handleLogout = async () => {
     await logout()
@@ -21,13 +25,26 @@ export const Topbar = () => {
   return (
     <header className='h-14 border-b bg-background flex items-center justify-between px-4 shrink-0'>
 
-      <div className='flex items-center h-full py-1.5'>
+      {/* El logotipo se mantiene original: en modo oscuro va sobre una placa blanca. */}
+      <div className='flex items-center h-full py-1.5 dark:rounded-md dark:bg-blanco dark:px-1.5'>
         <img 
           src={logoImage} 
           alt="Logo" 
           className='h-full w-auto object-contain'
         />
       </div>
+
+      <div className='flex items-center gap-1'>
+      <button
+        type='button'
+        onClick={toggleTheme}
+        aria-label={dark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+        aria-pressed={dark}
+        title={dark ? 'Modo claro' : 'Modo oscuro'}
+        className='grid size-9 place-items-center rounded-md text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground'
+      >
+        {dark ? <Sun className='h-[18px] w-[18px]' aria-hidden /> : <Moon className='h-[18px] w-[18px]' aria-hidden />}
+      </button>
 
       <DropdownMenu>
         <DropdownMenuTrigger className='flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-muted cursor-pointer select-none outline-none transition-colors duration-200'>
@@ -66,6 +83,7 @@ export const Topbar = () => {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      </div>
     </header>
   )
 }

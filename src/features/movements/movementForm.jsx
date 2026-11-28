@@ -221,6 +221,14 @@ export function NextButton({ onClick, blockedReason, pending = false, pendingLab
   )
 }
 
+/**
+ * Botones de un paso (Cancelar / Atrás a la izquierda, Continuar / Confirmar a la derecha). Van dentro
+ * de la última tarjeta del paso, debajo de su último campo y separados por una línea.
+ */
+export function FormFooter({ children }) {
+  return <div className='mt-6 flex flex-col-reverse gap-2 border-t border-line pt-5 sm:flex-row sm:items-center sm:justify-between'>{children}</div>
+}
+
 /** Almacenes activos como tarjetas elegibles (origen de un retiro, destino de una entrada). */
 export function WarehouseChoice({ warehouses, value, onChange, label }) {
   return (

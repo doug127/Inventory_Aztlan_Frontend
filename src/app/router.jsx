@@ -49,6 +49,8 @@ const WithdrawalPage = lazy(() =>
   import('@/features/movements/WithdrawalPage').then((m) => ({ default: m.WithdrawalPage }))
 )
 const EntryPage = lazy(() => import('@/features/movements/EntryPage').then((m) => ({ default: m.EntryPage })))
+const ReturnPage = lazy(() => import('@/features/movements/ReturnPage').then((m) => ({ default: m.ReturnPage })))
+const AdjustmentPage = lazy(() => import('@/features/movements/AdjustmentPage').then((m) => ({ default: m.AdjustmentPage })))
 const TransferPage = lazy(() => import('@/features/movements/TransferPage').then((m) => ({ default: m.TransferPage })))
 const MovementDetailPage = lazy(() =>
   import('@/features/movements/MovementDetailPage').then((m) => ({ default: m.MovementDetailPage }))
@@ -114,14 +116,21 @@ export const router = createBrowserRouter([
               </Page>
             ),
           },
-          // HU-401 y HU-402: orden de retiro y entrada (ALMACENISTA o superior; el backend también lo exige)
+          // HU-401 a HU-403: orden de retiro, entrada y traslado (ALMACENISTA o superior; el backend también lo exige)
           {
             element: <PermissionRoute minHierarchy={HIERARCHY.ALMACENISTA} />,
             children: [
               { path: '/movements/new/withdrawal', element: <Page><WithdrawalPage /></Page> },
               { path: '/movements/new/entry', element: <Page><EntryPage /></Page> },
               { path: '/movements/new/transfer', element: <Page><TransferPage /></Page> },
+              // HU-405: devolución de préstamos (entrada con motivo DEVOLUCION)
+              { path: '/movements/new/return', element: <Page><ReturnPage /></Page> },
             ],
+          },
+          // HU-404: ajuste por conteo físico, solo ADMIN y SUPERADMIN (business_rules.md §2.5)
+          {
+            element: <PermissionRoute minHierarchy={HIERARCHY.ADMIN} />,
+            children: [{ path: '/movements/new/adjustment', element: <Page><AdjustmentPage /></Page> }],
           },
           {
             path: '/movements/:id',
