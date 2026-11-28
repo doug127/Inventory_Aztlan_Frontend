@@ -25,6 +25,9 @@ export const movementsService = {
   createEntry: ({ body, idempotencyKey }) => api.post('/movements/entries', body, { headers: { 'Idempotency-Key': idempotencyKey } }),
   /** Ajuste por conteo físico (HU-404, ADMIN). meta.warnings: { belowMinimum, aboveMaximum, consolidated }. */
   createAdjustment: ({ body, idempotencyKey }) => api.post('/movements/adjustments', body, { headers: { 'Idempotency-Key': idempotencyKey } }),
+  /** Corrección con un movimiento inverso (HU-406, ADMIN): body { lines: [{ lineId, quantity }], note, movementDate? }. */
+  createCorrection: ({ movementId, body, idempotencyKey }) =>
+    api.post(`/movements/${movementId}/corrections`, body, { headers: { 'Idempotency-Key': idempotencyKey } }),
   /** Traslado (HU-403). Mismo sobre; meta.warnings: { consolidated }. */
   createTransfer: ({ body, idempotencyKey }) => api.post('/movements/transfers', body, { headers: { 'Idempotency-Key': idempotencyKey } }),
   createWithdrawal: ({ body, idempotencyKey }) => api.post('/movements/withdrawals', body, { headers: { 'Idempotency-Key': idempotencyKey } }),
@@ -77,6 +80,7 @@ export const usePendingLoans = (params, { enabled = true } = {}) =>
 export const useCreateEntry = () => useMovementMutation(movementsService.createEntry)
 export const useCreateTransfer = () => useMovementMutation(movementsService.createTransfer)
 export const useCreateAdjustment = () => useMovementMutation(movementsService.createAdjustment)
+export const useCreateCorrection = () => useMovementMutation(movementsService.createCorrection)
 
 export const useCreateWithdrawal = () => {
   const qc = useQueryClient()

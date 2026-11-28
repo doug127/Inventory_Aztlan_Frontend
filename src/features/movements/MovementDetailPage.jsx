@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Undo2 } from 'lucide-react'
+import { ArrowLeft, RotateCcw, Undo2 } from 'lucide-react'
 import { formatDateTime } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/authStore'
@@ -64,6 +64,8 @@ export function MovementDetailPage() {
   // El archivo de un documento lo adjunta quien registró la entrada o un administrador (una sola vez).
   const canAttach = isAdmin || (isAlmacenista && movement.createdBy.id === userId)
   const documents = movement.documents ?? []
+  // Corrección (HU-406): solo ADMIN, no sobre otra corrección y con algo aún por corregir.
+  const canCorrect = isAdmin && !movement.correctionOf && movement.lines.some((l) => Number(l.quantity) > Number(l.corrected))
   return (
     <div className='mx-auto max-w-4xl font-plex text-ink-900'>
       {back}
@@ -82,7 +84,37 @@ export function MovementDetailPage() {
               Registrar devolución
             </Link>
           )}
+          {canCorrect && (
+            <Link
+              to={`/movements/${movement.id}/correct`}
+              className='inline-flex h-10 items-center gap-2 rounded-md border border-line bg-white px-4 text-sm font-semibold hover:border-ink-500/40'
+            >
+              <RotateCcw className='size-4' aria-hidden />
+              Corregir
+            </Link>
+          )}
         </div>
+        {movement.correctionOf && (
+          <p className='mt-1 text-sm text-ink-500'>
+            Corrige a{' '}
+            <Link to={`/movements/${movement.correctionOf.id}`} className='font-mono font-medium text-ink-900 hover:underline'>
+              {movement.correctionOf.documentNumber}
+            </Link>
+          </p>
+        )}
+        {movement.corrections.length > 0 && (
+          <p className='mt-1 text-sm text-ink-500'>
+            Corregida por{' '}
+            {movement.corrections.map((c, i) => (
+              <span key={c.id}>
+                {i > 0 && ', '}
+                <Link to={`/movements/${c.id}`} className='font-mono font-medium text-ink-900 hover:underline'>
+                  {c.documentNumber}
+                </Link>
+              </span>
+            ))}
+          </p>
+        )}
         {isLoan && pendingData && (
           <p className='mt-1 text-sm text-ink-500'>
             {pendingPairs > 0 ? `${pendingPairs} ${pendingPairs === 1 ? 'línea' : 'líneas'} con préstamo pendiente de devolver` : 'Préstamo devuelto por completo'}
@@ -164,6 +196,7 @@ export function MovementDetailPage() {
                 </td>
                 <td className='whitespace-nowrap px-3 py-2.5 text-right font-semibold tabular-nums'>
                   {qty(line.quantity)} {line.product.unitCode}
+                  {Number(line.corrected) > 0 && <span className='block text-xs font-normal text-amber-700'>corregido {qty(line.corrected)}</span>}
                 </td>
                 <td className='px-5 py-2.5'>
                   {line.asset ? (
@@ -186,8 +219,9 @@ export function MovementDetailPage() {
                 <p className='truncate text-sm font-medium'>{line.product.name}</p>
                 <p className='truncate text-xs text-ink-500'>{line.asset ? `${line.asset.code} · ${line.asset.name}` : 'Sin activo'}</p>
               </div>
-              <span className='shrink-0 text-sm font-semibold tabular-nums'>
+              <span className='shrink-0 text-right text-sm font-semibold tabular-nums'>
                 {qty(line.quantity)} {line.product.unitCode}
+                {Number(line.corrected) > 0 && <span className='block text-xs font-normal text-amber-700'>corregido {qty(line.corrected)}</span>}
               </span>
             </li>
           ))}

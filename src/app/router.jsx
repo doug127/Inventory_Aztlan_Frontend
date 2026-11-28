@@ -49,6 +49,7 @@ const WithdrawalPage = lazy(() =>
   import('@/features/movements/WithdrawalPage').then((m) => ({ default: m.WithdrawalPage }))
 )
 const EntryPage = lazy(() => import('@/features/movements/EntryPage').then((m) => ({ default: m.EntryPage })))
+const CorrectionPage = lazy(() => import('@/features/movements/CorrectionPage').then((m) => ({ default: m.CorrectionPage })))
 const ReturnPage = lazy(() => import('@/features/movements/ReturnPage').then((m) => ({ default: m.ReturnPage })))
 const AdjustmentPage = lazy(() => import('@/features/movements/AdjustmentPage').then((m) => ({ default: m.AdjustmentPage })))
 const TransferPage = lazy(() => import('@/features/movements/TransferPage').then((m) => ({ default: m.TransferPage })))
@@ -127,10 +128,14 @@ export const router = createBrowserRouter([
               { path: '/movements/new/return', element: <Page><ReturnPage /></Page> },
             ],
           },
-          // HU-404: ajuste por conteo físico, solo ADMIN y SUPERADMIN (business_rules.md §2.5)
+          // HU-404 y HU-406: ajuste por conteo físico y corrección de movimientos, solo ADMIN y SUPERADMIN
           {
             element: <PermissionRoute minHierarchy={HIERARCHY.ADMIN} />,
-            children: [{ path: '/movements/new/adjustment', element: <Page><AdjustmentPage /></Page> }],
+            children: [
+              { path: '/movements/new/adjustment', element: <Page><AdjustmentPage /></Page> },
+              // HU-406: corrección con un movimiento inverso (REV-{documento})
+              { path: '/movements/:id/correct', element: <Page><CorrectionPage /></Page> },
+            ],
           },
           {
             path: '/movements/:id',

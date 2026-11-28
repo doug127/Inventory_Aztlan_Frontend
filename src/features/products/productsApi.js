@@ -12,6 +12,7 @@ export const productsService = {
    * ProductDto: { id, code, name, category, unit, minStock, maxStock, isActive, stock, hasMovements }
    */
   list: (params) => api.get('/products', { params: clean(params) }),
+  get: (id) => api.get(`/products/${id}`).then(unwrap),
   nextCode: (categoryId) => api.get('/products/next-code', { params: { categoryId } }).then(unwrap),
   create: (body) => api.post('/products', body).then(unwrap),
   update: (id, body) => api.patch(`/products/${id}`, body).then(unwrap),
@@ -27,6 +28,9 @@ export const useProducts = (params) =>
     queryFn: () => productsService.list(params),
     placeholderData: keepPreviousData,
   })
+
+/** Un producto por id (precarga de la orden de retiro desde Existencias). */
+export const useProduct = (id) => useQuery({ queryKey: [...KEY, 'detail', id], queryFn: () => productsService.get(id), enabled: Boolean(id) })
 
 /** Código sugerido para la categoría elegida (LUBR-0003). */
 export const useNextProductCode = (categoryId, { enabled = true } = {}) =>

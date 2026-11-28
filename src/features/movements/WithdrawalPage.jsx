@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion'
 import { AlertTriangle, ArrowLeft, Check, CheckCircle2, Copy, FileText, Info, Plus, Trash2 } from 'lucide-react'
 import { SearchPicker } from '@/components/common/SearchPicker'
@@ -8,7 +8,7 @@ import { HIERARCHY } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { EASE_OUT } from '@/features/auth/components/AuthUI'
 import { useWarehouses } from '@/features/warehouses/warehousesApi'
-import { useProducts } from '@/features/products/productsApi'
+import { useProduct, useProducts } from '@/features/products/productsApi'
 import { categoryPathLabel, useAssets } from '@/features/assets/assetsApi'
 import { useAssetCategoryTree } from '@/features/asset-categories/assetCategoriesApi'
 import { useAvailability } from '@/features/stock/stockApi'
@@ -623,9 +623,18 @@ function DoneStep({ result, onNew }) {
 export function WithdrawalPage() {
   const navigate = useNavigate()
   const canBackdate = useAuthStore((s) => s.hasHierarchy(HIERARCHY.ADMIN))
+  // Desde Existencias (HU-407): ?product=ID&warehouse=ID precargan la primera línea y el almacén.
+  const [params] = useSearchParams()
+  const presetProductId = Number(params.get('product')) || undefined
+  const presetWarehouseId = Number(params.get('warehouse')) || ''
   const [step, setStep] = useState(1)
-  const [header, setHeader] = useState(EMPTY_HEADER)
+  const [header, setHeader] = useState(() => ({ ...EMPTY_HEADER, warehouseId: presetWarehouseId }))
   const [lines, setLines] = useState(() => [emptyLine()])
+  const { data: presetProduct } = useProduct(presetProductId)
+  useEffect(() => {
+    // Solo si la orden sigue en blanco: no pisa lo que el usuario ya eligió.
+    if (presetProduct) setLines((ls) => (ls.length === 1 && !ls[0].product ? [emptyLine(presetProduct)] : ls))
+  }, [presetProduct])
   const [assetFilter, setAssetFilter] = useState('')
   const [headerErrors, setHeaderErrors] = useState({})
   const [lineErrors, setLineErrors] = useState({})
