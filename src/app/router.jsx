@@ -52,6 +52,9 @@ const WithdrawalPage = lazy(() =>
 const EntryPage = lazy(() => import('@/features/movements/EntryPage').then((m) => ({ default: m.EntryPage })))
 const StockPrintPage = lazy(() => import('@/features/stock/StockPrintPage').then((m) => ({ default: m.StockPrintPage })))
 const KardexPrintPage = lazy(() => import('@/features/stock/KardexPrintPage').then((m) => ({ default: m.KardexPrintPage })))
+const ReportsPage = lazy(() => import('@/features/reports/ReportsPage').then((m) => ({ default: m.ReportsPage })))
+const ConsumptionReportPage = lazy(() => import('@/features/reports/ConsumptionReportPage').then((m) => ({ default: m.ConsumptionReportPage })))
+const ConsumptionPrintPage = lazy(() => import('@/features/reports/ConsumptionPrintPage').then((m) => ({ default: m.ConsumptionPrintPage })))
 const MovementPrintPage = lazy(() => import('@/features/movements/MovementPrintPage').then((m) => ({ default: m.MovementPrintPage })))
 const CorrectionPage = lazy(() => import('@/features/movements/CorrectionPage').then((m) => ({ default: m.CorrectionPage })))
 const ReturnPage = lazy(() => import('@/features/movements/ReturnPage').then((m) => ({ default: m.ReturnPage })))
@@ -107,6 +110,8 @@ export const router = createBrowserRouter([
       // Hojas imprimibles de Existencias y del Kardex, con los filtros de la pantalla (todos los roles).
       { path: '/stock/print', element: <Page><StockPrintPage /></Page> },
       { path: '/kardex/print', element: <Page><KardexPrintPage /></Page> },
+      // HU-501: hoja imprimible del reporte de consumo.
+      { path: '/reports/consumption/print', element: <Page><ConsumptionPrintPage /></Page> },
       {
         element: <AppLayout />,
         children: [
@@ -164,6 +169,9 @@ export const router = createBrowserRouter([
           },
           // HU-409: kardex de un producto (todos los roles)
           { path: '/kardex', element: <Page><KardexPage /></Page> },
+          // Reportes (Sprint 7, todos los roles). HU-501: consumo por activo y por categoría de activo.
+          { path: '/reports', element: <Page><ReportsPage /></Page> },
+          { path: '/reports/consumption', element: <Page><ConsumptionReportPage /></Page> },
           {
             path: '/products',
             element: (

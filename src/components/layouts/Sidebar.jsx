@@ -11,6 +11,7 @@ import {
   BookOpen,
   ChevronDown,
   ChevronLeft,
+  FileChartColumn,
   FolderTree,
   LayoutDashboard,
   Package,
@@ -29,6 +30,7 @@ const NAV_ITEMS = [
   { to: '/movements', label: 'Movimientos', icon: ArrowLeftRight, minHierarchy: HIERARCHY.USER },
   { to: '/stock', label: 'Stock', icon: BarChart2, minHierarchy: HIERARCHY.USER },
   { to: '/kardex', label: 'Kardex', icon: ScrollText, minHierarchy: HIERARCHY.USER },
+  { to: '/reports', label: 'Reportes', icon: FileChartColumn, minHierarchy: HIERARCHY.USER },
   { to: '/products', label: 'Productos', icon: Package, minHierarchy: HIERARCHY.USER },
   {
     id: 'catalog',

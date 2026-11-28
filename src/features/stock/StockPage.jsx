@@ -112,8 +112,11 @@ export function StockPage() {
   })
   const rows = data?.data ?? []
   const summary = data?.meta?.summary
-  const byWarehouse = groupBy === 'warehouse'
-  const showWarehouse = byWarehouse || Boolean(warehouseId)
+  // La forma de la tabla sale de los datos en pantalla (meta.filters), no del filtro recién elegido:
+  // mientras llega la respuesta nueva se siguen viendo (atenuadas) las filas anteriores, y las de la
+  // vista por producto no traen almacén.
+  const shownFilters = data?.meta?.filters ?? { groupBy, warehouseId }
+  const showWarehouse = shownFilters.groupBy === 'warehouse' || Boolean(shownFilters.warehouseId)
 
   /** [Kardex] abre el kardex del producto, en el almacén de la fila (o del filtro) si lo hay. */
   const kardexLink = (row) => {

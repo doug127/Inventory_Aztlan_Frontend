@@ -1,5 +1,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
+import { fetchAllPages } from '@/lib/fetchAllPages'
 
 // Endpoints de /api/stock: la existencia por almacén que usan los formularios de movimientos (HU-401)
 // y la consulta de existencias con alertas (HU-407).
@@ -44,25 +45,6 @@ export const useAvailability = (warehouseId, productIds) => {
 }
 
 // --- Hojas imprimibles: todas las filas, no solo una página ------------------------------------
-
-/** Máximo de páginas de 100 filas que trae una hoja imprimible (10 000 filas). */
-const PRINT_MAX_PAGES = 100
-
-/**
- * Recorre las páginas de un listado (de 100 en 100) y devuelve { rows, meta, truncated }: todas las
- * filas, el meta de la primera página (resumen y filtros) y si se cortó por el máximo.
- */
-const fetchAllPages = async (fetchPage, params) => {
-  const first = await fetchPage({ ...params, page: 1, limit: 100 })
-  const rows = [...(first.data ?? [])]
-  const totalPages = first.meta?.pagination?.totalPages ?? 1
-  const last = Math.min(totalPages, PRINT_MAX_PAGES)
-  for (let page = 2; page <= last; page += 1) {
-    const next = await fetchPage({ ...params, page, limit: 100 })
-    rows.push(...(next.data ?? []))
-  }
-  return { rows, meta: first.meta, truncated: totalPages > PRINT_MAX_PAGES }
-}
 
 /** Existencias completas con los filtros de la pantalla (hoja /stock/print). */
 export const useAllStock = (params) =>
